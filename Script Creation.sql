@@ -14,3 +14,10 @@ create table ddbba.empleado(
 	Puesto char(20)
 )
 go
+
+create table ddbba.sucursal(
+	Id int primary key,
+	Nombre char(20),
+	Localidad char(20),
+)
+go
