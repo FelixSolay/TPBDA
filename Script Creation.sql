@@ -7,6 +7,10 @@ go
 create schema ddbba
 go
 
+drop table if exists ddbba.empleado, ddbba.cargo, ddbba.sucursal, ddbba.venta, ddbba.cliente, ddbba.TipoCliente, 
+					 ddbba.Pago, ddbba.mediodePago, ddbba.lineaVenta, ddbba.producto, ddbba.categoria
+go
+
 create table ddbba.empleado(
 	Legajo int primary key,
 	Nombre char(20),
@@ -40,7 +44,7 @@ create table ddbba.venta(
 	IDVenta int Identity(1,1) primary key,
 	IDFactura int,
 	TipoFactura char check (TipoFactura='A' or TipoFactura='B' or TipoFactura='C'),
-	Fecha fecha,
+	Fecha date,
 	Total int
 )
 go
@@ -63,7 +67,7 @@ go
 create table ddbba.Pago(
 	IDPago int Identity(1,1) primary key,
 	IdentificadorDePago char(25),
-	Fecha fecha
+	Fecha date
 )
 go
 
@@ -74,15 +78,16 @@ create table ddbba.mediodePago(
 )
 go
 
-reate table ddbba.lineaVenta(
-	IDVenta int primary key,
-	Orden int primary key,
+create table ddbba.lineaVenta(
+	IDVenta int,
+	Orden int,
 	Cantidad int,
-	Monto int	
+	Monto int
+	constraint pkLineaVenta primary key (IDVenta, Orden)
 )
 go
 
-reate table ddbba.producto(
+create table ddbba.producto(
 	IDProducto int Identity(1,1) primary key,
 	Nombre char(20),
 	Precio int,
@@ -91,7 +96,7 @@ reate table ddbba.producto(
 )
 go
 
-reate table ddbba.categoria(
+create table ddbba.categoria(
 	IDcategoria int Identity(1,1) primary key,
 	Descripcion char(25)	
 )
