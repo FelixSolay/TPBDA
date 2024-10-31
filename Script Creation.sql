@@ -30,7 +30,7 @@ Weidmann
 
 Script de Creación de Base de datos y tablas para el trabajo práctico
 #############################################################################################
-#CUIDADO: Podría eliminar datos involuntariamente se corre sobre la base de datos existente #
+#CUIDADO: Podría eliminar datos involuntariamente si se corre sobre la base de datos existente #
 #############################################################################################
 */
 create database AuroraVentas
@@ -196,7 +196,7 @@ Los nombres de los store procedures NO deben comenzar con “SP”.
 
 
 --Insert Store Procedures
-create or alter procedure ddbba.insertarCargo
+CREATE PROCEDURE ddbba.insertarCargo
 	@Descripcion varchar(50)
 as
 begin
@@ -213,7 +213,8 @@ begin
 end
 go
 
-create or alter procedure ddbba.insertarSucursal
+CREATE PROCEDURE ddbba.insertarSucursal
+	@IDSucursal INT,
 	@Direccion 	nvarchar(50),
 	@Ciudad 	varchar(20),
 	@Horario 	varchar(50),
@@ -222,7 +223,7 @@ as
 begin
     BEGIN TRANSACTION;
     BEGIN TRY
-		insert into ddbba.Sucursal values (@Direccion, @Ciudad, @Horario, @Telefono)
+		insert into ddbba.Sucursal values (@IdSucursal, @Direccion, @Ciudad, @Horario, @Telefono)
 		COMMIT TRANSACTION;
 		PRINT 'Sucursal Insertada correctamente.';
     END TRY
@@ -233,7 +234,8 @@ begin
 end
 go
 
-create or alter procedure ddbba.insertarEmpleado
+CREATE PROCEDURE ddbba.insertarEmpleado
+	@Legajo INT,
 	@Nombre nvarchar(20),
 	@Apellido nvarchar(20),
 	@DNI int,
@@ -243,12 +245,12 @@ create or alter procedure ddbba.insertarEmpleado
 	@CUIL char(11),
 	@Turno char (16),
 	@Cargo int,
-	@IDSucursal int,
+	@Sucursal int
 as
 begin
     BEGIN TRANSACTION;
     BEGIN TRY
-		insert into ddbba.Empleado  values (@Nombre, @Apellido, @DNI, @Direccion, @EmailPersonal, @EmailEmpresa, @CUIL, @Turno, @Cargo, @Sucursal)
+		insert into ddbba.Empleado  values (@legajo, @Nombre, @Apellido, @DNI, @Direccion, @EmailPersonal, @EmailEmpresa, @CUIL, @Turno, @Cargo, @Sucursal)
 		COMMIT TRANSACTION;
 		PRINT 'Empleado Insertado correctamente.';
     END TRY
@@ -259,7 +261,7 @@ begin
 end
 go
 
-create or alter procedure ddbba.insertarTipoCliente
+CREATE PROCEDURE ddbba.insertarTipoCliente
 	@Descripcion varchar(50)
 as
 begin
@@ -276,7 +278,7 @@ begin
 end
 go
 
-create or alter procedure ddbba.insertarCliente
+CREATE PROCEDURE ddbba.insertarCliente
 	@DNI int,
 	@Nombre varchar(20),
 	@Apellido varchar(20),
@@ -298,7 +300,7 @@ begin
 end
 go
 
-create or alter procedure ddbba.insertarMedioDePago
+CREATE PROCEDURE ddbba.insertarMedioDePago
 	@Nombre char(20),
 	@Descripcion char(25)
 as	
@@ -316,7 +318,7 @@ begin
 end
 go
 
-create or alter procedure ddbba.insertarPago
+CREATE PROCEDURE ddbba.insertarPago
 	@IdentificadorDePago char(25),
 	@Fecha date,
 	@MedioDePago int
@@ -335,7 +337,7 @@ begin
 end
 go
 
-create or alter procedure ddbba.insertarVenta
+CREATE PROCEDURE ddbba.insertarVenta
 	@IDFactura int,
 	@TipoFactura char,
 	@@Fecha date,
@@ -358,7 +360,7 @@ begin
 end
 go
 
-create or alter procedure ddbba.insertarCategoria 
+CREATE PROCEDURE ddbba.insertarCategoria 
 	@Descripcion varchar(50)
 as
 begin
@@ -375,7 +377,7 @@ begin
 end
 go
 
-create or alter procedure ddbba.insertarProducto
+CREATE PROCEDURE ddbba.insertarProducto
 	@IDCategoria int,
 	@Nombre varchar(100),
 	@Precio decimal (9,2),
@@ -396,7 +398,7 @@ begin
 end
 go
 
-create or alter procedure ddbba.insertarLineaVenta
+CREATE PROCEDURE ddbba.insertarLineaVenta
 	@IDVenta int,
 	@Orden int,
 	@Cantidad int,
@@ -419,7 +421,7 @@ go
 
 
 /*--Sp Registro
-CREATE OR ALTER PROCEDURE ddbba.InsertarLog
+CREATE PROCEDURE ddbba.InsertarLog
 	@modulo varchar(20),
 	@texto varchar(20)
 AS
@@ -430,7 +432,7 @@ END
 
 
 --Sp eliminar producto
-CREATE OR ALTER PROCEDURE ddbba.EliminarProducto
+CREATE PROCEDURE ddbba.EliminarProducto
     @IDProducto INT
 AS
 BEGIN
@@ -456,7 +458,7 @@ END;
 GO
 
 --Sp Delete Linea Venta
-CREATE OR ALTER PROCEDURE ddbba.EliminarLineaVenta
+CREATE PROCEDURE ddbba.EliminarLineaVenta
     @IDVenta INT,
     @Orden INT
 AS
@@ -482,7 +484,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarCategoria
+CREATE PROCEDURE ddbba.EliminarCategoria
     @IDCategoria INT
 AS
 BEGIN
@@ -507,7 +509,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarVenta
+CREATE PROCEDURE ddbba.EliminarVenta
     @IDVenta INT
 AS
 BEGIN
@@ -532,7 +534,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarPago
+CREATE PROCEDURE ddbba.EliminarPago
     @IDPago INT
 AS
 BEGIN
@@ -557,7 +559,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarMedioDePago
+CREATE PROCEDURE ddbba.EliminarMedioDePago
     @IDMedioDePago INT
 AS
 BEGIN
@@ -582,7 +584,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarCliente
+CREATE PROCEDURE ddbba.EliminarCliente
     @IDCliente INT
 AS
 BEGIN
@@ -607,7 +609,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarTipoCliente
+CREATE PROCEDURE ddbba.EliminarTipoCliente
     @IDTipoCliente INT
 AS
 BEGIN
@@ -630,8 +632,9 @@ BEGIN
         PRINT 'Error al intentar eliminar el Tipo de Cliente: ' + ERROR_MESSAGE();
     END CATCH;
 END;
+GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarEmpleado
+CREATE PROCEDURE ddbba.EliminarEmpleado
     @Legajo INT
 AS
 BEGIN
@@ -656,7 +659,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarSucursal
+CREATE PROCEDURE ddbba.EliminarSucursal
     @IDsucursal INT
 AS
 BEGIN
@@ -681,7 +684,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarCargo
+CREATE PROCEDURE ddbba.EliminarCargo
     @IdCargo INT
 AS
 BEGIN
@@ -710,7 +713,7 @@ GO
 
 --Update Store procedures
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarProducto
+CREATE PROCEDURE ddbba.ActualizarProducto
     @IDProducto INT,
     @Nombre VARCHAR(100) = NULL,
     @Precio DECIMAL(9,2) = NULL,
@@ -751,12 +754,12 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarLineaVenta
+CREATE PROCEDURE ddbba.ActualizarLineaVenta
     @IDVenta INT,
 	@Orden INT,
     @Cantidad INT = NULL,
     @Monto DECIMAL(9,2) = NULL,
-    @Producto INT = NULL,
+    @Producto INT = NULL
 AS
 BEGIN
     BEGIN TRANSACTION;
@@ -768,8 +771,8 @@ BEGIN
             UPDATE ddbba.LineaVenta
             SET Cantidad = COALESCE(@Cantidad, Cantidad),
                 Monto = COALESCE(@Monto, Monto),
-                Producto = COALESCE(@Producto, Producto),
-            WHERE IDProducto = @IDProducto;
+                Producto = COALESCE(@Producto, Producto)
+            WHERE Producto = @Producto;
             -- Confirma la transacción si no hay errores
             COMMIT TRANSACTION;
             PRINT 'Linea de venta actualizada correctamente';
@@ -788,7 +791,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarCargo
+CREATE PROCEDURE ddbba.ActualizarCargo
     @IdCargo INT,
     @Descripcion VARCHAR(25) = NULL
 AS
@@ -817,7 +820,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarSucursal
+CREATE PROCEDURE ddbba.ActualizarSucursal
     @IDsucursal INT,
     @Direccion NVARCHAR(50) = NULL,
     @Ciudad VARCHAR(20) = NULL,
@@ -851,7 +854,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarEmpleado
+CREATE PROCEDURE ddbba.ActualizarEmpleado
     @Legajo INT,
     @Nombre NVARCHAR(20) = NULL,
     @Apellido NVARCHAR(20) = NULL,
@@ -897,7 +900,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarTipoCliente
+CREATE PROCEDURE ddbba.ActualizarTipoCliente
     @IDTipoCliente INT,
     @Descripcion VARCHAR(25) = NULL
 AS
@@ -925,7 +928,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarCliente
+CREATE PROCEDURE ddbba.ActualizarCliente
     @IDCliente INT,
     @DNI INT = NULL,
     @Nombre VARCHAR(20) = NULL,
@@ -961,7 +964,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarMedioDePago
+CREATE PROCEDURE ddbba.ActualizarMedioDePago
     @IDMedioDePago INT,
     @Nombre CHAR(20) = NULL,
     @Descripcion CHAR(25) = NULL
@@ -991,7 +994,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarPago
+CREATE PROCEDURE ddbba.ActualizarPago
     @IDPago INT,
     @IdentificadorDePago VARCHAR(22) = NULL,
     @Fecha DATE = NULL,
@@ -1023,7 +1026,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarVenta
+CREATE PROCEDURE ddbba.ActualizarVenta
     @IDVenta INT,
     @IDFactura INT = NULL,
     @TipoFactura CHAR = NULL,
@@ -1063,7 +1066,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarCategoria
+CREATE PROCEDURE ddbba.ActualizarCategoria
     @IDCategoria INT,
     @Descripcion VARCHAR(50) = NULL
 AS
