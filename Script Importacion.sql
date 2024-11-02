@@ -1,25 +1,14 @@
 use AuroraVentas
 go
 
-/*
-insert ddbba.categoria values ('fruta')
-
-select *
-	from ddbba.categoria
-go
-*/
-
 CREATE OR ALTER PROCEDURE ddbba.BulkCategoria
-	@Path VARCHAR(max)
+	@Path NVARCHAR(max)
 AS
 BEGIN
-	DECLARE @SQLBulk VARCHAR(max)
+	DECLARE @SQLBulk NVARCHAR(max)
 
--- Hay que agregar la extracion de la categoria del CSV e insertarlo tambien por BULK
-
--- Este SQL dinamico no funciona todavia, la idea es poder meter el Path al SP y que lo levante solo
 	SET @SQLBulk = 'BULK INSERT ddbba.producto 
-					FROM ''' + @Path + '''
+					FROM '''+ @Path +''' 
 					WITH
 					(
 						FIRSTROW = 2,
@@ -30,10 +19,10 @@ BEGIN
 					)'
 
 	BEGIN TRY
-		EXEC @SQLBulk
+		EXEC sp_executesql @SQLBulk
 	END TRY
 	BEGIN CATCH
-		PRINT 'Error al ejecutar: ' + @Path
+		SELECT ERROR_MESSAGE()
 	END CATCH
 END
 
@@ -41,3 +30,4 @@ EXEC ddbba.BulkCategoria @Path = 'C:\Users\juanp\Downloads\catalogo2.csv'
 
 select *
 	from ddbba.producto
+
