@@ -15,6 +15,9 @@ AS
 BEGIN
 	DECLARE @SQLBulk VARCHAR(max)
 
+-- Hay que agregar la extracion de la categoria del CSV e insertarlo tambien por BULK
+
+-- Este SQL dinamico no funciona todavia, la idea es poder meter el Path al SP y que lo levante solo
 	SET @SQLBulk = 'BULK INSERT ddbba.producto 
 					FROM ''' + @Path + '''
 					WITH
