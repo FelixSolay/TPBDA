@@ -40,13 +40,12 @@ GO
 USE AuroraVentas
 GO
 
-
+/*
 IF EXISTS (SELECT * FROM sys.schemas WHERE name = 'ddbba') DROP SCHEMA ddbba;
 GO
---Se crea el esquema para trabajar sin usar el default 'dbo'
+--Se crea el esquema para trabajar sin usar el default 'dbo'*/
 create schema ddbba
 go
-select * from sys.schemas
 
 --Se respeta este orden de borrado para que no haya conflictos con las Foreign Keys
 --drop table if exists ddbba.lineaVenta, ddbba.producto, ddbba.categoria, ddbba.venta,
@@ -87,24 +86,23 @@ create table ddbba.cargo(
 go
 
 create table ddbba.sucursal(
-	IDsucursal int primary key,
+	IDsucursal int Identity(1,1) primary key,
 	Direccion nvarchar(100),
 	Ciudad varchar(20),
-	Horario varchar(50),
+	Horario nvarchar(50),
 	Telefono varchar(15)
 )
 go
 
-
 create table ddbba.empleado(
-	Legajo int primary key,
-	Nombre nvarchar(20),
-	Apellido nvarchar(20),
+	Legajo bigint primary key,
+	Nombre nvarchar(30),
+	Apellido nvarchar(30),
 	DNI int Unique,
 	Direccion nvarchar(100),
 	EmailPersonal nvarchar(50),
 	EmailEmpresa nvarchar(50),
-	CUIL char(11) Unique,
+	CUIL char(11),
 	Turno char (16) check (Turno='TN' or Turno='TM' or turno= 'TT' or Turno='Jornada Completa'),
 	Cargo int,
 	Sucursal int,
@@ -113,10 +111,9 @@ create table ddbba.empleado(
 )
 go
 
-
 create table ddbba.TipoCliente(
 	IDTipoCliente int Identity(1,1) primary key, 
-	Descripcion varchar(25) 	
+	Descripcion varchar(20) 	
 )
 go
 
@@ -138,7 +135,6 @@ create table ddbba.MedioDePago(
 )
 go
 
-
 create table ddbba.Pago(
 	IDPago int Identity(1,1) primary key,
 	IdentificadorDePago varchar(22),
@@ -155,10 +151,10 @@ create table ddbba.venta(
 	Fecha date,
 	Total decimal (9,2),
 	Cliente int,
-	Sucursal int,
+	Empleado bigint,
 	Pago int,
 	FOREIGN KEY (Cliente) REFERENCES ddbba.cliente(IDCliente),
-	FOREIGN KEY (Sucursal) REFERENCES ddbba.Sucursal(IDSucursal),
+	FOREIGN KEY (Empleado) REFERENCES ddbba.Empleado(Legajo),
 	FOREIGN KEY (Pago) REFERENCES ddbba.Pago(IdPago)
 )
 go
@@ -193,8 +189,6 @@ create table ddbba.lineaVenta(
 )
 go
 
-
-
 /*
 Creación de los Store procedures
 
@@ -203,8 +197,6 @@ también debe decidir si determinadas entidades solo admitirán borrado lógico)
 Los nombres de los store procedures NO deben comenzar con “SP”.
 
 */
-
-
 --Insert Store Procedures
 CREATE OR ALTER PROCEDURE ddbba.insertarCargo
 	@Descripcion varchar(50)
@@ -353,13 +345,13 @@ CREATE OR ALTER PROCEDURE ddbba.insertarVenta
 	@Fecha date,
 	@Total decimal(9,2),
 	@Cliente int,
-	@Sucursal int,
+	@Empleado int,
 	@Pago int
 as
 begin
     BEGIN TRANSACTION;
     BEGIN TRY
-		insert into ddbba.Venta values (@IDFactura, @TipoFactura, @Fecha, @Total, @Cliente, @Sucursal, @Pago)
+		insert into ddbba.Venta values (@IDFactura, @TipoFactura, @Fecha, @Total, @Cliente, @Empleado, @Pago)
 		COMMIT TRANSACTION;
 		PRINT 'Venta Insertada correctamente.';
     END TRY
@@ -836,7 +828,7 @@ CREATE OR ALTER PROCEDURE ddbba.ActualizarSucursal
     @IDsucursal INT,
     @Direccion NVARCHAR(100) = NULL,
     @Ciudad VARCHAR(20) = NULL,
-    @Horario VARCHAR(50) = NULL,
+    @Horario NVARCHAR(50) = NULL,
     @Telefono VARCHAR(15) = NULL
 AS
 BEGIN
@@ -1045,7 +1037,7 @@ CREATE OR ALTER PROCEDURE ddbba.ActualizarVenta
     @Fecha DATE = NULL,
     @Total DECIMAL(9,2) = NULL,
     @Cliente INT = NULL,
-    @Sucursal INT = NULL,
+    @Empleado INT = NULL,
     @Pago INT = NULL
 AS
 BEGIN
@@ -1059,7 +1051,7 @@ BEGIN
                 Fecha = COALESCE(@Fecha, Fecha),
                 Total = COALESCE(@Total, Total),
                 Cliente = COALESCE(@Cliente, Cliente),
-                Sucursal = COALESCE(@Sucursal, Sucursal),
+                Empleado = COALESCE(@Empleado, Empleado),
                 Pago = COALESCE(@Pago, Pago)
             WHERE IDVenta = @IDVenta;
             COMMIT TRANSACTION;
