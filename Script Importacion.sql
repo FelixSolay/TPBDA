@@ -66,7 +66,7 @@ BEGIN
 END
 GO
 
-/*CREATE OR ALTER PROCEDURE ddbba.BulkVentasRegistradas
+CREATE OR ALTER PROCEDURE ddbba.BulkVentasRegistradas
 	@Path NVARCHAR(max)
 AS
 BEGIN
@@ -110,10 +110,10 @@ BEGIN
 		ROLLBACK TRANSACTION
 	END CATCH
 END
-GO*/
+GO
 
 EXEC ddbba.BulkProducto @Path = 'C:\Users\juanp\Downloads\catalogo2.csv'
 go
 
---EXEC ddbba.BulkVentasRegistradas @Path = 'C:\Users\juanp\Downloads\Ventas_registradas.csv'
---go
+EXEC ddbba.BulkVentasRegistradas @Path = 'C:\Users\juanp\Downloads\Ventas_registradas.csv'
+go
