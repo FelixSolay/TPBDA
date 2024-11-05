@@ -117,7 +117,8 @@ create table ddbba.empleado(
 go
 
 create table ddbba.TipoCliente(
-	IDTipoCliente char(6) primary key check (IDTipoCliente='Normal' or IDTipoCliente='Member'), 
+    IDTipoCliente int Identity(1,1) primary key,
+	TipoCliente char(6) check (TipoCliente='Normal' or TipoCliente='Member'), 
 	Descripcion varchar(20) 	
 )
 go
@@ -128,8 +129,8 @@ create table ddbba.cliente(
 	Nombre varchar(20),
 	Apellido varchar(20),
 	Genero varchar(6) check (Genero='Male' or Genero='Female'),
-	TipoCliente char(6),
-	FOREIGN KEY (TipoCliente) REFERENCES ddbba.TipoCliente(IDTipoCliente)
+	IDTipoCliente char(6),
+	FOREIGN KEY (IDTipoCliente) REFERENCES ddbba.TipoCliente(IDTipoCliente)
 )
 go
 

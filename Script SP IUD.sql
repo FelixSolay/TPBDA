@@ -75,13 +75,13 @@ end
 go
 
 CREATE OR ALTER PROCEDURE ddbba.insertarTipoCliente
-	@IDTipoCliente char(6),
+	@TipoCliente char(6),
 	@Descripcion varchar(50)
 as
 begin
     BEGIN TRANSACTION;
     BEGIN TRY
-		insert into ddbba.TipoCliente values (@IDTipoCliente, @Descripcion)
+		insert into ddbba.TipoCliente values (@TipoCliente, @Descripcion)
 		COMMIT TRANSACTION;
 		PRINT 'Tipo de Cliente Insertado correctamente.';
     END TRY
@@ -97,12 +97,12 @@ CREATE OR ALTER PROCEDURE ddbba.insertarCliente
 	@Nombre varchar(20),
 	@Apellido varchar(20),
 	@Genero char,
-	@TipoCliente int
+	@IDTipoCliente int
 as
 begin
     BEGIN TRANSACTION;
     BEGIN TRY
-		insert into ddbba.Cliente values (@DNI, @Nombre, @Apellido, @Genero, @tipoCliente)
+		insert into ddbba.Cliente values (@DNI, @Nombre, @Apellido, @Genero, @IDtipoCliente)
 		COMMIT TRANSACTION;
 		PRINT 'Cliente Insertado correctamente.';
     END TRY
@@ -719,6 +719,7 @@ GO
 
 CREATE OR ALTER PROCEDURE ddbba.ActualizarTipoCliente
     @IDTipoCliente INT,
+    @TipoCliente char(6),
     @Descripcion VARCHAR(25) = NULL
 AS
 BEGIN
@@ -727,7 +728,8 @@ BEGIN
         IF EXISTS (SELECT 1 FROM ddbba.TipoCliente WHERE IDTipoCliente = @IDTipoCliente)
         BEGIN
             UPDATE ddbba.TipoCliente
-            SET Descripcion = COALESCE(@Descripcion, Descripcion)
+            SET Descripcion = COALESCE(@Descripcion, Descripcion),
+                TipoCliente = COALESCE(@TipoCliente, TipoCliente)
             WHERE IDTipoCliente = @IDTipoCliente;
             COMMIT TRANSACTION;
             PRINT 'Tipo de Cliente actualizado correctamente.';
@@ -751,7 +753,7 @@ CREATE OR ALTER PROCEDURE ddbba.ActualizarCliente
     @Nombre VARCHAR(20) = NULL,
     @Apellido VARCHAR(20) = NULL,
     @Genero CHAR = NULL,
-    @TipoCliente INT = NULL
+    @IDTipoCliente INT = NULL
 AS
 BEGIN
     BEGIN TRANSACTION;
@@ -763,7 +765,7 @@ BEGIN
                 Nombre = COALESCE(@Nombre, Nombre),
                 Apellido = COALESCE(@Apellido, Apellido),
                 Genero = COALESCE(@Genero, Genero),
-                TipoCliente = COALESCE(@TipoCliente, TipoCliente)
+                IDTipoCliente = COALESCE(@IDTipoCliente, IDTipoCliente)
             WHERE IDCliente = @IDCliente;
             COMMIT TRANSACTION;
             PRINT 'Cliente actualizado correctamente.';
