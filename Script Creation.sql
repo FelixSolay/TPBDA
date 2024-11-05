@@ -129,7 +129,7 @@ create table ddbba.cliente(
 	Nombre varchar(20),
 	Apellido varchar(20),
 	Genero varchar(6) check (Genero='Male' or Genero='Female'),
-	IDTipoCliente char(6),
+	IDTipoCliente int,
 	FOREIGN KEY (IDTipoCliente) REFERENCES ddbba.TipoCliente(IDTipoCliente)
 )
 go
