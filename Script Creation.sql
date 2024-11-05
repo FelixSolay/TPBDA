@@ -186,7 +186,7 @@ go
 
 create table ddbba.lineaVenta(
 	IDVenta int,
-	Orden int,
+	Orden int identity(1,1),
 	Cantidad int,
 	Monto decimal (9,2),
 	producto int,
