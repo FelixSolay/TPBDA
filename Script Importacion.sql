@@ -1,9 +1,11 @@
-/* EJECUTAR SOLO UNA VEZ */
-
 use AuroraVentas
 go
 
-create table #ProductoCSV(
+CREATE OR ALTER PROCEDURE ddbba.BulkProducto
+	@Path NVARCHAR(max)
+AS
+BEGIN
+	create table #ProductoCSV(
 	IDProducto int primary key NONCLUSTERED,
     CategoriaDescripcion varchar(50),
 	Nombre varchar(100),
@@ -11,30 +13,8 @@ create table #ProductoCSV(
 	PrecioReferencia decimal (9,2),
 	UnidadReferencia varchar(2),
     Fecha datetime
-)
-go
+	)
 
-create table #VentasRegistradasCSV(
-	IDFactura int, 					--venta.Factura
-	TipoFactura char, 				--venta.TipoFactura
-	Ciudad varchar(20), 			--sucursal.ciudad NO SIRVE
-	TipoCliente char(6), 			--cliente.tipocliente NO SIRVE
-	Genero varchar(6), 				--venta.genero
-	Producto varchar(100),			--lineaVenta.producto
-	PrecioUnitario decimal(9,2),	--lineaVenta.Monto
-	Cantidad int,					--lineaVenta.cantidad
-	Fecha date,						--venta.fecha
-	Hora time,						--venta.hora
-	MedioPago char(20),				--MedioDePago.nombre
-	Empleado bigint,				--venta.Empleado
-	IdentificadorPago varchar(22)	--pago.IdentificadorDePago
-)
-go
-
-CREATE OR ALTER PROCEDURE ddbba.BulkProducto
-	@Path NVARCHAR(max)
-AS
-BEGIN
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 
 	BEGIN TRANSACTION 
@@ -57,6 +37,7 @@ BEGIN
 			SELECT Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha
 				FROM #ProductoCSV
 
+		DROP TABLE #ProductoCSV
 		COMMIT TRANSACTION
 	END TRY
 	BEGIN CATCH
@@ -70,6 +51,22 @@ CREATE OR ALTER PROCEDURE ddbba.BulkVentasRegistradas
 	@Path NVARCHAR(max)
 AS
 BEGIN
+	create table #VentasRegistradasCSV(
+	IDFactura varchar(max), 					--venta.Factura
+	TipoFactura varchar(max), 				--venta.TipoFactura
+	Ciudad varchar(max), 			--sucursal.ciudad NO SIRVE
+	TipoCliente varchar(max), 			--cliente.tipocliente NO SIRVE
+	Genero varchar(max), 				--venta.genero
+	Producto varchar(max),			--lineaVenta.producto
+	PrecioUnitario varchar(max),	--lineaVenta.Monto
+	Cantidad varchar(max),					--lineaVenta.cantidad
+	Fecha varchar(max),						--venta.fecha
+	Hora varchar(max),						--venta.hora
+	MedioPago varchar(max),				--MedioDePago.nombre
+	Empleado varchar(max),				--venta.Empleado
+	IdentificadorPago varchar(max)	--pago.IdentificadorDePago
+	)
+
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 
 	BEGIN TRANSACTION 
@@ -88,7 +85,7 @@ BEGIN
 	BEGIN TRY
 		EXEC sp_executesql @SQLBulk
 	
-		INSERT ddbba.pago(IdentificadorDePago, Fecha, MedioDePago)
+		/*INSERT ddbba.pago(IdentificadorDePago, Fecha, MedioDePago)
 			SELECT a.IdentificadorPago, a.Fecha, b.IDMedioDePago
 				FROM #VentasRegistradasCSV AS a
 				LEFT JOIN ddbba.MedioDePago AS b ON a.MedioPago = b.nombre
@@ -101,8 +98,12 @@ BEGIN
 		INSERT ddbba.lineaVenta(IDVenta, Cantidad, Monto, producto)
 			SELECT b.IDVenta, a.Cantidad, a.PrecioUnitario, a.producto
 				FROM #VentasRegistradasCSV AS a
-				LEFT JOIN ddbba.venta AS b ON a.IDFactura = b.Factura
+				LEFT JOIN ddbba.venta AS b ON a.IDFactura = b.Factura*/
 
+		select *
+			from #VentasRegistradasCSV
+
+		DROP TABLE #VentasRegistradasCSV
 		COMMIT TRANSACTION
 	END TRY
 	BEGIN CATCH
@@ -112,8 +113,8 @@ BEGIN
 END
 GO
 
-EXEC ddbba.BulkProducto @Path = 'C:\Users\juanp\Downloads\catalogo2.csv'
-go
+--EXEC ddbba.BulkProducto @Path = 'C:\Users\juanp\Downloads\catalogo2.csv'
+--go
 
-EXEC ddbba.BulkVentasRegistradas @Path = 'C:\Users\juanp\Downloads\Ventas_registradas.csv'
-go
+--EXEC ddbba.BulkVentasRegistradas @Path = 'C:\Users\juanp\Downloads\Ventas_registradas.csv'
+--go
