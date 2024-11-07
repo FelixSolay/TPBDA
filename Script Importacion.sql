@@ -1,13 +1,13 @@
-use AuroraVentas
+use COM2900G09
 go
 
-CREATE OR ALTER PROCEDURE ddbba.BulkProducto
+CREATE OR ALTER PROCEDURE BulkProducto
 	@Path NVARCHAR(max)
 AS
 BEGIN
 	create table #ProductoCSV(
-	IDProducto int primary key NONCLUSTERED,
-    CategoriaDescripcion varchar(50),
+	IDProducto int primary key,
+    Categoria varchar(50),
 	Nombre varchar(100),
 	Precio decimal (9,2),
 	PrecioReferencia decimal (9,2),
@@ -33,8 +33,8 @@ BEGIN
 	BEGIN TRY
 		EXEC sp_executesql @SQLBulk
 
-		INSERT ddbba.producto(Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha)
-			SELECT Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha
+		INSERT deposito.producto(Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha)
+			SELECT Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha
 				FROM #ProductoCSV
 
 		DROP TABLE #ProductoCSV
@@ -47,23 +47,23 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.BulkVentasRegistradas
+CREATE OR ALTER PROCEDURE BulkVentasRegistradas
 	@Path NVARCHAR(max)
 AS
 BEGIN
 	create table #VentasRegistradasCSV(
-	IDFactura varchar(max), 					--venta.Factura
-	TipoFactura varchar(max), 				--venta.TipoFactura
+	Factura varchar(max), 			--comprobante.numero
+	TipoFactura varchar(max), 		--comprobante.tipo
 	Ciudad varchar(max), 			--sucursal.ciudad NO SIRVE
-	TipoCliente varchar(max), 			--cliente.tipocliente NO SIRVE
-	Genero varchar(max), 				--venta.genero
-	Producto varchar(max),			--lineaVenta.producto
-	PrecioUnitario varchar(max),	--lineaVenta.Monto
-	Cantidad varchar(max),					--lineaVenta.cantidad
-	Fecha varchar(max),						--venta.fecha
-	Hora varchar(max),						--venta.hora
-	MedioPago varchar(max),				--MedioDePago.nombre
-	Empleado varchar(max),				--venta.Empleado
+	TipoCliente varchar(max), 		--cliente.tipocliente NO SIRVE
+	Genero varchar(max), 			--cliente.genero NO SIRVE
+	Producto varchar(max),			--producto.nombre
+	PrecioUnitario varchar(max),	--lineaComprobante.Monto
+	Cantidad varchar(max),			--lineaComprobante.cantidad
+	Fecha varchar(max),				--comprobante.fecha
+	Hora varchar(max),				--comprobante.hora
+	MedioPago varchar(max),			--MedioDePago.nombre
+	Empleado varchar(max),			--comprobante.Empleado
 	IdentificadorPago varchar(max)	--pago.IdentificadorDePago
 	)
 
@@ -85,30 +85,31 @@ BEGIN
 	BEGIN TRY
 		EXEC sp_executesql @SQLBulk
 	
-		/*INSERT ddbba.pago(IdentificadorDePago, Fecha, MedioDePago)
-			SELECT a.IdentificadorPago, a.Fecha, b.IDMedioDePago
-				FROM #VentasRegistradasCSV AS a
-				LEFT JOIN ddbba.MedioDePago AS b ON a.MedioPago = b.nombre
+		SELECT *
+			FROM #VentasRegistradasCSV
 
-		INSERT ddbba.venta(Factura, TipoFactura, Fecha, Hora, Empleado, Pago)
-			SELECT a.IDFactura, a.TipoFactura, a.Fecha, a.Hora, a.Empleado, b.IDPago
+		INSERT facturacion.pago(IdentificadorDePago, Fecha, MedioDePago)
+			SELECT IIF(a.IdentificadorPago = '--', NULL, LEFT(REPLACE(a.IdentificadorPago, '''',''), 22)), a.Fecha, b.IDMedioDePago
 				FROM #VentasRegistradasCSV AS a
-				LEFT JOIN ddbba.pago AS b ON a.IdentificadorPago = b.IdentificadorDePago
+				LEFT JOIN facturacion.MedioDePago AS b ON a.MedioPago = b.nombre
 
-		INSERT ddbba.lineaVenta(IDVenta, Cantidad, Monto, producto)
-			SELECT b.IDVenta, a.Cantidad, a.PrecioUnitario, a.producto
+		INSERT facturacion.comprobante(numero, letra, Fecha, Hora, Empleado, Pago)
+			SELECT a.Factura, a.TipoFactura, a.Fecha, a.Hora, CAST(a.Empleado AS INT), b.IDPago
 				FROM #VentasRegistradasCSV AS a
-				LEFT JOIN ddbba.venta AS b ON a.IDFactura = b.Factura*/
+				LEFT JOIN facturacion.pago AS b ON a.IdentificadorPago = b.IdentificadorDePago
 
-		select *
-			from #VentasRegistradasCSV
+		INSERT facturacion.lineaComprobante(ID, IdProducto, Cantidad, Monto)
+			SELECT b.ID, c.IdProducto, a.Cantidad, a.PrecioUnitario
+				FROM #VentasRegistradasCSV 		  AS a
+				LEFT JOIN facturacion.comprobante AS b ON a.Factura  = b.numero
+				LEFT JOIN deposito.producto 	  AS c ON a.producto = c.nombre
 
 		DROP TABLE #VentasRegistradasCSV
 		COMMIT TRANSACTION
 	END TRY
 	BEGIN CATCH
 		SELECT ERROR_MESSAGE()
-		ROLLBACK TRANSACTION
+		ROLLBACK TRANSACTION --Los identitys se mantienen avanzados a pesar del rollback
 	END CATCH
 END
 GO
@@ -118,3 +119,6 @@ GO
 
 --EXEC ddbba.BulkVentasRegistradas @Path = 'C:\Users\juanp\Downloads\Ventas_registradas.csv'
 --go
+
+use master
+go
