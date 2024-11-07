@@ -31,6 +31,9 @@ Weidmann
 Script de Creación de Base de datos y tablas para el trabajo práctico
 */
 
+USE master
+GO
+
 DROP DATABASE IF EXISTS COM2900G09
 GO
 
@@ -145,7 +148,8 @@ create table facturacion.comprobante(
 	tipo char(2) check (tipo='FC' or tipo='NC' or tipo='ND'), 
 	numero char(11),
 	letra char check (Letra='A' or Letra='B' or Letra='C'),
-	Fecha datetime,
+	Fecha date,
+	Hora time,
 	Total decimal (9,2),
 	Cliente int,
 	Empleado int,
@@ -185,21 +189,5 @@ create table facturacion.lineaComprobante(
 )
 go
 
-/*
-IF OBJECT_ID(N'[ddbba].[CSVMem]', N'U') IS NULL
-	BEGIN
-		CREATE TABLE ddbba.CSVMem(
-			IDProducto int primary key NONCLUSTERED,
-    		CategoriaDescripcion varchar(50),
-			Nombre varchar(100),
-			Precio decimal (9,2),
-			PrecioReferencia decimal (9,2),
-			UnidadReferencia varchar(2),
-    		Fecha datetime
-		)
-		WITH(
-			MEMORY_OPTIMIZED = ON,
-			DURABILITY = SCHEMA_ONLY
-		)
-	END
-*/
+use master
+go
