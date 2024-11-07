@@ -29,173 +29,163 @@ Weidmann
 
 
 Script de Creación de Base de datos y tablas para el trabajo práctico
-#############################################################################################
-#CUIDADO: Podría eliminar datos involuntariamente si se corre sobre la base de datos existente #
-#############################################################################################
 */
-CREATE DATABASE AuroraVentas
+
+DROP DATABASE IF EXISTS COM2900G09
+GO
+
+CREATE DATABASE COM2900G09
+GO
+/*
 CONTAINMENT = NONE
 ON PRIMARY(
 	NAME = N'AuroraVentas', FILENAME = N'D:\DataTP\AuroraVentas'),
 FILEGROUP [Memoria] CONTAINS MEMORY_OPTIMIZED_DATA DEFAULT(
 	NAME = N'MemoryDB', FILENAME = N'D:\DataTP\AuroraVentasMem')
 GO
-
+*/
 --Para trabajar sobre la base de datos creada
-USE AuroraVentas
+USE COM2900G09
 GO
 
-/*
-IF EXISTS (SELECT * FROM sys.schemas WHERE name = 'ddbba') DROP SCHEMA ddbba;
-GO
---Se crea el esquema para trabajar sin usar el default 'dbo'*/
-create schema ddbba
+
+--Se crean esquemas para trabajar sin usar el default 'dbo'
+--Facturación se encargará de la generación y gestión de comprobantes, pagos y clientes
+create schema facturacion
 go
+--Destinamos el esquema Depósito a lo relacionado a gestión de Productos
+create schema deposito
+GO
+--El esquema infraestructura tiene como objetivo gestionar sucursales y recursos humanos
+create schema infraestructura
+GO
 
 --Se respeta este orden de borrado para que no haya conflictos con las Foreign Keys
---drop table if exists ddbba.lineaVenta, ddbba.producto, ddbba.categoria, ddbba.venta,
---					   ddbba.pago, ddbba.mediodePago, ddbba.cliente, ddbba.tipoCliente,
---					   ddbba.empleado, ddbba.sucursal, ddbba.cargo
---go
-
-IF OBJECT_ID('ddbba.lineaVenta', 'U') IS NOT NULL DROP TABLE ddbba.lineaVenta;
-IF OBJECT_ID('ddbba.producto', 'U') IS NOT NULL DROP TABLE ddbba.producto;
-IF OBJECT_ID('ddbba.categoria', 'U') IS NOT NULL DROP TABLE ddbba.categoria;
-IF OBJECT_ID('ddbba.venta', 'U') IS NOT NULL DROP TABLE ddbba.venta;
-IF OBJECT_ID('ddbba.Pago', 'U') IS NOT NULL DROP TABLE ddbba.Pago;
-IF OBJECT_ID('ddbba.mediodePago', 'U') IS NOT NULL DROP TABLE ddbba.mediodePago;
-IF OBJECT_ID('ddbba.cliente', 'U') IS NOT NULL DROP TABLE ddbba.cliente;
-IF OBJECT_ID('ddbba.TipoCliente', 'U') IS NOT NULL DROP TABLE ddbba.TipoCliente;
-IF OBJECT_ID('ddbba.empleado', 'U') IS NOT NULL DROP TABLE ddbba.empleado;
-IF OBJECT_ID('ddbba.sucursal', 'U') IS NOT NULL DROP TABLE ddbba.sucursal;
-IF OBJECT_ID('ddbba.cargo', 'U') IS NOT NULL DROP TABLE ddbba.cargo;
---IF OBJECT_ID('ddbba.Registro', 'U') IS NOT NULL DROP TABLE ddbba.Registro;
+IF OBJECT_ID('deposito.producto', 'U') IS NOT NULL DROP TABLE deposito.producto;
+IF OBJECT_ID('facturacion.lineaComprobante', 'U') IS NOT NULL DROP TABLE facturacion.lineaComprobante;
+IF OBJECT_ID('deposito.categoria', 'U') IS NOT NULL DROP TABLE deposito.categoria;
+IF OBJECT_ID('facturacion.comprobante', 'U') IS NOT NULL DROP TABLE facturacion.comprobante;
+IF OBJECT_ID('facturacion.Pago', 'U') IS NOT NULL DROP TABLE facturacion.Pago;
+IF OBJECT_ID('facturacion.mediodePago', 'U') IS NOT NULL DROP TABLE facturacion.mediodePago;
+IF OBJECT_ID('facturacion.cliente', 'U') IS NOT NULL DROP TABLE facturacion.cliente;
+IF OBJECT_ID('facturacion.TipoCliente', 'U') IS NOT NULL DROP TABLE facturacion.TipoCliente;
+IF OBJECT_ID('infraestructura.empleado', 'U') IS NOT NULL DROP TABLE infraestructura.empleado;
+IF OBJECT_ID('infraestructura.sucursal', 'U') IS NOT NULL DROP TABLE infraestructura.sucursal;
+IF OBJECT_ID('infraestructura.cargo', 'U') IS NOT NULL DROP TABLE infraestructura.cargo;
 go
-
-/*
---Tabla para log de Inserción/Modificación/Eliminado
-create table ddbba.Registro(
-	ID int Identity(1,1) primary key,
-	Fecha datetime,
-	modulo varchar(20),
-	texto varchar(20),
-)
-go
-*/
 
 --Utilizamos como Pk en las tablas un int Identity para mejorar la velocidad de las consultas
-create table ddbba.cargo(
+create table infraestructura.cargo(
 	IdCargo int Identity(1,1) primary key,
 	Descripcion varchar(25)
 )
 go
 
-create table ddbba.sucursal(
+create table infraestructura.sucursal(
 	IDsucursal int Identity(1,1) primary key,
-	Direccion nvarchar(100),
+	Direccion varchar(100),
 	Ciudad varchar(20),
-	Horario nvarchar(50),
-	Telefono varchar(15)
+	Horario char(45),
+	Telefono char(11)
 )
 go
 
-create table ddbba.empleado(
-	Legajo bigint primary key,
-	Nombre nvarchar(30),
-	Apellido nvarchar(30),
+create table infraestructura.empleado(
+	Legajo int primary key,
+	Nombre varchar(30),
+	Apellido varchar(30),
 	DNI int Unique,
-	Direccion nvarchar(100),
-	EmailPersonal nvarchar(50),
-	EmailEmpresa nvarchar(50),
+	Direccion varchar(100),
+	EmailPersonal varchar(100),
+	EmailEmpresa varchar(100),
 	CUIL char(11),
 	Turno char (16) check (Turno='TN' or Turno='TM' or turno= 'TT' or Turno='Jornada Completa'),
 	Cargo int,
 	Sucursal int,
-	FOREIGN KEY (Cargo) REFERENCES ddbba.cargo(IdCargo),
-	FOREIGN KEY (Sucursal) REFERENCES ddbba.Sucursal(IdSucursal)
+	FOREIGN KEY (Cargo) REFERENCES infraestructura.cargo(IdCargo),
+	FOREIGN KEY (Sucursal) REFERENCES infraestructura.Sucursal(IdSucursal)
 )
 go
 
-create table ddbba.TipoCliente(
-    IDTipoCliente int Identity(1,1) primary key,
-	TipoCliente char(6) check (TipoCliente='Normal' or TipoCliente='Member'), 
-	Descripcion varchar(20) 	
+create table facturacion.TipoCliente(
+    IDTipoCliente int Identity(1,1) primary key, 
+	nombre varchar(20) 	
 )
 go
 
-create table ddbba.cliente(
+create table facturacion.cliente(
 	IDCliente int Identity(1,1) primary key,
 	DNI int Unique,
-	Nombre varchar(20),
-	Apellido varchar(20),
-	Genero varchar(6) check (Genero='Male' or Genero='Female'),
+	Nombre varchar(25),
+	Apellido varchar(25),
+	Genero char(1) check (Genero='M' or Genero='F'),
 	IDTipoCliente int,
-	FOREIGN KEY (IDTipoCliente) REFERENCES ddbba.TipoCliente(IDTipoCliente)
+	FOREIGN KEY (IDTipoCliente) REFERENCES facturacion.TipoCliente(IDTipoCliente)
 )
 go
 
-create table ddbba.MedioDePago(
+create table facturacion.MedioDePago(
 	IDMedioDePago int Identity(1,1) primary key,
-	Nombre char(20),
-	Descripcion char(25)
+	Nombre varchar(20),
+	Descripcion varchar(50)
 )
 go
 
-create table ddbba.Pago(
+create table facturacion.Pago(
 	IDPago int Identity(1,1) primary key,
 	IdentificadorDePago varchar(22),
-	Fecha date,
+	Fecha datetime,
 	MedioDePago int,
-	FOREIGN KEY (MedioDePago) REFERENCES ddbba.MedioDePago(IDMedioDePago)
+	FOREIGN KEY (MedioDePago) REFERENCES facturacion.MedioDePago(IDMedioDePago)
 )
 go
 
-create table ddbba.venta(
-	IDVenta int Identity(1,1) primary key,
-	Factura char(11),
-	TipoFactura char check (TipoFactura='A' or TipoFactura='B' or TipoFactura='C'),
-	Fecha date,
-    Hora time,
+create table facturacion.comprobante(
+	ID int Identity(1,1) primary key,
+	tipo char(2) check (tipo='FC' or tipo='NC' or tipo='ND'), 
+	numero char(11),
+	letra char check (Letra='A' or Letra='B' or Letra='C'),
+	Fecha datetime,
 	Total decimal (9,2),
 	Cliente int,
-	Empleado bigint,
+	Empleado int,
 	Pago int,
-	FOREIGN KEY (Cliente) REFERENCES ddbba.cliente(IDCliente),
-	FOREIGN KEY (Empleado) REFERENCES ddbba.Empleado(Legajo),
-	FOREIGN KEY (Pago) REFERENCES ddbba.Pago(IdPago)
+	FOREIGN KEY (Cliente) REFERENCES facturacion.cliente(IDCliente),
+	FOREIGN KEY (Empleado) REFERENCES infraestructura.Empleado(Legajo),
+	FOREIGN KEY (Pago) REFERENCES facturacion.Pago(IdPago)
 )
 go
 
-create table ddbba.categoria(
-	IDCategoria int Identity(1,1) unique,
-	Descripcion varchar(50) primary key,
+create table deposito.categoria(
+	IDCategoria int Identity(1,1) primary key,
+	Descripcion varchar(50),
 )
 go
 
-create table ddbba.producto(
+create table deposito.producto(
 	IDProducto int Identity(1,1) primary key,
-    CategoriaDescripcion varchar(50),
+    categoria int,
 	Nombre varchar(100),
 	Precio decimal (9,2),
 	PrecioReferencia decimal (9,2),
-	UnidadReferencia varchar(2),
+	UnidadReferencia char(2),
     Fecha datetime,
-	FOREIGN KEY (CategoriaDescripcion) REFERENCES ddbba.categoria(Descripcion)
+	FOREIGN KEY (categoria) REFERENCES deposito.categoria(IDCategoria)
 )
 go
 
-create table ddbba.lineaVenta(
-	IDVenta int,
-	Orden int identity(1,1),
+create table facturacion.lineaComprobante(
+	ID int,
+	IdProducto int,
 	Cantidad int,
 	Monto decimal (9,2),
-	producto int,
-	FOREIGN KEY (IDVenta) REFERENCES ddbba.Venta(IDVenta),
-	FOREIGN KEY (producto) REFERENCES ddbba.producto(IDProducto),
-	constraint pkLineaVenta primary key (IDVenta, Orden)
+	FOREIGN KEY (ID) REFERENCES facturacion.Comprobante(ID),
+	FOREIGN KEY (IdProducto) REFERENCES deposito.producto(IDProducto),
+	constraint pkLineaVenta primary key (ID, IdProducto)
 )
 go
 
+/*
 IF OBJECT_ID(N'[ddbba].[CSVMem]', N'U') IS NULL
 	BEGIN
 		CREATE TABLE ddbba.CSVMem(
@@ -212,3 +202,4 @@ IF OBJECT_ID(N'[ddbba].[CSVMem]', N'U') IS NULL
 			DURABILITY = SCHEMA_ONLY
 		)
 	END
+*/
