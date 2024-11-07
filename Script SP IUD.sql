@@ -7,244 +7,250 @@ Los nombres de los store procedures NO deben comenzar con “SP”.
 
 */
 --Insert Store Procedures
-use AuroraVentas
+use COM2900G09
 go
 
-CREATE OR ALTER PROCEDURE ddbba.insertarCargo
-	@Descripcion varchar(50)
-as
-begin
+CREATE OR ALTER PROCEDURE facturacion.InsertarPago
+    @IdentificadorDePago VARCHAR(22),
+    @Fecha DATETIME,
+    @MedioDePago INT
+AS
+BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-		insert into ddbba.Cargo values (@Descripcion)
-		COMMIT TRANSACTION;
-		PRINT 'Cargo Insertado correctamente.';
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar el Cargo: ' + ERROR_MESSAGE();
-    END CATCH;
-end
-go
-
-CREATE OR ALTER PROCEDURE ddbba.insertarSucursal
-	@Direccion 	nvarchar(100),
-	@Ciudad 	varchar(20),
-	@Horario 	varchar(50),
-	@Telefono 	varchar(15)
-as
-begin
-    BEGIN TRANSACTION;
-    BEGIN TRY
-		insert into ddbba.Sucursal values (@Direccion, @Ciudad, @Horario, @Telefono)
-		COMMIT TRANSACTION;
-		PRINT 'Sucursal Insertada correctamente.';
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar la Sucursal: ' + ERROR_MESSAGE();
-    END CATCH;		
-end
-go
-
-CREATE OR ALTER PROCEDURE ddbba.insertarEmpleado
-	@Legajo INT,
-	@Nombre nvarchar(20),
-	@Apellido nvarchar(20),
-	@DNI int,
-	@Direccion nvarchar(100),
-	@EmailPersonal varchar(50),
-	@EmailEmpresa varchar(50),
-	@CUIL char(11),
-	@Turno char (16),
-	@Cargo int,
-	@Sucursal int
-as
-begin
-    BEGIN TRANSACTION;
-    BEGIN TRY
-		insert into ddbba.Empleado  values (@legajo, @Nombre, @Apellido, @DNI, @Direccion, @EmailPersonal, @EmailEmpresa, @CUIL, @Turno, @Cargo, @Sucursal)
-		COMMIT TRANSACTION;
-		PRINT 'Empleado Insertado correctamente.';
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar el Empleado: ' + ERROR_MESSAGE();
-    END CATCH;
-end
-go
-
-CREATE OR ALTER PROCEDURE ddbba.insertarTipoCliente
-	@TipoCliente char(6),
-	@Descripcion varchar(50)
-as
-begin
-    BEGIN TRANSACTION;
-    BEGIN TRY
-		insert into ddbba.TipoCliente values (@TipoCliente, @Descripcion)
-		COMMIT TRANSACTION;
-		PRINT 'Tipo de Cliente Insertado correctamente.';
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar el Tipo de Cliente: ' + ERROR_MESSAGE();
-    END CATCH;	
-end
-go
-
-CREATE OR ALTER PROCEDURE ddbba.insertarCliente
-	@DNI int,
-	@Nombre varchar(20),
-	@Apellido varchar(20),
-	@Genero char,
-	@IDTipoCliente int
-as
-begin
-    BEGIN TRANSACTION;
-    BEGIN TRY
-		insert into ddbba.Cliente values (@DNI, @Nombre, @Apellido, @Genero, @IDtipoCliente)
-		COMMIT TRANSACTION;
-		PRINT 'Cliente Insertado correctamente.';
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar el Cliente: ' + ERROR_MESSAGE();
-    END CATCH;
-	
-end
-go
-
-CREATE OR ALTER PROCEDURE ddbba.insertarMedioDePago
-	@Nombre char(20),
-	@Descripcion char(25)
-as	
-begin
-    BEGIN TRANSACTION;
-    BEGIN TRY
-		insert into ddbba.MedioDePago values (@Nombre, @Descripcion)
-		COMMIT TRANSACTION;
-		PRINT 'Medio de Pago Insertado correctamente.';
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar el Medio de Pago: ' + ERROR_MESSAGE();
-    END CATCH;
-end
-go
-
-CREATE OR ALTER PROCEDURE ddbba.insertarPago
-	@IdentificadorDePago char(25),
-	@Fecha date,
-	@MedioDePago int
-as
-begin
-    BEGIN TRANSACTION;
-    BEGIN TRY
-		insert into ddbba.Pago values (@IdentificadorDePago, @Fecha, @MedioDePago)
-		COMMIT TRANSACTION;
-		PRINT 'Pago Insertado correctamente.';
+        INSERT INTO facturacion.Pago (IdentificadorDePago, Fecha, MedioDePago)
+        VALUES (@IdentificadorDePago, @Fecha, @MedioDePago);
+        
+        COMMIT TRANSACTION;
+        PRINT 'Pago insertado correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al intentar insertar el Pago: ' + ERROR_MESSAGE();
     END CATCH;
-end
-go
+END;
+GO
 
-CREATE OR ALTER PROCEDURE ddbba.insertarVenta
-	@Factura int,
-	@TipoFactura char(11),
-	@Fecha date,
-	@Hora time,
-	@Total decimal(9,2),
-	@Cliente int,
-	@Empleado int,
-	@Pago int
-as
-begin
+CREATE OR ALTER PROCEDURE facturacion.InsertarMedioDePago
+    @Nombre VARCHAR(20),
+    @Descripcion VARCHAR(50)
+AS
+BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-		insert into ddbba.Venta values (@Factura, @TipoFactura, @Fecha, @Hora, @Total, @Cliente, @Empleado, @Pago)
-		COMMIT TRANSACTION;
-		PRINT 'Venta Insertada correctamente.';
+        INSERT INTO facturacion.MedioDePago (Nombre, Descripcion)
+        VALUES (@Nombre, @Descripcion);
+        
+        COMMIT TRANSACTION;
+        PRINT 'MedioDePago insertado correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar la Venta: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar insertar el MedioDePago: ' + ERROR_MESSAGE();
     END CATCH;
-end
-go
+END;
+GO
 
-CREATE OR ALTER PROCEDURE ddbba.insertarCategoria 
-	@Descripcion varchar(50)
-as
-begin
+CREATE OR ALTER PROCEDURE facturacion.InsertarCliente
+    @DNI INT,
+    @Nombre VARCHAR(25),
+    @Apellido VARCHAR(25),
+    @Genero CHAR(1),
+    @IDTipoCliente INT
+AS
+BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-		insert into ddbba.Categoria values (@Descripcion)
-		COMMIT TRANSACTION;
-		PRINT 'Categoria Insertada correctamente.';
+        INSERT INTO facturacion.Cliente (DNI, Nombre, Apellido, Genero, IDTipoCliente)
+        VALUES (@DNI, @Nombre, @Apellido, @Genero, @IDTipoCliente);
+        
+        COMMIT TRANSACTION;
+        PRINT 'Cliente insertado correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar la Categoria: ' + ERROR_MESSAGE();
-    END CATCH;	
-end
-go
+        PRINT 'Error al intentar insertar el Cliente: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
 
-CREATE OR ALTER PROCEDURE ddbba.insertarProducto
-	@IDCategoria int,
-	@Nombre varchar(100),
-	@Precio decimal (9,2),
-	@PrecioReferencia decimal (9,2),
-	@UnidadReferencia varchar(2),
-	@Fecha datetime
-as
-begin
+CREATE OR ALTER PROCEDURE facturacion.InsertarTipoCliente @nombre VARCHAR(20)
+AS
+BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-		insert into ddbba.Producto values (@IDCategoria, @Nombre, @Precio, @PrecioReferencia, @UnidadReferencia, @Fecha)
-		COMMIT TRANSACTION;
-		PRINT 'Producto Insertado correctamente.';
+        INSERT INTO facturacion.TipoCliente (nombre)
+        VALUES (@nombre);
+        COMMIT TRANSACTION;
+        PRINT 'TipoCliente insertado correctamente.';
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar insertar el TipoCliente: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.InsertarLineaComprobante
+    @ID INT,
+    @IdProducto INT,
+    @Cantidad INT,
+    @Monto DECIMAL(9,2)
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO facturacion.LineaComprobante (ID, IdProducto, Cantidad, Monto)
+        VALUES (@ID, @IdProducto, @Cantidad, @Monto);
+        
+        COMMIT TRANSACTION;
+        PRINT 'LineaComprobante insertada correctamente.';
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar insertar la LineaComprobante: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.InsertarComprobante
+    @tipo CHAR(2),
+    @numero CHAR(11),
+    @letra CHAR(1),
+    @Fecha DATETIME,
+    @Total DECIMAL(9,2),
+    @Cliente INT,
+    @Empleado INT,
+    @Pago INT
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO facturacion.Comprobante (tipo, numero, letra, Fecha, Total, Cliente, Empleado, Pago)
+        VALUES (@tipo, @numero, @letra, @Fecha, @Total, @Cliente, @Empleado, @Pago);
+        
+        COMMIT TRANSACTION;
+        PRINT 'Comprobante insertado correctamente.';
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar insertar el Comprobante: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE deposito.InsertarCategoria
+    @Descripcion VARCHAR(50)
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO deposito.Categoria (Descripcion)
+        VALUES (@Descripcion);
+        
+        COMMIT TRANSACTION;
+        PRINT 'Categoría insertada correctamente.';
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar insertar la Categoría: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE deposito.InsertarProducto
+    @Categoria INT,
+    @Nombre VARCHAR(100),
+    @Precio DECIMAL(9,2),
+    @PrecioReferencia DECIMAL(9,2),
+    @UnidadReferencia CHAR(2),
+    @Fecha DATETIME
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO deposito.Producto (Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha)
+        VALUES (@Categoria, @Nombre, @Precio, @PrecioReferencia, @UnidadReferencia, @Fecha);
+        
+        COMMIT TRANSACTION;
+        PRINT 'Producto insertado correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al intentar insertar el Producto: ' + ERROR_MESSAGE();
-    END CATCH;	
-end
-go
+    END CATCH;
+END;
+GO
 
-CREATE OR ALTER PROCEDURE ddbba.insertarLineaVenta
-	@IDVenta int,
-	@Orden int,
-	@Cantidad int,
-	@Monto decimal (9,2),
-	@Producto int
-as
-begin
+CREATE OR ALTER PROCEDURE infraestructura.InsertarEmpleado
+    @Legajo INT,
+    @Nombre VARCHAR(30),
+    @Apellido VARCHAR(30),
+    @DNI INT,
+    @Direccion VARCHAR(100),
+    @EmailPersonal VARCHAR(100),
+    @EmailEmpresa VARCHAR(100),
+    @CUIL CHAR(11),
+    @Turno CHAR(16),
+    @Cargo INT,
+    @Sucursal INT
+AS
+BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-		insert into ddbba.LineaVenta values (@IDVenta, @Orden, @Cantidad, @Monto, @Producto)
-		COMMIT TRANSACTION;
-		PRINT 'Linea de venta Insertada correctamente.';
+        INSERT INTO infraestructura.Empleado (Legajo, Nombre, Apellido, DNI, Direccion, EmailPersonal, EmailEmpresa, CUIL, Turno, Cargo, Sucursal)
+        VALUES (@Legajo, @Nombre, @Apellido, @DNI, @Direccion, @EmailPersonal, @EmailEmpresa, @CUIL, @Turno, @Cargo, @Sucursal);
+        
+        COMMIT TRANSACTION;
+        PRINT 'Empleado insertado correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar la Linea de Venta: ' + ERROR_MESSAGE();
-    END CATCH;		
-end
-go
+        PRINT 'Error al intentar insertar el Empleado: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
 
-
-/*--Sp Registro
-CREATE OR ALTER PROCEDURE ddbba.InsertarLog
-	@modulo varchar(20),
-	@texto varchar(20)
+CREATE OR ALTER PROCEDURE infraestructura.InsertarSucursal
+    @Direccion VARCHAR(100),
+    @Ciudad VARCHAR(20),
+    @Horario CHAR(45),
+    @Telefono CHAR(11)
 AS
 BEGIN
-	INSERT INTO ddbba.Registro VALUES (GETDATE(), @modulo, @texto)
-END
-*/
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO infraestructura.Sucursal (Direccion, Ciudad, Horario, Telefono)
+        VALUES (@Direccion, @Ciudad, @Horario, @Telefono);
+        
+        COMMIT TRANSACTION;
+        PRINT 'Sucursal insertada correctamente.';
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar insertar la Sucursal: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE infraestructura.InsertarCargo
+    @Descripcion VARCHAR(25)
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO infraestructura.Cargo (Descripcion)
+        VALUES (@Descripcion);
+        
+        COMMIT TRANSACTION;
+        PRINT 'Cargo insertado correctamente.';
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar insertar el Cargo: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
 
 
 --Sp eliminar producto
