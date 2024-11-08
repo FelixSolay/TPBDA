@@ -47,6 +47,7 @@ BEGIN
 END
 GO*/
 
+
 CREATE OR ALTER PROCEDURE VentasRegistradas
 	@Path NVARCHAR(max)
 AS
@@ -144,6 +145,7 @@ BEGIN
 	BEGIN TRY
 		-- Informacion_complementaria.xlsx -> catalogo
 		SET @SQL = 'INSERT INTO #Indice(NomArch)
+
 						SELECT * FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'',
 												 ''Excel 12.0;HDR=YES;Database=' + @Path + '\Informacion_complementaria.xlsx'',
 												 ''SELECT * FROM [catalogo$]'')'
@@ -215,6 +217,7 @@ BEGIN
 		DROP TABLE #Indice
 		*/
 
+
 		COMMIT TRANSACTION 
 	END TRY
 	BEGIN CATCH
@@ -223,6 +226,7 @@ BEGIN
 	END CATCH
 END
 go
+
 
 DECLARE @ConstantPath nvarchar(max)
 SET @ConstantPath = 'C:\Users\juanp\Downloads'
