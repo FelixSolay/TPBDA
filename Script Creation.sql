@@ -37,8 +37,14 @@ GO
 DROP DATABASE IF EXISTS COM2900G09
 GO
 
-CREATE DATABASE COM2900G09
+CREATE DATABASE COM2900G09 COLLATE Modern_Spanish_CI_AS
+EXEC sp_configure 'show advanced options',1;
 GO
+sp_configure	 'Ad Hoc Distributed Queries',1;
+GO
+sp_configure	 'Ole Automation Procedures',1;
+RECONFIGURE;
+
 /*
 CONTAINMENT = NONE
 ON PRIMARY(

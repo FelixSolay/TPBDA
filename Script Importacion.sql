@@ -47,9 +47,9 @@ BEGIN
 END
 GO*/
 
-DECLARE @ConstantPath nvarchar(max)
-SET @ConstantPath = 'C:\Users\juanp\Downloads'
-GO
+use COM2900G09
+go
+
 
 CREATE OR ALTER PROCEDURE ImportInformacion
 	@Path NVARCHAR(max)
@@ -70,19 +70,24 @@ BEGIN
 		Fecha varchar(max)
 	)
 
+
+
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 
 	BEGIN TRANSACTION 
 	DECLARE @SQL NVARCHAR(max)
 	DECLARE @Producto NVARCHAR(max)
+	DECLARE @IdenIni int
+
 
 	BEGIN TRY
 		-- Informacion_complementaria.xlsx -> catalogo
 		SET @SQL = 'INSERT INTO #Indice(NomArch)
-						SELECT * FROM OPENROWSET(Microsoft.ACE.OLEDB.12.0,
-												 Excel 12.0 Xml;Database=' + @Path + '\Informacion_complementaria.xlsx;HDR=SI;IMEX=1,
-												 SELECT * FROM [catalogo$B2:B5]))'
-		EXEC sp_executesql @SQL
+						SELECT * FROM OPENROWSET(''Microsoft.ACE.OLEDB.12.0'',
+												 ''Excel 12.0 Xml;Database=' + @Path + '\Informacion_complementaria.xlsx;HDR=YES;IMEX=1'',
+												 ''SELECT * FROM [catalogo$B2:B5]'')'
+		EXEC sp_executesql @SQL/*
+		
 
 		-- Electronic accessories.xlsx -> Sheet1
 		SELECT @Producto = NomArch 
@@ -138,16 +143,16 @@ BEGIN
 		EXEC sp_executesql @SQL
 
 		INSERT deposito.producto(Categoria, Nombre, UnidadReferencia, PrecioReferencia, Fecha)
-			SELECT 'Productos importados', Nombre, Precio, PrecioReferencia, UnidadReferencia, GETDATE()
+			SELECT 'Productos importados', Nombre, UnidadReferencia, PrecioReferencia, GETDATE()
 				FROM #Producto
 
-		TRUNCATE TABLE #Producto
-
-		COMMIT TRANSACTION
+		DROP TABLE #Producto
+		DROP TABLE #Indice
+		*/
+		COMMIT TRANSACTION 
 	END TRY
 	BEGIN CATCH
 		SELECT ERROR_MESSAGE()
-		--Los identitys se mantienen avanzados a pesar del rollback
 		ROLLBACK TRANSACTION
 	END CATCH
 END
@@ -217,6 +222,12 @@ BEGIN
 	END CATCH
 END
 GO
+
+
+DECLARE @ConstantPath nvarchar(max)
+SET @ConstantPath = 'C:\Users\ariwe\Desktop\Facu\BDA'
+EXEC ImportInformacion @Path = @ConstantPath
+go
 
 --EXEC ddbba.ImportInformacion @Path = @ConstantPath
 --go
