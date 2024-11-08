@@ -47,116 +47,6 @@ BEGIN
 END
 GO*/
 
-use COM2900G09
-go
-
-
-CREATE OR ALTER PROCEDURE ImportInformacion
-	@Path NVARCHAR(max)
-AS
-BEGIN
-	create table #Indice(
-		id int identity(1,1),
-		NomArch nvarchar(max)
-	)
-
-	create table #Producto(
-		IDProducto varchar(max),
-		Categoria varchar(max),
-		Nombre varchar(max),
-		Precio varchar(max),
-		PrecioReferencia varchar(max),
-		UnidadReferencia varchar(max),
-		Fecha varchar(max)
-	)
-
-
-
-	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
-
-	BEGIN TRANSACTION 
-	DECLARE @SQL NVARCHAR(max)
-	DECLARE @Producto NVARCHAR(max)
-	DECLARE @IdenIni int
-
-
-	BEGIN TRY
-		-- Informacion_complementaria.xlsx -> catalogo
-		SET @SQL = 'INSERT INTO #Indice(NomArch)
-						SELECT * FROM OPENROWSET(''Microsoft.ACE.OLEDB.12.0'',
-												 ''Excel 12.0 Xml;Database=' + @Path + '\Informacion_complementaria.xlsx;HDR=YES;IMEX=1'',
-												 ''SELECT * FROM [catalogo$B2:B5]'')'
-		EXEC sp_executesql @SQL/*
-		
-
-		-- Electronic accessories.xlsx -> Sheet1
-		SELECT @Producto = NomArch 
-			FROM #Indice
-				where id = 1
-
-		SET @SQL = 'INSERT INTO #Producto(Nombre, Precio)
-						SELECT * FROM OPENROWSET(Microsoft.ACE.OLEDB.12.0,
-												 Excel 12.0 Xml;Database=' + @Path + '\' + @Producto + ';HDR=SI;IMEX=1,
-												 SELECT * FROM [Sheet1$]))'
-
-		EXEC sp_executesql @SQL
-
-			INSERT INTO deposito.producto(Categoria, Nombre, Precio, Fecha)
-				SELECT 'Electronic accessories', Nombre, Precio, GETDATE()
-					FROM #Producto
-
-		TRUNCATE TABLE #Producto
-
-		-- catalogo.csv -> catalogo
-		SELECT @Producto = NomArch 
-			FROM #Indice
-				where id = 2
-
-		SET @SQL = 'BULK INSERT #Producto
-						FROM ''' + @Path + '\' + @Producto + ''' 
-						WITH
-						(
-							FIRSTROW = 2,
-							DATAFILETYPE = ''char'',
-							FIELDTERMINATOR = '','',
-							ROWTERMINATOR = ''\n''
-						)'
-
-		EXEC sp_executesql @SQL
-
-		INSERT deposito.producto(Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha)
-			SELECT Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha
-				FROM #Producto
-
-		TRUNCATE TABLE #Producto
-
-		-- Productos_importados.xlsx -> Listado de Productos
-		SELECT @Producto = NomArch 
-			FROM #Indice
-				where id = 3
-
-		SET @SQL = 'INSERT INTO #Producto(Nombre, UnidadReferencia, PrecioReferencia)
-						SELECT * FROM OPENROWSET(Microsoft.ACE.OLEDB.12.0,
-												 Excel 12.0 Xml;Database=' + @Path + '\' + @Producto + ';HDR=SI;IMEX=1,
-												 SELECT * FROM [Listado de Productos$]))'
-
-		EXEC sp_executesql @SQL
-
-		INSERT deposito.producto(Categoria, Nombre, UnidadReferencia, PrecioReferencia, Fecha)
-			SELECT 'Productos importados', Nombre, UnidadReferencia, PrecioReferencia, GETDATE()
-				FROM #Producto
-
-		DROP TABLE #Producto
-		DROP TABLE #Indice
-		*/
-		COMMIT TRANSACTION 
-	END TRY
-	BEGIN CATCH
-		SELECT ERROR_MESSAGE()
-		ROLLBACK TRANSACTION
-	END CATCH
-END
-GO
 
 CREATE OR ALTER PROCEDURE VentasRegistradas
 	@Path NVARCHAR(max)
@@ -223,16 +113,127 @@ BEGIN
 END
 GO
 
+CREATE OR ALTER PROCEDURE ImportInformacion
+	@Path NVARCHAR(max)
+AS
+BEGIN
+	create table #Indice(
+		id int identity(1,1),
+		NomArch nvarchar(max)
+	)
+
+	create table #Producto(
+		IDProducto varchar(max),
+		Categoria varchar(max),
+		Nombre varchar(max),
+		Precio varchar(max),
+		PrecioReferencia varchar(max),
+		UnidadReferencia varchar(max),
+		Fecha varchar(max)
+	)
+
+
+
+	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+
+	BEGIN TRANSACTION 
+	DECLARE @SQL NVARCHAR(max)
+	DECLARE @Producto NVARCHAR(max)
+	DECLARE @IdenIni int
+
+
+	BEGIN TRY
+		-- Informacion_complementaria.xlsx -> catalogo
+		SET @SQL = 'INSERT INTO #Indice(NomArch)
+
+						SELECT * FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'',
+												 ''Excel 12.0;HDR=YES;Database=' + @Path + '\Informacion_complementaria.xlsx'',
+												 ''SELECT * FROM [catalogo$]'')'
+
+		EXEC sp_executesql @SQL
+
+		select *
+			from #Indice
+		
+		/*
+		-- Electronic accessories.xlsx -> Sheet1
+		SELECT @Producto = NomArch 
+			FROM #Indice
+				where id = 1
+
+		SET @SQL = 'INSERT INTO #Producto(Nombre, Precio)
+						SELECT * FROM OPENROWSET(Microsoft.ACE.OLEDB.12.0,
+												 Excel 12.0 Xml;Database=' + @Path + '\' + @Producto + ';HDR=YES;IMEX=1,
+												 SELECT * FROM [Sheet1$])'
+
+		EXEC sp_executesql @SQL
+
+			INSERT INTO deposito.producto(Categoria, Nombre, Precio, Fecha)
+				SELECT 'Electronic accessories', Nombre, Precio, GETDATE()
+					FROM #Producto
+
+		TRUNCATE TABLE #Producto
+
+		-- catalogo.csv -> catalogo
+		SELECT @Producto = NomArch 
+			FROM #Indice
+				where id = 2
+
+		SET @SQL = 'BULK INSERT #Producto
+						FROM ''' + @Path + '\' + @Producto + ''' 
+						WITH
+						(
+							FIRSTROW = 2,
+							DATAFILETYPE = ''char'',
+							FIELDTERMINATOR = '','',
+							ROWTERMINATOR = ''\n''
+						)'
+
+		EXEC sp_executesql @SQL
+
+		INSERT deposito.producto(Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha)
+			SELECT Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha
+				FROM #Producto
+
+		TRUNCATE TABLE #Producto
+
+		-- Productos_importados.xlsx -> Listado de Productos
+		SELECT @Producto = NomArch 
+			FROM #Indice
+				where id = 3
+
+		SET @SQL = 'INSERT INTO #Producto(Nombre, UnidadReferencia, PrecioReferencia)
+						SELECT * FROM OPENROWSET(Microsoft.ACE.OLEDB.12.0,
+												 Excel 12.0 Xml;Database=' + @Path + '\' + @Producto + ';HDR=YES;IMEX=1,
+												 SELECT * FROM [Listado de Productos$]))'
+
+		EXEC sp_executesql @SQL
+
+		INSERT deposito.producto(Categoria, Nombre, UnidadReferencia, PrecioReferencia, Fecha)
+			SELECT 'Productos importados', Nombre, UnidadReferencia, PrecioReferencia, GETDATE()
+				FROM #Producto
+
+		DROP TABLE #Producto
+		DROP TABLE #Indice
+		*/
+
+
+		COMMIT TRANSACTION 
+	END TRY
+	BEGIN CATCH
+		SELECT ERROR_MESSAGE()
+		ROLLBACK TRANSACTION
+	END CATCH
+END
+go
+
 
 DECLARE @ConstantPath nvarchar(max)
-SET @ConstantPath = 'C:\Users\ariwe\Desktop\Facu\BDA'
+SET @ConstantPath = 'C:\Users\juanp\Downloads'
 EXEC ImportInformacion @Path = @ConstantPath
 go
 
---EXEC ddbba.ImportInformacion @Path = @ConstantPath
---go
-
---EXEC ddbba.BulkVentasRegistradas @Path = @ConstantPath
+--EXEC ImportVentasRegistradas @Path = @ConstantPath
 --go
 
 use master

@@ -31,19 +31,27 @@ Weidmann
 Script de Creación de Base de datos y tablas para el trabajo práctico
 */
 
-USE master
-GO
-
 DROP DATABASE IF EXISTS COM2900G09
 GO
 
 CREATE DATABASE COM2900G09 COLLATE Modern_Spanish_CI_AS
-EXEC sp_configure 'show advanced options',1;
+
+EXEC sp_configure 'show advanced options', 1
+RECONFIGURE
 GO
-sp_configure	 'Ad Hoc Distributed Queries',1;
+EXEC sp_configure 'Ad Hoc Distributed Queries', 1
+RECONFIGURE
 GO
-sp_configure	 'Ole Automation Procedures',1;
-RECONFIGURE;
+EXEC sp_configure 'Ole Automation Procedures', 1
+RECONFIGURE
+GO
+--EXEC sp_MSSet_oledb_prop N'Microsoft.ACE.OLEDB.12.0', N'AllowInProcess', 0
+--GO
+--EXEC sp_MSSet_oledb_prop N'Microsoft.ACE.OLEDB.12.0', N'DynamicParameters', 0
+--GO
+SET DATEFORMAT mdy
+GO
+
 
 /*
 CONTAINMENT = NONE
@@ -195,5 +203,5 @@ create table facturacion.lineaComprobante(
 )
 go
 
-use master
-go
+USE master
+GO
