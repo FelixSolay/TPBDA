@@ -45,8 +45,8 @@ GO
 EXEC sp_configure 'Ole Automation Procedures', 1
 RECONFIGURE
 GO
---EXEC sp_MSSet_oledb_prop N'Microsoft.ACE.OLEDB.12.0', N'AllowInProcess', 0
---GO
+EXEC sp_MSSet_oledb_prop N'Microsoft.ACE.OLEDB.16.0', N'AllowInProcess', 1
+GO
 --EXEC sp_MSSet_oledb_prop N'Microsoft.ACE.OLEDB.12.0', N'DynamicParameters', 0
 --GO
 SET DATEFORMAT mdy
