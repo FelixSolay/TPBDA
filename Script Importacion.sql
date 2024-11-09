@@ -118,43 +118,39 @@ CREATE OR ALTER PROCEDURE ImportInformacion
 AS
 BEGIN
 	create table #Producto(
-		IDProducto varchar(max),
-		Categoria varchar(max),
-		Nombre varchar(max),
-		Precio varchar(max),
+		IDProducto		 varchar(max),
+		Categoria		 varchar(max),
+		Nombre			 varchar(max),
+		Precio			 varchar(max),
 		PrecioReferencia varchar(max),
 		UnidadReferencia varchar(max),
-		Fecha varchar(max)
+		Fecha			 varchar(max),
 	)
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 	BEGIN TRANSACTION 
-	DECLARE @SQL NVARCHAR(max)
+	DECLARE @SQL   NVARCHAR(max)
+	DECLARE @OLEDB NVARCHAR(max) = 'Microsoft.ACE.OLEDB.16.0'
+	DECLARE @EXCEL NVARCHAR(max) = 'Excel 12.0'
 
 	BEGIN TRY
 		-- Electronic accessories.xlsx -> Sheet1
 		SET @SQL = 'INSERT INTO #Producto(Nombre, Precio)
-						SELECT * FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'',
-												 ''Excel 12.0;HDR=YES;IMEX=1;Database=' + @Path + '\Electronic accessories.xlsx'',
-												 ''SELECT * FROM [Sheet1$]'')'
+						SELECT * 
+							FROM OPENROWSET(''' + @OLEDB + ''',
+											''' + @EXCEL + ';HDR=YES;Database=' + @Path + '\Electronic accessories.xlsx'',
+											''SELECT * FROM [Sheet1$]'')'
 
 		EXEC sp_executesql @SQL
 
-		/*INSERT INTO deposito.producto(Categoria, Nombre, Precio, Fecha)
+		INSERT INTO deposito.producto(Categoria, Nombre, Precio, Fecha)
 			SELECT 1, Nombre, Precio, GETDATE()
-				FROM #Producto*/
-
-		SELECT *
-			FROM #Producto
+				FROM #Producto
 
 		TRUNCATE TABLE #Producto
-		/*
-		-- catalogo.csv -> catalogo
-		SELECT @Producto = NomArch 
-			FROM #Indice
-				where id = 2
 
+		-- catalogo.csv -> catalogo
 		SET @SQL = 'BULK INSERT #Producto
-						FROM ''' + @Path + '\' + @Producto + ''' 
+						FROM ''' + @Path + '\catalogo.csv''
 						WITH
 						(
 							FIRSTROW = 2,
@@ -172,23 +168,19 @@ BEGIN
 		TRUNCATE TABLE #Producto
 
 		-- Productos_importados.xlsx -> Listado de Productos
-		SELECT @Producto = NomArch 
-			FROM #Indice
-				where id = 3
-
-		SET @SQL = 'INSERT INTO #Producto(Nombre, UnidadReferencia, PrecioReferencia)
-						SELECT * FROM OPENROWSET(Microsoft.ACE.OLEDB.12.0,
-												 Excel 12.0 Xml;Database=' + @Path + '\' + @Producto + ';HDR=YES;IMEX=1,
-												 SELECT * FROM [Listado de Productos$]))'
+		SET @SQL = 'INSERT INTO #Producto(Nombre, Categoria, UnidadReferencia, PrecioReferencia)
+						SELECT NombreProducto, Categoría, CantidadPorUnidad, PrecioUnidad
+							FROM OPENROWSET(''' + @OLEDB + ''',
+											''' + @EXCEL + ';HDR=YES;Database=' + @Path + '\Productos_importados.xlsx'',
+											''SELECT * FROM [Listado de Productos$]'')'								
 
 		EXEC sp_executesql @SQL
 
 		INSERT deposito.producto(Categoria, Nombre, UnidadReferencia, PrecioReferencia, Fecha)
-			SELECT 'Productos importados', Nombre, UnidadReferencia, PrecioReferencia, GETDATE()
+			SELECT 3, Nombre, UnidadReferencia, PrecioReferencia, GETDATE()
 				FROM #Producto
-
+		
 		DROP TABLE #Producto
-		*/
 
 		COMMIT TRANSACTION 
 	END TRY
