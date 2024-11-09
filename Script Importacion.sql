@@ -117,11 +117,6 @@ CREATE OR ALTER PROCEDURE ImportInformacion
 	@Path NVARCHAR(max)
 AS
 BEGIN
-	create table #Indice(
-		id int identity(1,1),
-		NomArch nvarchar(max)
-	)
-
 	create table #Producto(
 		IDProducto varchar(max),
 		Categoria varchar(max),
@@ -131,49 +126,28 @@ BEGIN
 		UnidadReferencia varchar(max),
 		Fecha varchar(max)
 	)
-
-
-
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
-
 	BEGIN TRANSACTION 
 	DECLARE @SQL NVARCHAR(max)
-	DECLARE @Producto NVARCHAR(max)
-	DECLARE @IdenIni int
-
 
 	BEGIN TRY
-		-- Informacion_complementaria.xlsx -> catalogo
-		SET @SQL = 'INSERT INTO #Indice(NomArch)
-
-						SELECT * FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'',
-												 ''Excel 12.0;HDR=YES;Database=' + @Path + '\Informacion_complementaria.xlsx'',
-												 ''SELECT * FROM [catalogo$]'')'
-
-		EXEC sp_executesql @SQL
-
-		select *
-			from #Indice
-		
-		/*
 		-- Electronic accessories.xlsx -> Sheet1
-		SELECT @Producto = NomArch 
-			FROM #Indice
-				where id = 1
-
 		SET @SQL = 'INSERT INTO #Producto(Nombre, Precio)
-						SELECT * FROM OPENROWSET(Microsoft.ACE.OLEDB.12.0,
-												 Excel 12.0 Xml;Database=' + @Path + '\' + @Producto + ';HDR=YES;IMEX=1,
-												 SELECT * FROM [Sheet1$])'
+						SELECT * FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'',
+												 ''Excel 12.0;HDR=YES;IMEX=1;Database=' + @Path + '\Electronic accessories.xlsx'',
+												 ''SELECT * FROM [Sheet1$]'')'
 
 		EXEC sp_executesql @SQL
 
-			INSERT INTO deposito.producto(Categoria, Nombre, Precio, Fecha)
-				SELECT 'Electronic accessories', Nombre, Precio, GETDATE()
-					FROM #Producto
+		/*INSERT INTO deposito.producto(Categoria, Nombre, Precio, Fecha)
+			SELECT 1, Nombre, Precio, GETDATE()
+				FROM #Producto*/
+
+		SELECT *
+			FROM #Producto
 
 		TRUNCATE TABLE #Producto
-
+		/*
 		-- catalogo.csv -> catalogo
 		SELECT @Producto = NomArch 
 			FROM #Indice
@@ -214,9 +188,7 @@ BEGIN
 				FROM #Producto
 
 		DROP TABLE #Producto
-		DROP TABLE #Indice
 		*/
-
 
 		COMMIT TRANSACTION 
 	END TRY
@@ -225,8 +197,7 @@ BEGIN
 		ROLLBACK TRANSACTION
 	END CATCH
 END
-go
-
+GO
 
 DECLARE @ConstantPath nvarchar(max)
 SET @ConstantPath = 'C:\Users\juanp\Downloads'
