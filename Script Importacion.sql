@@ -48,7 +48,7 @@ END
 GO*/
 
 
-CREATE OR ALTER PROCEDURE VentasRegistradas
+CREATE OR ALTER PROCEDURE ImportVentas
 	@Path NVARCHAR(max)
 AS
 BEGIN
@@ -113,7 +113,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE ImportInformacion
+CREATE OR ALTER PROCEDURE ImportProductos
 	@Path NVARCHAR(max)
 AS
 BEGIN
@@ -191,11 +191,187 @@ BEGIN
 END
 GO
 
+CREATE OR ALTER PROCEDURE ImportSucursal
+	@Path NVARCHAR(max)
+AS
+BEGIN
+	create table #Sucursal(
+		IDsucursal	varchar(max),
+		Direccion	varchar(max),
+		Ciudad		varchar(max),
+		Horario		varchar(max),
+		Telefono	varchar(max)
+	)
+	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+	BEGIN TRANSACTION 
+	DECLARE @SQL   NVARCHAR(max)
+	DECLARE @OLEDB NVARCHAR(max) = 'Microsoft.ACE.OLEDB.16.0'
+	DECLARE @EXCEL NVARCHAR(max) = 'Excel 12.0'
+
+	BEGIN TRY
+		-- Informacion_complementaria.xlsx -> sucursal
+		SET @SQL = 'INSERT INTO #Sucursal(Ciudad, Direccion, Horario, Telefono)
+						SELECT Reemplazar por, direccion, Horario, Telefono
+							FROM OPENROWSET(''' + @OLEDB + ''',
+											''' + @EXCEL + ';HDR=YES;Database=' + @Path + '\Informacion_complementaria.xlsx'',
+											''SELECT * FROM [sucursal$]'')'
+
+		EXEC sp_executesql @SQL
+
+		INSERT INTO infraestructura.sucursal(Ciudad, Direccion, Horario, Telefono)
+			SELECT Ciudad, Direccion, Horario, Telefono 
+				FROM #Sucursal
+
+		DROP TABLE #Sucursal
+
+
+		COMMIT TRANSACTION 
+	END TRY
+	BEGIN CATCH
+		SELECT ERROR_MESSAGE()
+		ROLLBACK TRANSACTION
+	END CATCH
+END
+GO
+
+
+CREATE OR ALTER PROCEDURE ImportEmpleados
+	@Path NVARCHAR(max)
+AS
+BEGIN
+	create table #Empleados(
+	Legajo			varchar(max),
+	Nombre			varchar(max),
+	Apellido		varchar(max),
+	DNI				varchar(max),
+	Direccion		varchar(max),
+	EmailPersonal	varchar(max),
+	EmailEmpresa	varchar(max),
+	CUIL			varchar(max),
+	Turno			varchar(max),
+	Cargo			varchar(max),
+	Sucursal		varchar(max),
+	)
+	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+	BEGIN TRANSACTION 
+	DECLARE @SQL   NVARCHAR(max)
+	DECLARE @OLEDB NVARCHAR(max) = 'Microsoft.ACE.OLEDB.16.0'
+	DECLARE @EXCEL NVARCHAR(max) = 'Excel 12.0'
+
+	BEGIN TRY
+		-- Informacion_complementaria.xlsx -> Empleados
+		SET @SQL = 'INSERT INTO #Empelados(Legajo, Nombre, Apellido, DNI, Direccion, EmailPersonal, EmailEmpresa, CUIL, Cargo, Sucursal, Turno)
+						SELECT *
+							FROM OPENROWSET(''' + @OLEDB + ''',
+											''' + @EXCEL + ';HDR=YES;Database=' + @Path + '\Informacion_complementaria.xlsx'',
+											''SELECT * FROM [Empelados$]'')'
+
+		EXEC sp_executesql @SQL
+
+		INSERT INTO infraestructura.empleado(Legajo, Nombre, Apellido, DNI, Direccion, EmailPersonal, EmailEmpresa, CUIL, Cargo, Sucursal, Turno)
+			SELECT Legajo, Nombre, Apellido, DNI, Direccion, EmailPersonal, EmailEmpresa, CUIL, Cargo, Sucursal, Turno 
+				FROM #Empleados
+
+		DROP TABLE #Empleados
+
+
+		COMMIT TRANSACTION 
+	END TRY
+	BEGIN CATCH
+		SELECT ERROR_MESSAGE()
+		ROLLBACK TRANSACTION
+	END CATCH
+END
+GO
+
+CREATE OR ALTER PROCEDURE ImportMediosdepago
+	@Path NVARCHAR(max)
+AS
+BEGIN
+	create table #Mediosdepago(
+	IDMedioDePago	varchar(max),
+	Nombre			varchar(max),
+	Descripcion		varchar(max)
+	)
+	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+	BEGIN TRANSACTION 
+	DECLARE @SQL   NVARCHAR(max)
+	DECLARE @OLEDB NVARCHAR(max) = 'Microsoft.ACE.OLEDB.16.0'
+	DECLARE @EXCEL NVARCHAR(max) = 'Excel 12.0'
+
+	BEGIN TRY
+		-- Informacion_complementaria.xlsx -> medios de pago
+		SET @SQL = 'INSERT INTO #Mediosdepago(Nombre, Descripcion)
+						SELECT *
+							FROM OPENROWSET(''' + @OLEDB + ''',
+											''' + @EXCEL + ';HDR=NO;Database=' + @Path + '\Informacion_complementaria.xlsx'',
+											''SELECT * FROM [medios de pago$B3:C5]'')'
+
+		EXEC sp_executesql @SQL
+
+		INSERT INTO facturacion.MedioDePago(Nombre, Descripcion)
+			SELECT Nombre, Descripcion
+				FROM #Mediosdepago
+
+		DROP TABLE #Mediosdepago
+
+
+		COMMIT TRANSACTION 
+	END TRY
+	BEGIN CATCH
+		SELECT ERROR_MESSAGE()
+		ROLLBACK TRANSACTION
+	END CATCH
+END
+GO
+
+CREATE OR ALTER PROCEDURE ImportCategoria
+	@Path NVARCHAR(max)
+AS
+BEGIN
+	create table #Categoria(
+	IDCategoria		varchar(max),
+	Descripcion		varchar(max),
+	)
+	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+	BEGIN TRANSACTION 
+	DECLARE @SQL   NVARCHAR(max)
+	DECLARE @OLEDB NVARCHAR(max) = 'Microsoft.ACE.OLEDB.16.0'
+	DECLARE @EXCEL NVARCHAR(max) = 'Excel 12.0'
+
+	BEGIN TRY
+		-- Informacion_complementaria.xlsx -> Clasificacion de productos
+		SET @SQL = 'INSERT INTO #Categoria(Descripcion)
+						SELECT Línea de producto
+							FROM OPENROWSET(''' + @OLEDB + ''',
+											''' + @EXCEL + ';HDR=NO;Database=' + @Path + '\Informacion_complementaria.xlsx'',
+											''SELECT * FROM [Clasificacion de productos$]'')'
+
+		EXEC sp_executesql @SQL
+
+		INSERT INTO deposito.categoria(Descripcion)
+			SELECT distinct Descripcion
+				FROM #Categoria
+
+		DROP TABLE #Categoria
+
+
+		COMMIT TRANSACTION 
+	END TRY
+	BEGIN CATCH
+		SELECT ERROR_MESSAGE()
+		ROLLBACK TRANSACTION
+	END CATCH
+END
+GO
+
+
+/*
 DECLARE @ConstantPath nvarchar(max)
 SET @ConstantPath = 'C:\Users\juanp\Downloads'
 EXEC ImportInformacion @Path = @ConstantPath
 go
-
+*/
 --EXEC ImportVentasRegistradas @Path = @ConstantPath
 --go
 
