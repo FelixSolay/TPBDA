@@ -1,15 +1,17 @@
 /*
-Creación de los Store procedures
+Creacion de los Store procedures
 
-Genere store procedures para manejar la inserción, modificado, borrado (si corresponde,
-también debe decidir si determinadas entidades solo admitirán borrado lógico) de cada tabla.
+Genere store procedures para manejar la insercion, modificado, borrado (si corresponde,
+tambien debe decidir si determinadas entidades solo admitiran borrado logico) de cada tabla.
 Los nombres de los store procedures NO deben comenzar con “SP”.
 
 */
---Insert Store Procedures
+
 use COM2900G09
 go
 
+--Insert Store Procedures 
+--FACTURACION
 CREATE OR ALTER PROCEDURE facturacion.InsertarPago
     @IdentificadorDePago VARCHAR(22),
     @Fecha DATETIME,
@@ -37,16 +39,19 @@ CREATE OR ALTER PROCEDURE facturacion.InsertarMedioDePago
 AS
 BEGIN
     BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IdMedioDePago),0) FROM facturacion.MedioDePago);
     BEGIN TRY
         INSERT INTO facturacion.MedioDePago (Nombre, Descripcion)
         VALUES (@Nombre, @Descripcion);
-        
+        DBCC CHECKIDENT ('facturacion.MedioDePago', RESEED, @MaxID);
         COMMIT TRANSACTION;
         PRINT 'MedioDePago insertado correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al intentar insertar el MedioDePago: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('facturacion.MedioDePago', RESEED, @MaxID);
     END CATCH;
 END;
 GO
@@ -62,8 +67,7 @@ BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
         INSERT INTO facturacion.Cliente (DNI, Nombre, Apellido, Genero, IDTipoCliente)
-        VALUES (@DNI, @Nombre, @Apellido, @Genero, @IDTipoCliente);
-        
+        VALUES (@DNI, @Nombre, @Apellido, @Genero, @IDTipoCliente);        
         COMMIT TRANSACTION;
         PRINT 'Cliente insertado correctamente.';
     END TRY
@@ -74,19 +78,24 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.InsertarTipoCliente @nombre VARCHAR(20)
+CREATE OR ALTER PROCEDURE facturacion.InsertarTipoCliente
+    @Nombre VARCHAR(20)
 AS
 BEGIN
     BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IDTipoCliente),0) FROM facturacion.TipoCliente);
     BEGIN TRY
-        INSERT INTO facturacion.TipoCliente (nombre)
-        VALUES (@nombre);
+        INSERT INTO facturacion.TipoCliente (Nombre)
+        VALUES (@Nombre);
+        DBCC CHECKIDENT ('facturacion.TipoCliente', RESEED, @MaxID);
         COMMIT TRANSACTION;
         PRINT 'TipoCliente insertado correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al intentar insertar el TipoCliente: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('facturacion.TipoCliente', RESEED, @MaxID);
     END CATCH;
 END;
 GO
@@ -102,13 +111,12 @@ BEGIN
     BEGIN TRY
         INSERT INTO facturacion.LineaComprobante (ID, IdProducto, Cantidad, Monto)
         VALUES (@ID, @IdProducto, @Cantidad, @Monto);
-        
         COMMIT TRANSACTION;
-        PRINT 'LineaComprobante insertada correctamente.';
+        PRINT 'Linea de Comprobante insertada correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar la LineaComprobante: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar insertar la Linea de Comprobante: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
@@ -139,21 +147,26 @@ BEGIN
 END;
 GO
 
+--DEPOSITO
+
 CREATE OR ALTER PROCEDURE deposito.InsertarCategoria
     @Descripcion VARCHAR(50)
 AS
 BEGIN
     BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IDCategoria),0) FROM deposito.categoria);
     BEGIN TRY
         INSERT INTO deposito.Categoria (Descripcion)
         VALUES (@Descripcion);
-        
+        DBCC CHECKIDENT ('deposito.Categoria', RESEED, @MaxID);
         COMMIT TRANSACTION;
-        PRINT 'Categoría insertada correctamente.';
+        PRINT 'Categoria insertada correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar la Categoría: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar insertar la Categoria: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('deposito.Categoria', RESEED, @MaxID);
     END CATCH;
 END;
 GO
@@ -161,27 +174,31 @@ GO
 CREATE OR ALTER PROCEDURE deposito.InsertarProducto
     @Categoria INT,
     @Nombre VARCHAR(100),
-    @Precio DECIMAL(9,2),
-    @PrecioReferencia DECIMAL(9,2),
+    @Precio DECIMAL(9, 2),
+    @PrecioReferencia DECIMAL(9, 2),
     @UnidadReferencia CHAR(2),
     @Fecha DATETIME
 AS
 BEGIN
     BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IDProducto),0) FROM deposito.producto);
     BEGIN TRY
         INSERT INTO deposito.Producto (Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha)
         VALUES (@Categoria, @Nombre, @Precio, @PrecioReferencia, @UnidadReferencia, @Fecha);
-        
+        DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID);
         COMMIT TRANSACTION;
         PRINT 'Producto insertado correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al intentar insertar el Producto: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID);
     END CATCH;
 END;
 GO
 
+--INFRAESTRUCTURA
 CREATE OR ALTER PROCEDURE infraestructura.InsertarEmpleado
     @Legajo INT,
     @Nombre VARCHAR(30),
@@ -219,57 +236,64 @@ CREATE OR ALTER PROCEDURE infraestructura.InsertarSucursal
 AS
 BEGIN
     BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IDsucursal),0) FROM infraestructura.Sucursal);
     BEGIN TRY
         INSERT INTO infraestructura.Sucursal (Direccion, Ciudad, Horario, Telefono)
         VALUES (@Direccion, @Ciudad, @Horario, @Telefono);
-        
+        DBCC CHECKIDENT ('infraestructura.Sucursal', RESEED, @MaxID);
         COMMIT TRANSACTION;
         PRINT 'Sucursal insertada correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al intentar insertar la Sucursal: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('infraestructura.Sucursal', RESEED, @MaxID);
     END CATCH;
 END;
 GO
+
 
 CREATE OR ALTER PROCEDURE infraestructura.InsertarCargo
     @Descripcion VARCHAR(25)
 AS
 BEGIN
     BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IDcargo),0) FROM infraestructura.cargo);
     BEGIN TRY
         INSERT INTO infraestructura.Cargo (Descripcion)
         VALUES (@Descripcion);
-        
+        DBCC CHECKIDENT ('infraestructura.Cargo', RESEED, @MaxID);
         COMMIT TRANSACTION;
         PRINT 'Cargo insertado correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al intentar insertar el Cargo: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('infraestructura.Cargo', RESEED, @MaxID);
     END CATCH;
 END;
 GO
 
-
---Sp eliminar producto
-CREATE OR ALTER PROCEDURE ddbba.EliminarProducto
+--Delete Stored Procedures
+--DEPOSITO
+CREATE OR ALTER PROCEDURE deposito.EliminarProducto
     @IDProducto INT
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.producto WHERE IDProducto = @IDProducto)
+        IF EXISTS (SELECT 1 FROM deposito.producto WHERE IDProducto = @IDProducto)
         BEGIN
-            DELETE FROM ddbba.producto WHERE IDProducto = @IDProducto;
+            DELETE FROM deposito.producto WHERE IDProducto = @IDProducto;
             COMMIT TRANSACTION;
             PRINT 'Producto eliminado correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de Producto con el ID especificado.';
+            PRINT 'No se encontro el registro de Producto con el ID especificado.';
         END
     END TRY
     BEGIN CATCH
@@ -279,49 +303,22 @@ BEGIN
 END;
 GO
 
---Sp Delete Linea Venta
-CREATE OR ALTER PROCEDURE ddbba.EliminarLineaVenta
-    @IDVenta INT,
-    @Orden INT
-AS
-BEGIN
-    BEGIN TRANSACTION;
-    BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.lineaVenta WHERE IDVenta = @IDVenta AND Orden = @Orden)
-        BEGIN
-            DELETE FROM ddbba.lineaVenta WHERE IDVenta = @IDVenta AND Orden = @Orden;
-            COMMIT TRANSACTION;
-            PRINT 'Linea de Venta eliminada correctamente.';
-        END
-        ELSE
-        BEGIN
-            ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de Linea de Venta con el IDVenta y Orden especificados.';
-        END
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar eliminar la Linea de Venta: ' + ERROR_MESSAGE();
-    END CATCH;
-END;
-GO
-
-CREATE OR ALTER PROCEDURE ddbba.EliminarCategoria
+CREATE OR ALTER PROCEDURE deposito.EliminarCategoria
     @IDCategoria INT
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.categoria WHERE IDCategoria = @IDCategoria)
+        IF EXISTS (SELECT 1 FROM deposito.categoria WHERE IDCategoria = @IDCategoria)
         BEGIN
-            DELETE FROM ddbba.categoria WHERE IDCategoria = @IDCategoria;
+            DELETE FROM deposito.categoria WHERE IDCategoria = @IDCategoria;
             COMMIT TRANSACTION;
             PRINT 'Categoria eliminada correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de Categoria con el ID especificado.';
+            PRINT 'No se encontro el registro de Categoria con el ID especificado.';
         END
     END TRY
     BEGIN CATCH
@@ -331,47 +328,75 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarVenta
-    @IDVenta INT
+
+--FACTURACION
+CREATE OR ALTER PROCEDURE facturacion.EliminarLineaComprobante
+    @ID INT,
+    @IDProducto INT
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.venta WHERE IDVenta = @IDVenta)
+        IF EXISTS (SELECT 1 FROM facturacion.LineaComprobante WHERE ID = @ID AND IdProducto = @IDProducto)
         BEGIN
-            DELETE FROM ddbba.venta WHERE IDVenta = @IDVenta;
+            DELETE FROM facturacion.LineaComprobante WHERE ID = @ID AND IdProducto = @IDProducto;
             COMMIT TRANSACTION;
-            PRINT 'Venta eliminada correctamente.';
+            PRINT 'Linea de Comprobante eliminada correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de Venta con el ID especificado.';
+            PRINT 'No se encontro el registro de Linea de Comprobante con el ID y Producto especificados.';
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar eliminar la Venta: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar eliminar la Linea de Comprobante: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarPago
+CREATE OR ALTER PROCEDURE facturacion.EliminarComprobante
+    @ID INT
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM facturacion.comprobante WHERE ID = @ID)
+        BEGIN
+            DELETE FROM facturacion.comprobante WHERE ID = @ID;
+            COMMIT TRANSACTION;
+            PRINT 'Comprobante eliminado correctamente.';
+        END
+        ELSE
+        BEGIN
+            ROLLBACK TRANSACTION;
+            PRINT 'No se encontro el registro de Comprobante con el ID especificado.';
+        END
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar eliminar el Comprobante: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.EliminarPago
     @IDPago INT
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.Pago WHERE IDPago = @IDPago)
+        IF EXISTS (SELECT 1 FROM facturacion.Pago WHERE IDPago = @IDPago)
         BEGIN
-            DELETE FROM ddbba.Pago WHERE IDPago = @IDPago;
+            DELETE FROM facturacion.Pago WHERE IDPago = @IDPago;
             COMMIT TRANSACTION;
             PRINT 'Pago eliminado correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de Pago con el ID especificado.';
+            PRINT 'No se encontro el registro de Pago con el ID especificado.';
         END
     END TRY
     BEGIN CATCH
@@ -381,22 +406,22 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarMedioDePago
+CREATE OR ALTER PROCEDURE facturacion.EliminarMedioDePago
     @IDMedioDePago INT
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.MedioDePago WHERE IDMedioDePago = @IDMedioDePago)
+        IF EXISTS (SELECT 1 FROM facturacion.MedioDePago WHERE IDMedioDePago = @IDMedioDePago)
         BEGIN
-            DELETE FROM ddbba.MedioDePago WHERE IDMedioDePago = @IDMedioDePago;
+            DELETE FROM facturacion.MedioDePago WHERE IDMedioDePago = @IDMedioDePago;
             COMMIT TRANSACTION;
             PRINT 'Medio De Pago eliminado correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de Medio De Pago con el ID especificado.';
+            PRINT 'No se encontro el registro de Medio De Pago con el ID especificado.';
         END
     END TRY
     BEGIN CATCH
@@ -406,22 +431,22 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarCliente
+CREATE OR ALTER PROCEDURE facturacion.EliminarCliente
     @IDCliente INT
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.cliente WHERE IDCliente = @IDCliente)
+        IF EXISTS (SELECT 1 FROM facturacion.cliente WHERE IDCliente = @IDCliente)
         BEGIN
-            DELETE FROM ddbba.cliente WHERE IDCliente = @IDCliente;
+            DELETE FROM facturacion.cliente WHERE IDCliente = @IDCliente;
             COMMIT TRANSACTION;
             PRINT 'Cliente eliminado correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de Cliente con el ID especificado.';
+            PRINT 'No se encontro el registro de Cliente con el ID especificado.';
         END
     END TRY
     BEGIN CATCH
@@ -431,22 +456,22 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarTipoCliente
+CREATE OR ALTER PROCEDURE facturacion.EliminarTipoCliente
     @IDTipoCliente INT
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.TipoCliente WHERE IDTipoCliente = @IDTipoCliente)
+        IF EXISTS (SELECT 1 FROM facturacion.TipoCliente WHERE IDTipoCliente = @IDTipoCliente)
         BEGIN
-            DELETE FROM ddbba.TipoCliente WHERE IDTipoCliente = @IDTipoCliente;
+            DELETE FROM facturacion.TipoCliente WHERE IDTipoCliente = @IDTipoCliente;
             COMMIT TRANSACTION;
             PRINT 'Tipo de Cliente eliminado correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de Tipo de Cliente con el ID especificado.';
+            PRINT 'No se encontro el registro de Tipo de Cliente con el ID especificado.';
         END
     END TRY
     BEGIN CATCH
@@ -456,22 +481,23 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarEmpleado
+--INFRAESTRUCTURA
+CREATE OR ALTER PROCEDURE infraestructura.EliminarEmpleado
     @Legajo INT
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.empleado WHERE Legajo = @Legajo)
+        IF EXISTS (SELECT 1 FROM infraestructura.empleado WHERE Legajo = @Legajo)
         BEGIN
-            DELETE FROM ddbba.empleado WHERE Legajo = @Legajo;
+            DELETE FROM infraestructura.empleado WHERE Legajo = @Legajo;
             COMMIT TRANSACTION;
             PRINT 'Empleado eliminado correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de Empleado con el Legajo especificado.';
+            PRINT 'No se encontro el registro de Empleado con el Legajo especificado.';
         END
     END TRY
     BEGIN CATCH
@@ -481,22 +507,22 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarSucursal
+CREATE OR ALTER PROCEDURE infraestructura.EliminarSucursal
     @IDsucursal INT
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.sucursal WHERE IDsucursal = @IDsucursal)
+        IF EXISTS (SELECT 1 FROM infraestructura.sucursal WHERE IDsucursal = @IDsucursal)
         BEGIN
-            DELETE FROM ddbba.sucursal WHERE IDsucursal = @IDsucursal;
+            DELETE FROM infraestructura.sucursal WHERE IDsucursal = @IDsucursal;
             COMMIT TRANSACTION;
             PRINT 'Sucursal eliminada correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de Sucursal con el ID especificado.';
+            PRINT 'No se encontro el registro de Sucursal con el ID especificado.';
         END
     END TRY
     BEGIN CATCH
@@ -506,23 +532,23 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.EliminarCargo
+CREATE OR ALTER PROCEDURE infraestructura.EliminarCargo
     @IdCargo INT
 AS
 BEGIN
     BEGIN TRANSACTION;
 
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.cargo WHERE IdCargo = @IdCargo)
+        IF EXISTS (SELECT 1 FROM infraestructura.cargo WHERE IdCargo = @IdCargo)
         BEGIN
-            DELETE FROM ddbba.cargo WHERE IdCargo = @IdCargo;
+            DELETE FROM infraestructura.cargo WHERE IdCargo = @IdCargo;
             COMMIT TRANSACTION;
             PRINT 'Cargo eliminado correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de Cargo con el ID especificado.';
+            PRINT 'No se encontro el registro de Cargo con el ID especificado.';
         END
     END TRY
     BEGIN CATCH
@@ -533,98 +559,84 @@ END;
 GO
 
 --Update Store procedures
-
-CREATE OR ALTER PROCEDURE ddbba.ActualizarProducto
+--DEPOSITO
+CREATE OR ALTER PROCEDURE deposito.ActualizarProducto
     @IDProducto INT,
-	@CategoriaDescripcion VARCHAR(50) = NULL,
+    @Categoria INT = NULL,
     @Nombre VARCHAR(100) = NULL,
     @Precio DECIMAL(9,2) = NULL,
     @PrecioReferencia DECIMAL(9,2) = NULL,
-    @UnidadReferencia VARCHAR(2) = NULL,
+    @UnidadReferencia CHAR(2) = NULL,
     @Fecha DATETIME = NULL
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        -- Verifica que el producto exista antes de intentar actualizarlo
-        IF EXISTS (SELECT 1 FROM ddbba.producto WHERE IDProducto = @IDProducto)
+        IF EXISTS (SELECT 1 FROM deposito.Producto WHERE IDProducto = @IDProducto)
         BEGIN
-            -- Actualiza solo los campos que no son NULL, conservando los valores actuales en los campos no especificados
-            UPDATE ddbba.producto
-            SET Nombre = COALESCE(@Nombre, Nombre),
-				CategoriaDescripcion = COALESCE(@CategoriaDescripcion, CategoriaDescripcion),
+            UPDATE deposito.Producto
+            SET Categoria = COALESCE(@Categoria, Categoria),
+                Nombre = COALESCE(@Nombre, Nombre),
                 Precio = COALESCE(@Precio, Precio),
                 PrecioReferencia = COALESCE(@PrecioReferencia, PrecioReferencia),
                 UnidadReferencia = COALESCE(@UnidadReferencia, UnidadReferencia),
                 Fecha = COALESCE(@Fecha, Fecha)
-            WHERE IDProducto = @IDProducto;
-
-            -- Confirma la transacción si no hay errores
+            WHERE IDProducto = @IDProducto;            
             COMMIT TRANSACTION;
-            PRINT 'Producto actualizado correctamente';
+            PRINT 'Producto actualizado correctamente.';
         END
         ELSE
         BEGIN
-            PRINT 'No se encontró un producto con el ID especificado';
             ROLLBACK TRANSACTION;
+            PRINT 'No se encontro el producto con el Id especificado.';
         END
     END TRY
     BEGIN CATCH
-        -- Deshace la transacción en caso de error
         ROLLBACK TRANSACTION;
-        PRINT 'Error al actualizar el producto';
+        PRINT 'Error al intentar actualizar el producto: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarLineaVenta
-    @IDVenta INT,
-	@Orden INT,
-    @Cantidad INT = NULL,
-    @Monto DECIMAL(9,2) = NULL,
-    @Producto INT = NULL
+CREATE OR ALTER PROCEDURE deposito.ActualizarCategoria
+    @IDCategoria INT,
+    @Descripcion VARCHAR(50) = NULL
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        -- Verifica que el producto exista antes de intentar actualizarlo
-        IF EXISTS (SELECT 1 FROM ddbba.LineaVenta WHERE IDVenta = @IDVenta AND Orden = @Orden)
+        IF EXISTS (SELECT 1 FROM deposito.Categoria WHERE IDCategoria = @IDCategoria)
         BEGIN
-            -- Actualiza solo los campos que no son NULL, conservando los valores actuales en los campos no especificados
-            UPDATE ddbba.LineaVenta
-            SET Cantidad = COALESCE(@Cantidad, Cantidad),
-                Monto = COALESCE(@Monto, Monto),
-                Producto = COALESCE(@Producto, Producto)
-            WHERE Producto = @Producto;
-            -- Confirma la transacción si no hay errores
+            UPDATE deposito.Categoria
+            SET Descripcion = COALESCE(@Descripcion, Descripcion)
+            WHERE IDCategoria = @IDCategoria;
             COMMIT TRANSACTION;
-            PRINT 'Linea de venta actualizada correctamente';
+            PRINT 'Categoria actualizada correctamente.';
         END
         ELSE
         BEGIN
-            PRINT 'No se encontró una Linea de venta con el ID especificado';
             ROLLBACK TRANSACTION;
+            PRINT 'No se encontro la categoria con el Id especificado.';
         END
     END TRY
     BEGIN CATCH
-        -- Deshace la transacción en caso de error
         ROLLBACK TRANSACTION;
-        PRINT 'Error al actualizar la linea de venta: ' + ERROR_MESSAGE();;
+        PRINT 'Error al intentar actualizar la categoria: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarCargo
+--INFRAESTRUCTURA
+CREATE OR ALTER PROCEDURE infraestructura.ActualizarCargo
     @IdCargo INT,
     @Descripcion VARCHAR(25) = NULL
 AS
 BEGIN
     BEGIN TRANSACTION;
-
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.cargo WHERE IdCargo = @IdCargo)
+        IF EXISTS (SELECT 1 FROM infraestructura.Cargo WHERE IdCargo = @IdCargo)
         BEGIN
-            UPDATE ddbba.cargo
+            UPDATE infraestructura.Cargo
             SET Descripcion = COALESCE(@Descripcion, Descripcion)
             WHERE IdCargo = @IdCargo;
             COMMIT TRANSACTION;
@@ -633,7 +645,7 @@ BEGIN
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de cargo con el Id especificado.';
+            PRINT 'No se encontro el cargo con el Id especificado.';
         END
     END TRY
     BEGIN CATCH
@@ -643,31 +655,31 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarSucursal
-    @IDsucursal INT,
-    @Direccion NVARCHAR(100) = NULL,
+CREATE OR ALTER PROCEDURE infraestructura.ActualizarSucursal
+    @IDSucursal INT,
+    @Direccion VARCHAR(100) = NULL,
     @Ciudad VARCHAR(20) = NULL,
-    @Horario NVARCHAR(50) = NULL,
-    @Telefono VARCHAR(15) = NULL
+    @Horario CHAR(45) = NULL,
+    @Telefono CHAR(11) = NULL
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.sucursal WHERE IDsucursal = @IDsucursal)
+        IF EXISTS (SELECT 1 FROM infraestructura.Sucursal WHERE IDSucursal = @IDSucursal)
         BEGIN
-            UPDATE ddbba.sucursal
+            UPDATE infraestructura.Sucursal
             SET Direccion = COALESCE(@Direccion, Direccion),
                 Ciudad = COALESCE(@Ciudad, Ciudad),
                 Horario = COALESCE(@Horario, Horario),
                 Telefono = COALESCE(@Telefono, Telefono)
-            WHERE IDsucursal = @IDsucursal;
+            WHERE IDSucursal = @IDSucursal;
             COMMIT TRANSACTION;
             PRINT 'Sucursal actualizada correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de sucursal con el Id especificado.';
+            PRINT 'No se encontro la sucursal con el Id especificado.';
         END
     END TRY
     BEGIN CATCH
@@ -677,14 +689,14 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarEmpleado
+CREATE OR ALTER PROCEDURE infraestructura.ActualizarEmpleado
     @Legajo INT,
-    @Nombre NVARCHAR(20) = NULL,
-    @Apellido NVARCHAR(20) = NULL,
+    @Nombre VARCHAR(30) = NULL,
+    @Apellido VARCHAR(30) = NULL,
     @DNI INT = NULL,
-    @Direccion NVARCHAR(100) = NULL,
-    @EmailPersonal NVARCHAR(50) = NULL,
-    @EmailEmpresa NVARCHAR(50) = NULL,
+    @Direccion VARCHAR(100) = NULL,
+    @EmailPersonal VARCHAR(100) = NULL,
+    @EmailEmpresa VARCHAR(100) = NULL,
     @CUIL CHAR(11) = NULL,
     @Turno CHAR(16) = NULL,
     @Cargo INT = NULL,
@@ -693,9 +705,9 @@ AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.empleado WHERE Legajo = @Legajo)
+        IF EXISTS (SELECT 1 FROM infraestructura.Empleado WHERE Legajo = @Legajo)
         BEGIN
-            UPDATE ddbba.empleado
+            UPDATE infraestructura.Empleado
             SET Nombre = COALESCE(@Nombre, Nombre),
                 Apellido = COALESCE(@Apellido, Apellido),
                 DNI = COALESCE(@DNI, DNI),
@@ -713,7 +725,7 @@ BEGIN
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de empleado con el Legajo especificado.';
+            PRINT 'No se encontro el empleado con el legajo especificado.';
         END
     END TRY
     BEGIN CATCH
@@ -723,50 +735,157 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarTipoCliente
-    @IDTipoCliente INT,
-    @TipoCliente char(6),
-    @Descripcion VARCHAR(25) = NULL
+--FACTURACION
+CREATE OR ALTER PROCEDURE facturacion.ActualizarLineaComprobante
+    @ID INT,
+    @IdProducto INT,
+    @Cantidad INT = NULL,
+    @Monto DECIMAL(9,2) = NULL
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.TipoCliente WHERE IDTipoCliente = @IDTipoCliente)
+        IF EXISTS (SELECT 1 FROM facturacion.LineaComprobante WHERE ID = @ID AND IdProducto = @IdProducto)
         BEGIN
-            UPDATE ddbba.TipoCliente
-            SET Descripcion = COALESCE(@Descripcion, Descripcion),
-                TipoCliente = COALESCE(@TipoCliente, TipoCliente)
-            WHERE IDTipoCliente = @IDTipoCliente;
+            UPDATE facturacion.LineaComprobante
+            SET Cantidad = COALESCE(@Cantidad, Cantidad),
+                Monto = COALESCE(@Monto, Monto)
+            WHERE ID = @ID AND IdProducto = @IdProducto;
             COMMIT TRANSACTION;
-            PRINT 'Tipo de Cliente actualizado correctamente.';
+            PRINT 'Linea de comprobante actualizada correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de Tipo de Cliente con el ID especificado.';
+            PRINT 'No se encontro la linea de comprobante con los Ids especificados.';
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar actualizar el Tipo de Cliente: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar actualizar la linea de comprobante: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarCliente
+CREATE OR ALTER PROCEDURE facturacion.ActualizarComprobante
+    @ID INT,
+    @Tipo CHAR(2) = NULL,
+    @Numero CHAR(11) = NULL,
+    @Letra CHAR(1) = NULL,
+    @Fecha DATETIME = NULL,
+    @Total DECIMAL(9,2) = NULL,
+    @Cliente INT = NULL,
+    @Empleado INT = NULL,
+    @Pago INT = NULL
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM facturacion.Comprobante WHERE ID = @ID)
+        BEGIN
+            UPDATE facturacion.Comprobante
+            SET Tipo = COALESCE(@Tipo, Tipo),
+                Numero = COALESCE(@Numero, Numero),
+                Letra = COALESCE(@Letra, Letra),
+                Fecha = COALESCE(@Fecha, Fecha),
+                Total = COALESCE(@Total, Total),
+                Cliente = COALESCE(@Cliente, Cliente),
+                Empleado = COALESCE(@Empleado, Empleado),
+                Pago = COALESCE(@Pago, Pago)
+            WHERE ID = @ID;
+            COMMIT TRANSACTION;
+            PRINT 'Comprobante actualizado correctamente.';
+        END
+        ELSE
+        BEGIN
+            ROLLBACK TRANSACTION;
+            PRINT 'No se encontro el comprobante con el Id especificado.';
+        END
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar actualizar el comprobante: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.ActualizarPago
+    @IDPago INT,
+    @IdentificadorDePago VARCHAR(22) = NULL,
+    @Fecha DATETIME = NULL,
+    @MedioDePago INT = NULL
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM facturacion.Pago WHERE IDPago = @IDPago)
+        BEGIN
+            UPDATE facturacion.Pago
+            SET IdentificadorDePago = COALESCE(@IdentificadorDePago, IdentificadorDePago),
+                Fecha = COALESCE(@Fecha, Fecha),
+                MedioDePago = COALESCE(@MedioDePago, MedioDePago)
+            WHERE IDPago = @IDPago;
+            COMMIT TRANSACTION;
+            PRINT 'Pago actualizado correctamente.';
+        END
+        ELSE
+        BEGIN
+            ROLLBACK TRANSACTION;
+            PRINT 'No se encontro el pago con el Id especificado.';
+        END
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar actualizar el pago: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.ActualizarMedioDePago
+    @IDMedioDePago INT,
+    @Nombre VARCHAR(20) = NULL,
+    @Descripcion VARCHAR(50) = NULL
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM facturacion.MedioDePago WHERE IDMedioDePago = @IDMedioDePago)
+        BEGIN
+            UPDATE facturacion.MedioDePago
+            SET Nombre = COALESCE(@Nombre, Nombre),
+                Descripcion = COALESCE(@Descripcion, Descripcion)
+            WHERE IDMedioDePago = @IDMedioDePago;
+            
+            COMMIT TRANSACTION;
+            PRINT 'Medio de pago actualizado correctamente.';
+        END
+        ELSE
+        BEGIN
+            ROLLBACK TRANSACTION;
+            PRINT 'No se encontro el medio de pago con el Id especificado.';
+        END
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar actualizar el medio de pago: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.ActualizarCliente
     @IDCliente INT,
     @DNI INT = NULL,
-    @Nombre VARCHAR(20) = NULL,
-    @Apellido VARCHAR(20) = NULL,
-    @Genero CHAR = NULL,
+    @Nombre VARCHAR(25) = NULL,
+    @Apellido VARCHAR(25) = NULL,
+    @Genero CHAR(1) = NULL,
     @IDTipoCliente INT = NULL
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.cliente WHERE IDCliente = @IDCliente)
+        IF EXISTS (SELECT 1 FROM facturacion.Cliente WHERE IDCliente = @IDCliente)
         BEGIN
-            UPDATE ddbba.cliente
+            UPDATE facturacion.Cliente
             SET DNI = COALESCE(@DNI, DNI),
                 Nombre = COALESCE(@Nombre, Nombre),
                 Apellido = COALESCE(@Apellido, Apellido),
@@ -779,7 +898,7 @@ BEGIN
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de cliente con el ID especificado.';
+            PRINT 'No se encontro el cliente con el Id especificado.';
         END
     END TRY
     BEGIN CATCH
@@ -789,132 +908,31 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ActualizarMedioDePago
-    @IDMedioDePago INT,
-    @Nombre CHAR(20) = NULL,
-    @Descripcion CHAR(25) = NULL
+CREATE OR ALTER PROCEDURE facturacion.ActualizarTipoCliente
+    @IDTipoCliente INT,
+    @Nombre VARCHAR(20) = NULL
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.MedioDePago WHERE IDMedioDePago = @IDMedioDePago)
+        IF EXISTS (SELECT 1 FROM facturacion.TipoCliente WHERE IDTipoCliente = @IDTipoCliente)
         BEGIN
-            UPDATE ddbba.MedioDePago
-            SET Nombre = COALESCE(@Nombre, Nombre),
-                Descripcion = COALESCE(@Descripcion, Descripcion)
-            WHERE IDMedioDePago = @IDMedioDePago;
+            UPDATE facturacion.TipoCliente
+            SET Nombre = COALESCE(@Nombre, Nombre)
+            WHERE IDTipoCliente = @IDTipoCliente;
+            
             COMMIT TRANSACTION;
-            PRINT 'Medio De Pago actualizado correctamente.';
+            PRINT 'Tipo de cliente actualizado correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de Medio De Pago con el ID especificado.';
+            PRINT 'No se encontro el tipo de cliente con el Id especificado.';
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar actualizar el Medio De Pago: ' + ERROR_MESSAGE();
-    END CATCH;
-END;
-GO
-
-CREATE OR ALTER PROCEDURE ddbba.ActualizarPago
-    @IDPago INT,
-    @IdentificadorDePago VARCHAR(22) = NULL,
-    @Fecha DATE = NULL,
-    @MedioDePago INT = NULL
-AS
-BEGIN
-    BEGIN TRANSACTION;
-    BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.Pago WHERE IDPago = @IDPago)
-        BEGIN
-            UPDATE ddbba.Pago
-            SET IdentificadorDePago = COALESCE(@IdentificadorDePago, IdentificadorDePago),
-                Fecha = COALESCE(@Fecha, Fecha),
-                MedioDePago = COALESCE(@MedioDePago, MedioDePago)
-            WHERE IDPago = @IDPago;
-            COMMIT TRANSACTION;
-            PRINT 'Pago actualizado correctamente.';
-        END
-        ELSE
-        BEGIN
-            ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de pago con el ID especificado.';
-        END
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar actualizar el pago: ' + ERROR_MESSAGE();
-    END CATCH;
-END;
-GO
-
-CREATE OR ALTER PROCEDURE ddbba.ActualizarVenta
-    @IDVenta INT,
-    @Factura INT = NULL,
-    @TipoFactura CHAR = NULL,
-    @Fecha DATE = NULL,
-    @Total DECIMAL(9,2) = NULL,
-    @Cliente INT = NULL,
-    @Empleado INT = NULL,
-    @Pago INT = NULL
-AS
-BEGIN
-    BEGIN TRANSACTION;
-    BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.venta WHERE IDVenta = @IDVenta)
-        BEGIN
-            UPDATE ddbba.venta
-            SET Factura = COALESCE(@Factura, Factura),
-                TipoFactura = COALESCE(@TipoFactura, TipoFactura),
-                Fecha = COALESCE(@Fecha, Fecha),
-                Total = COALESCE(@Total, Total),
-                Cliente = COALESCE(@Cliente, Cliente),
-                Empleado = COALESCE(@Empleado, Empleado),
-                Pago = COALESCE(@Pago, Pago)
-            WHERE IDVenta = @IDVenta;
-            COMMIT TRANSACTION;
-            PRINT 'Venta actualizada correctamente.';
-        END
-        ELSE
-        BEGIN
-            ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de venta con el ID especificado.';
-        END
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar actualizar la venta: ' + ERROR_MESSAGE();
-    END CATCH;
-END;
-GO
-
-CREATE OR ALTER PROCEDURE ddbba.ActualizarCategoria
-    @IDCategoria INT,
-    @Descripcion VARCHAR(50) = NULL
-AS
-BEGIN
-    BEGIN TRANSACTION;
-    BEGIN TRY
-        IF EXISTS (SELECT 1 FROM ddbba.categoria WHERE IDCategoria = @IDCategoria)
-        BEGIN
-            UPDATE ddbba.categoria
-            SET Descripcion = COALESCE(@Descripcion, Descripcion)
-            WHERE IDCategoria = @IDCategoria;
-            COMMIT TRANSACTION;
-            PRINT 'Categoria actualizada correctamente.';
-        END
-        ELSE
-        BEGIN
-            ROLLBACK TRANSACTION;
-            PRINT 'No se encontró el registro de categoria con el ID especificado.';
-        END
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar actualizar la categoria: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar actualizar el tipo de cliente: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
