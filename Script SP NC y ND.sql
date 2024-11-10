@@ -1,80 +1,150 @@
-use AuroraVentas
-go
+USE COM2900G09
+GO
 
-
-CREATE OR ALTER PROCEDURE ddbba.GenerarNotaCredito
-    @VentaID INT,
-    @Motivo NVARCHAR(255),
-    @MontoCredito DECIMAL(9, 2)
-	-- aca deberia recibir las opciones de otro producto o el dinero
+CREATE OR ALTER PROCEDURE facturacion.GenerarNotaCredito
+    @ComprobanteID INT,                -- ID de la factura original
+	@EmpleadoID INT,                   -- ID del empleado que genera la nota
+    @Motivo VARCHAR(255),             
+    @MontoCredito DECIMAL(9, 2),       
+    @DevolucionProducto BIT = 0        -- 0: Devolución monetaria, 1: Devolucion de producto
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        --para que no exceda el total de la venta
+
+        --si tiene pago asociado
+        DECLARE @IDPago INT;
+        SELECT @IDPago = Pago
+        FROM facturacion.comprobante
+        WHERE ID = @ComprobanteID;
+
+        IF @IDPago IS NULL
+        BEGIN
+            PRINT 'Error: La nota de crédito solo se puede emitir para facturas pagadas.';
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+
         DECLARE @TotalVenta DECIMAL(9, 2);
-        SELECT @TotalVenta = Total FROM ddbba.venta WHERE IDVenta = @VentaID;
-        
-
-		--agregar verificacion de rol del empleado
-
-
-
-		-- añadir opcion de pedir otro producto de similar valor 
+        SELECT @TotalVenta = Total FROM facturacion.comprobante WHERE ID = @ComprobanteID;
 
         IF @MontoCredito > @TotalVenta
         BEGIN
-            PRINT 'El monto de la nota de credito no puede exceder el total de la venta';
+            PRINT 'Error: El monto de la nota de crédito no puede exceder el total de la venta.';
             ROLLBACK TRANSACTION;
             RETURN;
         END
 
        
-       -- EXEC ddbba.InsertarLog 'NotaCredito', @Motivo; ya para anticipar lo del log ver como lo manejamos dsp
+        DECLARE @NotaCreditoID INT;
+        INSERT INTO facturacion.comprobante (tipo, numero, letra, Fecha, Hora, Total, Cliente, Empleado, Pago)
+        SELECT 'NC', numero, letra, GETDATE(), CONVERT(TIME, GETDATE()), @MontoCredito, Cliente, @EmpleadoID, Pago
+        FROM facturacion.comprobante
+        WHERE ID = @ComprobanteID;
 
-	   -- para saber si esta pago solamente deberia checkear si existe el pago, ya que el valor pago del comprobante admite NULL
+        SET @NotaCreditoID = SCOPE_IDENTITY();
 
-
-
-
-	   -- hacerlo aca
         
-        UPDATE ddbba.venta
-        SET Total = Total - @MontoCredito
-        WHERE IDVenta = @VentaID;
+        IF @DevolucionProducto = 0  --- 0 = dev monetaria 
+        BEGIN
+            
+            INSERT INTO facturacion.lineaComprobante (ID, IdProducto, Cantidad, Monto)
+            SELECT @NotaCreditoID, IdProducto, Cantidad, -Monto
+            FROM facturacion.lineaComprobante
+            WHERE ID = @ComprobanteID;
+
+            PRINT 'Nota de crédito generada como devolución monetaria.';
+        END
+        ELSE						--- 1 = dev producto
+        BEGIN
+            DECLARE @IdProducto INT;
+            SELECT TOP 1 @IdProducto = IdProducto
+            FROM facturacion.lineaComprobante
+            WHERE ID = @ComprobanteID
+            ORDER BY NEWID();
+
+            INSERT INTO facturacion.lineaComprobante (ID, IdProducto, Cantidad, Monto)
+            VALUES (@NotaCreditoID, @IdProducto, 1, 0);
+
+            PRINT 'Nota de crédito generada con devolución de producto similar.';
+        END
 
         COMMIT TRANSACTION;
-        PRINT 'Nota de credito generada exitosamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al generar la nota de credito: ' + ERROR_MESSAGE();
+        PRINT 'Error al generar la nota de crédito: ' + ERROR_MESSAGE();
     END CATCH;
-END
+END;
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.GenerarNotaDebito
-    @VentaID INT,
-    @Motivo NVARCHAR(255),
-    @MontoDebito DECIMAL(9, 2)
+CREATE OR ALTER PROCEDURE facturacion.GenerarNotaDebito
+    @ComprobanteID INT,               -- ID de la factura original
+    @EmpleadoID INT,                  -- ID del empleado que genera la nota
+    @Motivo VARCHAR(255),            -- Motivo de la nota de débito
+    @MontoDebito DECIMAL(9, 2)        -- Monto del débito
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-       
-        -- EXEC ddbba.InsertarLog 'NotaDebito', @Motivo;   idem
 
-        
-        UPDATE ddbba.venta
-        SET Total = Total + @MontoDebito
-        WHERE IDVenta = @VentaID;
+        DECLARE @NotaDebitoID INT;
+        INSERT INTO facturacion.comprobante (tipo, numero, letra, Fecha, Hora, Total, Cliente, Empleado, Pago)
+        SELECT 'ND', numero, letra, GETDATE(), CONVERT(TIME, GETDATE()), @MontoDebito, Cliente, @EmpleadoID, Pago
+        FROM facturacion.comprobante
+        WHERE ID = @ComprobanteID;
+
+        SET @NotaDebitoID = SCOPE_IDENTITY();
+
+       
+        INSERT INTO facturacion.lineaComprobante (ID, IdProducto, Cantidad, Monto)
+        SELECT @NotaDebitoID, IdProducto, 1, @MontoDebito
+        FROM facturacion.lineaComprobante
+        WHERE ID = @ComprobanteID;
+
+        PRINT 'Nota de débito generada exitosamente.';
 
         COMMIT TRANSACTION;
-        PRINT 'Nota de débito generada exitosamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al generar la nota de débito: ' + ERROR_MESSAGE();
     END CATCH;
-END
+END;
+GO
+
+-----------------------------------------------------------------
+------------------- EJEMPLO DE EJECUCION ------------------------
+-----------------------------------------------------------------
+
+DECLARE @MontoCredito DECIMAL(9, 2) = 200.00;
+DECLARE @EmpleadoSupervisorID INT = 1;
+
+
+
+--Supervisor
+EXECUTE AS LOGIN = 'usuario_supervisor';
+EXEC facturacion.GenerarNotaCredito 
+    @ComprobanteID = 1, 
+	@EmpleadoID = @EmpleadoSupervisorID, 
+    @Motivo = 'Devolución parcial', 
+    @MontoCredito = 100.00, 
+    @DevolucionProducto = 0; 
+
+REVERT;
+GO
+
+--Vendedor
+
+DECLARE @EmpleadoNoSupervisorID INT = 2;
+EXECUTE AS LOGIN = 'usuario_vendedor';
+EXEC facturacion.GenerarNotaCredito 
+    @ComprobanteID = 1, 
+    @EmpleadoID = @EmpleadoNoSupervisorID, 
+    @Motivo = 'Devolución parcial', 
+    @MontoCredito = 100.00, 
+    @DevolucionProducto = 0; 
+
+REVERT;
 GO
