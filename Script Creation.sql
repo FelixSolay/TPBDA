@@ -78,23 +78,23 @@ create schema infraestructura
 GO
 
 --Se respeta este orden de borrado para que no haya conflictos con las Foreign Keys
-IF OBJECT_ID('deposito.producto', 'U') IS NOT NULL DROP TABLE deposito.producto;
-IF OBJECT_ID('facturacion.lineaComprobante', 'U') IS NOT NULL DROP TABLE facturacion.lineaComprobante;
-IF OBJECT_ID('deposito.categoria', 'U') IS NOT NULL DROP TABLE deposito.categoria;
-IF OBJECT_ID('facturacion.comprobante', 'U') IS NOT NULL DROP TABLE facturacion.comprobante;
-IF OBJECT_ID('facturacion.Pago', 'U') IS NOT NULL DROP TABLE facturacion.Pago;
-IF OBJECT_ID('facturacion.mediodePago', 'U') IS NOT NULL DROP TABLE facturacion.mediodePago;
-IF OBJECT_ID('facturacion.cliente', 'U') IS NOT NULL DROP TABLE facturacion.cliente;
-IF OBJECT_ID('facturacion.TipoCliente', 'U') IS NOT NULL DROP TABLE facturacion.TipoCliente;
-IF OBJECT_ID('infraestructura.empleado', 'U') IS NOT NULL DROP TABLE infraestructura.empleado;
-IF OBJECT_ID('infraestructura.sucursal', 'U') IS NOT NULL DROP TABLE infraestructura.sucursal;
-IF OBJECT_ID('infraestructura.cargo', 'U') IS NOT NULL DROP TABLE infraestructura.cargo;
+DROP TABLE IF EXISTS facturacion.LineaComprobante;
+DROP TABLE IF EXISTS facturacion.Comprobante;
+DROP TABLE IF EXISTS facturacion.Pago;
+DROP TABLE IF EXISTS facturacion.Cliente;
+DROP TABLE IF EXISTS facturacion.MedioDePago;
+DROP TABLE IF EXISTS facturacion.TipoCliente;   
+DROP TABLE IF EXISTS deposito.Producto;
+DROP TABLE IF EXISTS deposito.Categoria;
+DROP TABLE IF EXISTS infraestructura.Empleado;
+DROP TABLE IF EXISTS infraestructura.Sucursal;
+DROP TABLE IF EXISTS infraestructura.Cargo;
 go
 
 --Utilizamos como Pk en las tablas un int Identity para mejorar la velocidad de las consultas
 create table infraestructura.cargo(
 	IdCargo int Identity(1,1) primary key,
-	Descripcion varchar(25)
+	Descripcion varchar(25) Unique NOT NULL
 )
 go
 
@@ -126,7 +126,7 @@ go
 
 create table facturacion.TipoCliente(
     IDTipoCliente int Identity(1,1) primary key, 
-	nombre varchar(20) 	
+	nombre varchar(20) Unique NOT NULL 	
 )
 go
 
@@ -143,7 +143,7 @@ go
 
 create table facturacion.MedioDePago(
 	IDMedioDePago int Identity(1,1) primary key,
-	Nombre varchar(20),
+	Nombre varchar(20) Unique NOT NULL,
 	Descripcion varchar(50)
 )
 go
@@ -176,7 +176,7 @@ go
 
 create table deposito.categoria(
 	IDCategoria int Identity(1,1) primary key,
-	Descripcion varchar(50),
+	Descripcion varchar(50) Unique NOT NULL,
 )
 go
 
@@ -202,6 +202,34 @@ create table facturacion.lineaComprobante(
 	constraint pkLineaVenta primary key (ID, IdProducto)
 )
 go
+
+CREATE NONCLUSTERED INDEX idx_Comprobante_Numero
+ON facturacion.Comprobante (numero);
+GO
+
+CREATE NONCLUSTERED INDEX idx_Empleado_DNI
+ON infraestructura.Empleado (DNI);
+GO
+
+CREATE NONCLUSTERED INDEX idx_Cliente_DNI
+ON facturacion.Cliente (DNI);
+GO
+
+CREATE NONCLUSTERED INDEX idx_Empleado_Nombre
+ON infraestructura.Empleado (Nombre);
+GO
+
+CREATE NONCLUSTERED INDEX idx_Cliente_Nombre
+ON facturacion.Cliente (Nombre);
+GO
+
+CREATE NONCLUSTERED INDEX idx_Empleado_Apellido
+ON infraestructura.Empleado (Apellido);
+GO
+
+CREATE NONCLUSTERED INDEX idx_Cliente_Apellido
+ON facturacion.Cliente (Apellido);
+GO
 
 USE master
 GO

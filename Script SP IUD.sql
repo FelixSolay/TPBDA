@@ -10,7 +10,8 @@ Los nombres de los store procedures NO deben comenzar con “SP”.
 use COM2900G09
 go
 
---Insert Store Procedures
+--Insert Store Procedures 
+--FACTURACION
 CREATE OR ALTER PROCEDURE facturacion.InsertarPago
     @IdentificadorDePago VARCHAR(22),
     @Fecha DATETIME,
@@ -38,16 +39,19 @@ CREATE OR ALTER PROCEDURE facturacion.InsertarMedioDePago
 AS
 BEGIN
     BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IdMedioDePago),0) FROM facturacion.MedioDePago);
     BEGIN TRY
         INSERT INTO facturacion.MedioDePago (Nombre, Descripcion)
         VALUES (@Nombre, @Descripcion);
-        
+        DBCC CHECKIDENT ('facturacion.MedioDePago', RESEED, @MaxID);
         COMMIT TRANSACTION;
-        PRINT 'Medio De Pago insertado correctamente.';
+        PRINT 'MedioDePago insertado correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar el Medio De Pago: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar insertar el MedioDePago: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('facturacion.MedioDePago', RESEED, @MaxID);
     END CATCH;
 END;
 GO
@@ -63,8 +67,7 @@ BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
         INSERT INTO facturacion.Cliente (DNI, Nombre, Apellido, Genero, IDTipoCliente)
-        VALUES (@DNI, @Nombre, @Apellido, @Genero, @IDTipoCliente);
-        
+        VALUES (@DNI, @Nombre, @Apellido, @Genero, @IDTipoCliente);        
         COMMIT TRANSACTION;
         PRINT 'Cliente insertado correctamente.';
     END TRY
@@ -75,19 +78,24 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.InsertarTipoCliente @nombre VARCHAR(20)
+CREATE OR ALTER PROCEDURE facturacion.InsertarTipoCliente
+    @Nombre VARCHAR(20)
 AS
 BEGIN
     BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IDTipoCliente),0) FROM facturacion.TipoCliente);
     BEGIN TRY
-        INSERT INTO facturacion.TipoCliente (nombre)
-        VALUES (@nombre);
+        INSERT INTO facturacion.TipoCliente (Nombre)
+        VALUES (@Nombre);
+        DBCC CHECKIDENT ('facturacion.TipoCliente', RESEED, @MaxID);
         COMMIT TRANSACTION;
-        PRINT 'Tipo de Cliente insertado correctamente.';
+        PRINT 'TipoCliente insertado correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar el Tipo de Cliente: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar insertar el TipoCliente: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('facturacion.TipoCliente', RESEED, @MaxID);
     END CATCH;
 END;
 GO
@@ -103,7 +111,6 @@ BEGIN
     BEGIN TRY
         INSERT INTO facturacion.LineaComprobante (ID, IdProducto, Cantidad, Monto)
         VALUES (@ID, @IdProducto, @Cantidad, @Monto);
-        
         COMMIT TRANSACTION;
         PRINT 'Linea de Comprobante insertada correctamente.';
     END TRY
@@ -140,21 +147,26 @@ BEGIN
 END;
 GO
 
+--DEPOSITO
+
 CREATE OR ALTER PROCEDURE deposito.InsertarCategoria
     @Descripcion VARCHAR(50)
 AS
 BEGIN
     BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IDCategoria),0) FROM deposito.categoria);
     BEGIN TRY
         INSERT INTO deposito.Categoria (Descripcion)
         VALUES (@Descripcion);
-        
+        DBCC CHECKIDENT ('deposito.Categoria', RESEED, @MaxID);
         COMMIT TRANSACTION;
         PRINT 'Categoria insertada correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al intentar insertar la Categoria: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('deposito.Categoria', RESEED, @MaxID);
     END CATCH;
 END;
 GO
@@ -162,27 +174,31 @@ GO
 CREATE OR ALTER PROCEDURE deposito.InsertarProducto
     @Categoria INT,
     @Nombre VARCHAR(100),
-    @Precio DECIMAL(9,2),
-    @PrecioReferencia DECIMAL(9,2),
+    @Precio DECIMAL(9, 2),
+    @PrecioReferencia DECIMAL(9, 2),
     @UnidadReferencia CHAR(2),
     @Fecha DATETIME
 AS
 BEGIN
     BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IDProducto),0) FROM deposito.producto);
     BEGIN TRY
         INSERT INTO deposito.Producto (Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha)
         VALUES (@Categoria, @Nombre, @Precio, @PrecioReferencia, @UnidadReferencia, @Fecha);
-        
+        DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID);
         COMMIT TRANSACTION;
         PRINT 'Producto insertado correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al intentar insertar el Producto: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID);
     END CATCH;
 END;
 GO
 
+--INFRAESTRUCTURA
 CREATE OR ALTER PROCEDURE infraestructura.InsertarEmpleado
     @Legajo INT,
     @Nombre VARCHAR(30),
@@ -220,41 +236,48 @@ CREATE OR ALTER PROCEDURE infraestructura.InsertarSucursal
 AS
 BEGIN
     BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IDsucursal),0) FROM infraestructura.Sucursal);
     BEGIN TRY
         INSERT INTO infraestructura.Sucursal (Direccion, Ciudad, Horario, Telefono)
         VALUES (@Direccion, @Ciudad, @Horario, @Telefono);
-        
+        DBCC CHECKIDENT ('infraestructura.Sucursal', RESEED, @MaxID);
         COMMIT TRANSACTION;
         PRINT 'Sucursal insertada correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al intentar insertar la Sucursal: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('infraestructura.Sucursal', RESEED, @MaxID);
     END CATCH;
 END;
 GO
+
 
 CREATE OR ALTER PROCEDURE infraestructura.InsertarCargo
     @Descripcion VARCHAR(25)
 AS
 BEGIN
     BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IDcargo),0) FROM infraestructura.cargo);
     BEGIN TRY
         INSERT INTO infraestructura.Cargo (Descripcion)
         VALUES (@Descripcion);
-        
+        DBCC CHECKIDENT ('infraestructura.Cargo', RESEED, @MaxID);
         COMMIT TRANSACTION;
         PRINT 'Cargo insertado correctamente.';
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al intentar insertar el Cargo: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('infraestructura.Cargo', RESEED, @MaxID);
     END CATCH;
 END;
 GO
 
-
 --Delete Stored Procedures
+--DEPOSITO
 CREATE OR ALTER PROCEDURE deposito.EliminarProducto
     @IDProducto INT
 AS
@@ -280,6 +303,33 @@ BEGIN
 END;
 GO
 
+CREATE OR ALTER PROCEDURE deposito.EliminarCategoria
+    @IDCategoria INT
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM deposito.categoria WHERE IDCategoria = @IDCategoria)
+        BEGIN
+            DELETE FROM deposito.categoria WHERE IDCategoria = @IDCategoria;
+            COMMIT TRANSACTION;
+            PRINT 'Categoria eliminada correctamente.';
+        END
+        ELSE
+        BEGIN
+            ROLLBACK TRANSACTION;
+            PRINT 'No se encontro el registro de Categoria con el ID especificado.';
+        END
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar eliminar la Categoria: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+
+--FACTURACION
 CREATE OR ALTER PROCEDURE facturacion.EliminarLineaComprobante
     @ID INT,
     @IDProducto INT
@@ -302,31 +352,6 @@ BEGIN
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al intentar eliminar la Linea de Comprobante: ' + ERROR_MESSAGE();
-    END CATCH;
-END;
-GO
-
-CREATE OR ALTER PROCEDURE deposito.EliminarCategoria
-    @IDCategoria INT
-AS
-BEGIN
-    BEGIN TRANSACTION;
-    BEGIN TRY
-        IF EXISTS (SELECT 1 FROM deposito.categoria WHERE IDCategoria = @IDCategoria)
-        BEGIN
-            DELETE FROM deposito.categoria WHERE IDCategoria = @IDCategoria;
-            COMMIT TRANSACTION;
-            PRINT 'Categoria eliminada correctamente.';
-        END
-        ELSE
-        BEGIN
-            ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el registro de Categoria con el ID especificado.';
-        END
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar eliminar la Categoria: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
@@ -456,6 +481,7 @@ BEGIN
 END;
 GO
 
+--INFRAESTRUCTURA
 CREATE OR ALTER PROCEDURE infraestructura.EliminarEmpleado
     @Legajo INT
 AS
@@ -533,7 +559,7 @@ END;
 GO
 
 --Update Store procedures
-
+--DEPOSITO
 CREATE OR ALTER PROCEDURE deposito.ActualizarProducto
     @IDProducto INT,
     @Categoria INT = NULL,
@@ -600,6 +626,7 @@ BEGIN
 END;
 GO
 
+--INFRAESTRUCTURA
 CREATE OR ALTER PROCEDURE infraestructura.ActualizarCargo
     @IdCargo INT,
     @Descripcion VARCHAR(25) = NULL
@@ -708,6 +735,7 @@ BEGIN
 END;
 GO
 
+--FACTURACION
 CREATE OR ALTER PROCEDURE facturacion.ActualizarLineaComprobante
     @ID INT,
     @IdProducto INT,
