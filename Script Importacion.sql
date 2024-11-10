@@ -1,10 +1,14 @@
 USE COM2900G09
 GO
 
-EXEC deposito.InsertarCategoria @Descripcion = 'Accessorios electronicos'
-EXEC deposito.InsertarCategoria @Descripcion = 'Productos importados'
+CREATE TABLE #Constants(
+	ID int identity(1,1),
+	Valor NVARCHAR(MAX)
+)
+INSERT #Constants(Valor) VALUES ('C:\Users\juanp\Downloads')
+INSERT #Constants(Valor) VALUES ('Microsoft.ACE.OLEDB.16.0')
+INSERT #Constants(Valor) VALUES ('Excel 12.0')
 GO
-
 
 CREATE OR ALTER PROCEDURE facturacion.ImportVentas
 	@Path NVARCHAR(MAX)
@@ -32,7 +36,7 @@ BEGIN
 	DECLARE @SQLBulk NVARCHAR(MAX)
 
 	SET @SQLBulk = 'BULK INSERT #VentasRegistradasCSV
-					FROM ' + @Path + '\' + 'Ventas_registradas.csv 
+					FROM''' + @Path + '\Ventas_registradas.csv''
 					WITH
 					(
 						FIRSTROW = 2,
@@ -61,10 +65,11 @@ BEGIN
 				LEFT JOIN deposito.producto 	  AS c ON a.producto = c.nombre
 
 		DROP TABLE #VentasRegistradasCSV
+
 		COMMIT TRANSACTION
 	END TRY
 	BEGIN CATCH
-		SELECT ERROR_MESSAGE()
+		SELECT ERROR_MESSAGE() AS ImportVentas
 		--Los identitys se mantienen avanzados a pesar del rollback
 		ROLLBACK TRANSACTION
 	END CATCH
@@ -72,7 +77,9 @@ END
 GO
 
 CREATE OR ALTER PROCEDURE deposito.ImportProductos
-	@Path NVARCHAR(MAX)
+	@Path  NVARCHAR(MAX),
+	@OLEDB NVARCHAR(MAX),
+	@EXCEL NVARCHAR(MAX)
 AS
 BEGIN
 	create table #Producto(
@@ -87,8 +94,6 @@ BEGIN
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 	BEGIN TRANSACTION 
 	DECLARE @SQL   NVARCHAR(MAX)
-	DECLARE @OLEDB NVARCHAR(MAX) = 'Microsoft.ACE.OLEDB.16.0'
-	DECLARE @EXCEL NVARCHAR(MAX) = 'Excel 12.0'
 
 	BEGIN TRY
 		-- Electronic accessories.xlsx -> Sheet1
@@ -144,14 +149,16 @@ BEGIN
 		COMMIT TRANSACTION 
 	END TRY
 	BEGIN CATCH
-		SELECT ERROR_MESSAGE()
+		SELECT ERROR_MESSAGE() AS ImportProductos
 		ROLLBACK TRANSACTION
 	END CATCH
 END
 GO
 
 CREATE OR ALTER PROCEDURE infraestructura.ImportSucursal
-	@Path NVARCHAR(MAX)
+	@Path  NVARCHAR(MAX),
+	@OLEDB NVARCHAR(MAX),
+	@EXCEL NVARCHAR(MAX)
 AS
 BEGIN
 	create table #Sucursal(
@@ -162,9 +169,7 @@ BEGIN
 	)
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 	BEGIN TRANSACTION 
-	DECLARE @SQL   NVARCHAR(MAX)
-	DECLARE @OLEDB NVARCHAR(MAX) = 'Microsoft.ACE.OLEDB.16.0'
-	DECLARE @EXCEL NVARCHAR(MAX) = 'Excel 12.0'
+	DECLARE @SQL NVARCHAR(MAX)
 
 	BEGIN TRY
 		-- Informacion_complementaria.xlsx -> sucursal
@@ -185,14 +190,16 @@ BEGIN
 		COMMIT TRANSACTION 
 	END TRY
 	BEGIN CATCH
-		SELECT ERROR_MESSAGE()
+		SELECT ERROR_MESSAGE() AS ImportSucursal
 		ROLLBACK TRANSACTION
 	END CATCH
 END
 GO
 
 CREATE OR ALTER PROCEDURE infraestructura.ImportEmpleados
-	@Path NVARCHAR(MAX)
+	@Path  NVARCHAR(MAX),
+	@OLEDB NVARCHAR(MAX),
+	@EXCEL NVARCHAR(MAX)
 AS
 BEGIN
 	create table #Empleados(
@@ -210,9 +217,7 @@ BEGIN
 	)
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 	BEGIN TRANSACTION 
-	DECLARE @SQL   NVARCHAR(MAX)
-	DECLARE @OLEDB NVARCHAR(MAX) = 'Microsoft.ACE.OLEDB.16.0'
-	DECLARE @EXCEL NVARCHAR(MAX) = 'Excel 12.0'
+	DECLARE @SQL NVARCHAR(MAX)
 
 	BEGIN TRY
 		-- Informacion_complementaria.xlsx -> Empleados
@@ -234,14 +239,16 @@ BEGIN
 		COMMIT TRANSACTION 
 	END TRY
 	BEGIN CATCH
-		SELECT ERROR_MESSAGE()
+		SELECT ERROR_MESSAGE() AS ImportEmpleados
 		ROLLBACK TRANSACTION
 	END CATCH
 END
 GO
 
 CREATE OR ALTER PROCEDURE facturacion.ImportMediosPago
-	@Path NVARCHAR(MAX)
+	@Path  NVARCHAR(MAX),
+	@OLEDB NVARCHAR(MAX),
+	@EXCEL NVARCHAR(MAX)
 AS
 BEGIN
 	create table #MediosPago(
@@ -251,9 +258,7 @@ BEGIN
 	)
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 	BEGIN TRANSACTION 
-	DECLARE @SQL   NVARCHAR(MAX)
-	DECLARE @OLEDB NVARCHAR(MAX) = 'Microsoft.ACE.OLEDB.16.0'
-	DECLARE @EXCEL NVARCHAR(MAX) = 'Excel 12.0'
+	DECLARE @SQL NVARCHAR(MAX)
 
 	BEGIN TRY
 		-- Informacion_complementaria.xlsx -> medios de pago
@@ -275,14 +280,16 @@ BEGIN
 		COMMIT TRANSACTION 
 	END TRY
 	BEGIN CATCH
-		SELECT ERROR_MESSAGE()
+		SELECT ERROR_MESSAGE() AS ImportMediosPago
 		ROLLBACK TRANSACTION
 	END CATCH
 END
 GO
 
 CREATE OR ALTER PROCEDURE deposito.ImportCategoria
-	@Path NVARCHAR(MAX)
+	@Path  NVARCHAR(MAX),
+	@OLEDB NVARCHAR(MAX),
+	@EXCEL NVARCHAR(MAX)
 AS
 BEGIN
 	create table #Categoria(
@@ -293,9 +300,7 @@ BEGIN
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 	BEGIN TRANSACTION 
 
-	DECLARE @SQL   NVARCHAR(MAX)
-	DECLARE @OLEDB NVARCHAR(MAX) = 'Microsoft.ACE.OLEDB.16.0'
-	DECLARE @EXCEL NVARCHAR(MAX) = 'Excel 12.0'
+	DECLARE @SQL NVARCHAR(MAX)
 
 	BEGIN TRY
 		-- Informacion_complementaria.xlsx -> Clasificacion de productos
@@ -316,40 +321,49 @@ BEGIN
 		COMMIT TRANSACTION 
 	END TRY
 	BEGIN CATCH
-		SELECT ERROR_MESSAGE()
+		SELECT ERROR_MESSAGE() AS ImportCategoria
 		ROLLBACK TRANSACTION
 	END CATCH
 END
 GO
 
-CREATE TABLE #Path(
-			Valor NVARCHAR(MAX)
-		)
-INSERT #Path(Valor) VALUES ('C:\Users\juanp\Downloads')
+CREATE OR ALTER PROCEDURE infraestructura.ExecuteImports
+AS
+BEGIN
+	DECLARE @Path  NVARCHAR(MAX)
+	DECLARE @OLEDB NVARCHAR(MAX)
+	DECLARE @Excel NVARCHAR(MAX)
+
+	SELECT @Path = Valor  FROM #Constants
+		WHERE ID = 1
+	SELECT @OLEDB = Valor FROM #Constants
+		WHERE ID = 2
+	SELECT @Excel = Valor FROM #Constants
+		WHERE ID = 3
+
+	BEGIN TRY
+		-- Secuencia 1
+		EXEC infraestructura.ImportSucursal @Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel
+		EXEC deposito.ImportCategoria 		@Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel
+		EXEC facturacion.ImportMediosPago 	@Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel
+
+		-- Secuencia 2	
+		EXEC infraestructura.ImportEmpleados @Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel --Da error: Conversion failed when converting the varchar value '3.6383e+007' to data type int.
+		EXEC deposito.ImportProductos 		 @Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel --Da error: String or binary data would be truncated in table 'COM2900G09.deposito.producto', column 'UnidadReferencia'. Truncated value: '10'.
+
+		-- Secuencia 3
+		EXEC facturacion.ImportVentas @Path = @Path --Depende de empleados y productos
+	END TRY
+	BEGIN CATCH
+		SELECT ERROR_MESSAGE() AS ExecuteImports
+		ROLLBACK TRANSACTION
+	END CATCH
+END
 GO
 
--- Secuencia 1
-DECLARE @ConstantPath VARCHAR(MAX)
-SELECT @ConstantPath = Valor FROM #Path
-EXEC infraestructura.ImportSucursal @Path = @ConstantPath
-EXEC deposito.ImportCategoria @Path = @ConstantPath
-EXEC facturacion.mportMediosPago @Path = @ConstantPath
-GO
+EXEC infraestructura.ExecuteImports
 
--- Secuencia 2
-DECLARE @ConstantPath VARCHAR(MAX)
-SELECT @ConstantPath = Valor FROM #Path
-EXEC infraestructura.ImportEmpleados @Path = @ConstantPath
-EXEC deposito.ImportProductos @Path = @ConstantPath
-GO
-
--- Secuencia 3
-DECLARE @ConstantPath VARCHAR(MAX)
-SELECT @ConstantPath = Valor FROM #Path
-EXEC facturacion.ImportVentas @Path = @ConstantPath
-GO
-
-DROP TABLE #Path
+DROP TABLE #Constants
 GO
 
 USE master
