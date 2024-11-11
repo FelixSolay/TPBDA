@@ -125,7 +125,8 @@ CREATE OR ALTER PROCEDURE facturacion.InsertarComprobante
     @tipo CHAR(2),
     @numero CHAR(11),
     @letra CHAR(1),
-    @Fecha DATETIME,
+    @Fecha DATE,
+    @Hora TIME,
     @Total DECIMAL(9,2),
     @Cliente INT,
     @Empleado INT,
@@ -134,8 +135,8 @@ AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        INSERT INTO facturacion.Comprobante (tipo, numero, letra, Fecha, Total, Cliente, Empleado, Pago)
-        VALUES (@tipo, @numero, @letra, @Fecha, @Total, @Cliente, @Empleado, @Pago);
+        INSERT INTO facturacion.Comprobante (tipo, numero, letra, Fecha, Hora, Total, Cliente, Empleado, Pago)
+        VALUES (@tipo, @numero, @letra, @Fecha, @Hora, @Total, @Cliente, @Empleado, @Pago);
         
         COMMIT TRANSACTION;
         PRINT 'Comprobante insertado correctamente.';
@@ -772,7 +773,8 @@ CREATE OR ALTER PROCEDURE facturacion.ActualizarComprobante
     @Tipo CHAR(2) = NULL,
     @Numero CHAR(11) = NULL,
     @Letra CHAR(1) = NULL,
-    @Fecha DATETIME = NULL,
+    @Fecha DATE = NULL,
+    @Hora TIME = NULL,
     @Total DECIMAL(9,2) = NULL,
     @Cliente INT = NULL,
     @Empleado INT = NULL,
@@ -788,6 +790,7 @@ BEGIN
                 Numero = COALESCE(@Numero, Numero),
                 Letra = COALESCE(@Letra, Letra),
                 Fecha = COALESCE(@Fecha, Fecha),
+                Hora = COALESCE(@Hora, Hora),
                 Total = COALESCE(@Total, Total),
                 Cliente = COALESCE(@Cliente, Cliente),
                 Empleado = COALESCE(@Empleado, Empleado),
