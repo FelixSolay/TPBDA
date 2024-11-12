@@ -22,6 +22,9 @@ La base de datos almacenara y administrara informacion sobre ventas, productos, 
 0. Script TEST IUD
 
 # Particularidades
-La tabla <Constants> contiene parametro
+La tabla 'Constants' contiene parametros genericos que deben modificarse para la ejecucion en el dispositivo servidor; estos son:
+1. Version OLE DB
+2. Compilacion Excel
+3. Path de archivos de import
 
 
