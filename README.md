@@ -19,8 +19,9 @@ La base de datos almacenara y administrara informacion sobre ventas, productos, 
 4. Script SP NC y ND
 5. Script SP imports
 
-X. Script TEST IUD
+0. Script TEST IUD
 
-
+# Particularidades
+La tabla <Constants> contiene parametro
 
 
