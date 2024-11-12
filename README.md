@@ -1,5 +1,7 @@
 #Trabajo Practico Base de Datos Avanzada (UNLaM)
+
 Informe sobre SQL Server para el Proyecto de Gestion de Supermercado
+
 Integrantes:
 
 Alan
