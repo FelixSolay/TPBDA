@@ -1,35 +1,26 @@
-#Trabajo Practico Base de Datos Avanzada (UNLaM)
+# Trabajo Practico Base de Datos Avanzada (UNLaM)
 
 Informe sobre SQL Server para el Proyecto de Gestion de Supermercado
 
-#Integrantes:
-
-Alan
-
-Correa, Juan Pablo
-
-De Solay, Felix
-
-Weidmann, German
-
+# Integrantes:
+- Correa, Juan Pablo
+- De Solay, Felix
+- Weidmann, German
+- Alan
 
 #Objetivo
 
 La base de datos almacenara y administrara informacion sobre ventas, productos, clientes, empleados (y demas entidades) junto con sus operaciones que son criticas para el manejo del supermercado minorista.
 
-#Orden de ejecucion de Scripts:
+# Orden de ejecucion de Scripts:
 
-Creacion
+1. Script Creacion
+2. Script SP IUD
+3. Script Permisos
+4. Script SP NC y ND
+5. Script SP imports
 
-SP IUD
-
-Permisos
-
-SP NC y ND
-
-SP imports
-
-TEST IUD
+X. Script TEST IUD
 
 
 
