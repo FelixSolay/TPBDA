@@ -2,7 +2,7 @@
 
 Informe sobre SQL Server para el Proyecto de Gestion de Supermercado
 
-Integrantes:
+#Integrantes:
 
 Alan
 
@@ -14,4 +14,23 @@ Weidmann, German
 
 
 #Objetivo
+
 La base de datos almacenara y administrara informacion sobre ventas, productos, clientes, empleados (y demas entidades) junto con sus operaciones que son criticas para el manejo del supermercado minorista.
+
+#Orden de ejecucion de Scripts:
+
+Creacion
+
+SP IUD
+
+Permisos
+
+SP NC y ND
+
+SP imports
+
+TEST IUD
+
+
+
+
