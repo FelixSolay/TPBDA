@@ -52,11 +52,14 @@ BEGIN
 
         
         DECLARE @Fecha DATETIME = GETDATE();
-        EXEC facturacion.InsertarComprobante    --- no se si falta agregar lo de la hora en este SP  -- seria asi: CONVERT(TIME, GETDATE())
+		DECLARE @Hora TIME = CONVERT(TIME, GETDATE());
+
+        EXEC facturacion.InsertarComprobante 
             @tipo = 'NC',
             @numero = @NuevoNumero,
             @letra = @Letra,
             @Fecha = @Fecha,
+			@Hora = @Hora,
             @Total = @MontoCredito,
             @Cliente = @ClienteID,
             @Empleado = @EmpleadoID,
@@ -73,7 +76,7 @@ BEGIN
             
             SELECT TOP 1 @IdCategoriaOriginal = p.categoria
             FROM facturacion.lineaComprobante lc
-            JOIN deposito.producto p ON lc.IdProducto = p.IDProducto
+            INNER JOIN deposito.producto p ON lc.IdProducto = p.IDProducto
             WHERE lc.ID = @ComprobanteID;
 
            
@@ -108,8 +111,8 @@ BEGIN
             -- Devolución monetaria
 			EXEC facturacion.InsertarLineaComprobante
                 @ID = @NotaCreditoID,
-                @IdProducto = NULL,           -- No se asocia a ningún producto específico
-                @Cantidad = 1,                -- Cantidad establecida en 1
+                @IdProducto = NULL,           -- No asociado a ningun prod
+                @Cantidad = 1,                
                 @Monto = @MontoCredito;     
 
             PRINT 'Nota de crédito generada como devolución monetaria.';
@@ -127,7 +130,7 @@ CREATE OR ALTER PROCEDURE facturacion.GenerarNotaDebito
     @ComprobanteID INT,               -- ID de la factura original
     @EmpleadoID INT,                  -- ID del empleado que genera la nota
     -- @Motivo VARCHAR(255),            -- no lo estamos usando
-    @MontoDebito DECIMAL(9, 2)        -- Monto del débito
+    @MontoDebito DECIMAL(9, 2)       
 AS
 BEGIN
 
@@ -147,11 +150,14 @@ BEGIN
 
        
         DECLARE @Fecha DATETIME = GETDATE();
+		DECLARE @Hora TIME = CONVERT(TIME, GETDATE());
+
         EXEC facturacion.InsertarComprobante
             @tipo = 'ND',
             @numero = @NuevoNumero,
             @letra = @Letra,
-            @Fecha = @Fecha,							--- no se si falta agregar lo de la hora en este SP  -- seria asi: CONVERT(TIME, GETDATE())
+            @Fecha = @Fecha,
+			@Hora = @Hora,
             @Total = @MontoDebito,
             @Cliente = @ClienteID,
             @Empleado = @EmpleadoID,
@@ -165,7 +171,7 @@ BEGIN
             @ID = @NotaDebitoID,
             @IdProducto = NULL,         -- no asociada a un producto específico
             @Cantidad = 1,              
-            @Monto = @MontoDebito;      -- Monto de la nota de débito
+            @Monto = @MontoDebito;     
 
         PRINT 'Nota de débito generada exitosamente.';
 
@@ -218,7 +224,7 @@ EXEC facturacion.GenerarNotaCredito
 REVERT;
 GO
 
---Vendedor
+--Vendedor - monetario
 
 DECLARE @EmpleadoNoSupervisorID INT = 2;
 EXECUTE AS LOGIN = 'usuario_vendedor';
@@ -238,15 +244,17 @@ USE COM2900G09
 GO
 -- Agregamos campo para los datos cifrados
 ALTER TABLE infraestructura.empleado
-    ADD DireccionCifrada VARBINARY(MAX),
-        EmailPersonalCifrado VARBINARY(MAX);
+    ADD DireccionCifrada VARBINARY(256),
+        EmailPersonalCifrado VARBINARY(256);
 GO
+
+---- dropeamos la direccion sin cifrar? ------
+
 
 -- Obtenemos la clave de cifrado 
 DECLARE @FraseClave NVARCHAR(128) = 'CifraDatos';
 
 -- Ciframos los datos personales de los empleados.
--- Agrega un Hash (PK IdEmpleado al cifrado)
 
 
 
