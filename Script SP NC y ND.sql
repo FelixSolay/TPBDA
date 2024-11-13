@@ -1,10 +1,74 @@
 USE COM2900G09
 GO
 
+CREATE TYPE facturacion.TipoProductos AS TABLE
+(
+    IdProducto INT,
+    Cantidad INT,
+    Monto DECIMAL(9, 2)
+);
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.GenerarFactura
+    @ClienteID INT,                      -- ID del cliente
+    @EmpleadoID INT,                     -- ID del empleado que genera la factura
+	@Letra CHAR(1),
+    @Productos facturacion.TipoProductos READONLY -- Parametro en forma de tabla
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        -- Generar un nuevo número secuencial para la factura
+        DECLARE @NuevoNumero CHAR(11);
+        SELECT @NuevoNumero = RIGHT('0000000000' + CAST(ISNULL(MAX(CAST(numero AS INT)) + 1, 1) AS VARCHAR), 11)
+        FROM facturacion.comprobante
+        WHERE tipo = 'FC';
+
+        
+        DECLARE @Fecha DATE = GETDATE();
+        DECLARE @Hora TIME = CONVERT(TIME, GETDATE());
+        DECLARE @TotalFactura DECIMAL(9, 2) = 0.0; 
+
+        
+        SELECT @TotalFactura = SUM(Monto * Cantidad)
+        FROM @Productos;
+
+        EXEC facturacion.InsertarComprobante
+            @tipo = 'FC',
+            @numero = @NuevoNumero,
+            @letra = @Letra,                  
+            @Fecha = @Fecha,
+            @Hora = @Hora,
+            @Total = @TotalFactura,
+            @Cliente = @ClienteID,
+            @Empleado = @EmpleadoID,
+            @Pago = NULL;
+
+       
+        DECLARE @FacturaID INT = SCOPE_IDENTITY();
+
+        
+        INSERT INTO facturacion.LineaComprobante (ID, IdProducto, Cantidad, Monto)
+        SELECT @FacturaID, IdProducto, Cantidad, Monto
+        FROM @Productos;
+
+        PRINT 'Factura generada exitosamente con todos los productos.';
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al generar la factura: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+---faltan ver cosas propias del calculo de la factura. ----
+
+
+
 CREATE OR ALTER PROCEDURE facturacion.GenerarNotaCredito
     @ComprobanteID INT,                -- ID de la factura original
 	@EmpleadoID INT,                   -- ID del empleado que genera la nota
-    --@Motivo VARCHAR(255),             -- no lo estamos usando
     @MontoCredito DECIMAL(9, 2),       
     @DevolucionProducto BIT = 0,        -- 0: Devolución monetaria, 1: Devolucion de producto
 	@IdProductoDevolucion INT = NULL 
@@ -129,7 +193,6 @@ GO
 CREATE OR ALTER PROCEDURE facturacion.GenerarNotaDebito
     @ComprobanteID INT,               -- ID de la factura original
     @EmpleadoID INT,                  -- ID del empleado que genera la nota
-    -- @Motivo VARCHAR(255),            -- no lo estamos usando
     @MontoDebito DECIMAL(9, 2)       
 AS
 BEGIN
@@ -185,9 +248,29 @@ BEGIN
 END;
 GO
 
+
+
+
 -----------------------------------------------------------------
 ------------------- EJEMPLO DE EJECUCION ------------------------
 -----------------------------------------------------------------
+
+DECLARE @Productos facturacion.TipoProductos;
+INSERT INTO @Productos (IdProducto, Cantidad, Monto)
+VALUES (1, 2, 150.00),  -- Producto 1, cantidad 2, monto unitario 150.00
+       (2, 1, 200.00);  -- Producto 2, cantidad 1, monto unitario 200.00
+
+
+-- generamos la factura
+EXEC facturacion.GenerarFactura
+    @ClienteID = 123,
+    @EmpleadoID = 456,
+	@Letra = 'A',
+    @Productos = @Productos;
+GO
+
+
+
 
 DECLARE @MontoCredito DECIMAL(9, 2) = 200.00;
 DECLARE @EmpleadoSupervisorID INT = 1;
@@ -200,7 +283,6 @@ EXECUTE AS LOGIN = 'usuario_supervisor';
 EXEC facturacion.GenerarNotaCredito 
     @ComprobanteID = 1, 
 	@EmpleadoID = @EmpleadoSupervisorID, 
-    --@Motivo = 'Devolución parcial', 
     @MontoCredito = 100.00, 
     @DevolucionProducto = 0; 
 
@@ -216,7 +298,6 @@ EXECUTE AS LOGIN = 'usuario_supervisor';
 EXEC facturacion.GenerarNotaCredito
 	@EmpleadoID = @EmpleadoSupervisorID, 
 	@ComprobanteID = 1,
-    --@Motivo = 'Devolución de producto de la misma categoría',
     @MontoCredito = 100.00,
     @DevolucionProducto = 1,                  -- Indica que es devolucion por producto
     @IdProductoDevolucion = @IdProductoDevolucion;
@@ -231,7 +312,6 @@ EXECUTE AS LOGIN = 'usuario_vendedor';
 EXEC facturacion.GenerarNotaCredito 
     @ComprobanteID = 1, 
     @EmpleadoID = @EmpleadoNoSupervisorID, 
-    --@Motivo = 'Devolución parcial', 
     @MontoCredito = 100.00, 
     @DevolucionProducto = 0; 
 
