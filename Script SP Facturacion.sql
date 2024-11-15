@@ -9,7 +9,7 @@ Los nombres de los store procedures NO deben comenzar con “SP”.
 use COM2900G09
 go
 
--- INSERTS
+-------------------- INSERTS --------------------
 
 CREATE OR ALTER PROCEDURE facturacion.InsertarPago
 	@Factura			 INT,
@@ -236,7 +236,7 @@ BEGIN
 END
 GO
 
--- DELETES
+-------------------- DELETES --------------------
 
 CREATE OR ALTER PROCEDURE facturacion.EliminarLineaPedido
     @ID INT,
@@ -348,6 +348,7 @@ BEGIN
         IF EXISTS (SELECT 1 FROM facturacion.cliente WHERE IDCliente = @IDCliente)
         BEGIN
             DELETE FROM facturacion.cliente WHERE IDCliente = @IDCliente;
+            
             COMMIT TRANSACTION;
             PRINT 'Cliente eliminado correctamente.';
         END
@@ -373,6 +374,7 @@ BEGIN
         IF EXISTS (SELECT 1 FROM facturacion.TipoCliente WHERE IDTipoCliente = @IDTipoCliente)
         BEGIN
             DELETE FROM facturacion.TipoCliente WHERE IDTipoCliente = @IDTipoCliente;
+            
             COMMIT TRANSACTION;
             PRINT 'Tipo de Cliente eliminado correctamente.';
         END
@@ -389,7 +391,7 @@ BEGIN
 END;
 GO
 
--- UPDATES
+-------------------- UPDATES --------------------
 
 CREATE OR ALTER PROCEDURE facturacion.ActualizarLineaPedido
     @ID INT,
@@ -423,44 +425,6 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.CerrarPedido
-    @ID INT
-AS
-BEGIN
-    DECLARE @MontoNeto DECIMAL(9,2)
-
-    SELECT @MontoNeto = SUM(Importe)
-        from (SELECT IDProducto, Cantidad * Monto AS Importe
-                FROM facturacion.LineaPedido
-					WHERE ID = @ID) AS a
-
-    BEGIN TRANSACTION
-    BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.Pedido WHERE ID = @ID)
-        BEGIN
-            UPDATE facturacion.Pedido
-                SET MontoNeto   = COALESCE(@MontoNeto, MontoNeto),
-					Cerrado = 1
-					WHERE ID = @ID;
-
-            EXEC facturacion.GenerarFactura @IDPedido = @ID, @Importe = @MontoNeto
-
-            COMMIT TRANSACTION;
-            PRINT 'Pedido actualizado correctamente.';
-        END
-        ELSE
-        BEGIN
-            ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el Pedido con el Id especificado.';
-        END
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar actualizar el Pedido: ' + ERROR_MESSAGE();
-    END CATCH;
-END;
-GO
-
 CREATE OR ALTER PROCEDURE facturacion.ActualizarPago
     @IDPago INT,
     @IdentificadorDePago VARCHAR(22) = NULL,
@@ -473,10 +437,11 @@ BEGIN
         IF EXISTS (SELECT 1 FROM facturacion.Pago WHERE IDPago = @IDPago)
         BEGIN
             UPDATE facturacion.Pago
-            SET IdentificadorDePago = COALESCE(@IdentificadorDePago, IdentificadorDePago),
-                Fecha = COALESCE(@Fecha, Fecha),
-                MedioDePago = COALESCE(@MedioDePago, MedioDePago)
-            WHERE IDPago = @IDPago;
+                SET IdentificadorDePago = COALESCE(@IdentificadorDePago, IdentificadorDePago),
+                    Fecha = COALESCE(@Fecha, Fecha),
+                    MedioDePago = COALESCE(@MedioDePago, MedioDePago)
+                    WHERE IDPago = @IDPago;
+            
             COMMIT TRANSACTION;
             PRINT 'Pago actualizado correctamente.';
         END
@@ -504,9 +469,9 @@ BEGIN
         IF EXISTS (SELECT 1 FROM facturacion.MedioDePago WHERE IDMedioDePago = @IDMedioDePago)
         BEGIN
             UPDATE facturacion.MedioDePago
-            SET Nombre = COALESCE(@Nombre, Nombre),
-                Descripcion = COALESCE(@Descripcion, Descripcion)
-            WHERE IDMedioDePago = @IDMedioDePago;
+                SET Nombre = COALESCE(@Nombre, Nombre),
+                    Descripcion = COALESCE(@Descripcion, Descripcion)
+                    WHERE IDMedioDePago = @IDMedioDePago;
             
             COMMIT TRANSACTION;
             PRINT 'Medio de pago actualizado correctamente.';
@@ -538,12 +503,12 @@ BEGIN
         IF EXISTS (SELECT 1 FROM facturacion.Cliente WHERE IDCliente = @IDCliente)
         BEGIN
             UPDATE facturacion.Cliente
-            SET DNI			  = COALESCE(@DNI, DNI),
-                Nombre		  = COALESCE(@Nombre, Nombre),
-                Apellido	  = COALESCE(@Apellido, Apellido),
-                Genero		  = COALESCE(@Genero, Genero),
-                IDTipoCliente = COALESCE(@IDTipoCliente, IDTipoCliente)
-				WHERE IDCliente = @IDCliente;
+                SET DNI			  = COALESCE(@DNI, DNI),
+                    Nombre		  = COALESCE(@Nombre, Nombre),
+                    Apellido	  = COALESCE(@Apellido, Apellido),
+                    Genero		  = COALESCE(@Genero, Genero),
+                    IDTipoCliente = COALESCE(@IDTipoCliente, IDTipoCliente)
+                        WHERE IDCliente = @IDCliente;
 
             COMMIT TRANSACTION;
             PRINT 'Cliente actualizado correctamente.';
@@ -586,6 +551,44 @@ BEGIN
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al intentar actualizar el tipo de cliente: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.CerrarPedido
+    @ID INT
+AS
+BEGIN
+    DECLARE @MontoNeto DECIMAL(9,2)
+
+    SELECT @MontoNeto = SUM(Importe)
+        from (SELECT IDProducto, Cantidad * Monto AS Importe
+                FROM facturacion.LineaPedido
+					WHERE ID = @ID) AS a
+
+    BEGIN TRANSACTION
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM facturacion.Pedido WHERE ID = @ID)
+        BEGIN
+            UPDATE facturacion.Pedido
+                SET MontoNeto   = COALESCE(@MontoNeto, MontoNeto),
+					Cerrado = 1
+					WHERE ID = @ID;
+
+            EXEC facturacion.GenerarFactura @IDPedido = @ID, @Importe = @MontoNeto
+
+            COMMIT TRANSACTION;
+            PRINT 'Pedido actualizado correctamente.';
+        END
+        ELSE
+        BEGIN
+            ROLLBACK TRANSACTION;
+            PRINT 'No se encontro el Pedido con el Id especificado.';
+        END
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar actualizar el Pedido: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO

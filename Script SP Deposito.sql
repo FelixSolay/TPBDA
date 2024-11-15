@@ -9,7 +9,7 @@ Los nombres de los store procedures NO deben comenzar con “SP”.
 use COM2900G09
 go
 
--- INSERTS
+-------------------- INSERTS --------------------
 
 CREATE OR ALTER PROCEDURE deposito.InsertarCategoria
     @Descripcion VARCHAR(50)
@@ -60,7 +60,7 @@ BEGIN
 END;
 GO
 
--- DELETES
+-------------------- DELETES --------------------
 
 CREATE OR ALTER PROCEDURE deposito.EliminarProducto
     @IDProducto INT
@@ -112,7 +112,7 @@ BEGIN
 END;
 GO
 
--- UPDATES
+-------------------- UPDATES --------------------
 
 CREATE OR ALTER PROCEDURE deposito.ActualizarProducto
     @IDProducto INT,
