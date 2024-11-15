@@ -51,7 +51,6 @@ GO
 SET DATEFORMAT mdy
 GO
 
-
 /*
 CONTAINMENT = NONE
 ON PRIMARY(
@@ -63,7 +62,6 @@ GO
 --Para trabajar sobre la base de datos creada
 USE COM2900G09
 GO
-
 
 --Se crean esquemas para trabajar sin usar el default 'dbo'
 --Facturación se encargará de la generación y gestión de comprobantes, pagos y clientes
@@ -141,24 +139,6 @@ create table facturacion.cliente(
 )
 go
 
-create table facturacion.MedioDePago(
-	IDMedioDePago int Identity(1,1) primary key,
-	Nombre varchar(20) Unique NOT NULL,
-	Descripcion varchar(50)
-)
-go
-
-create table facturacion.Pago(
-	IDPago int Identity(1,1) primary key,
-	IDComprobante int,
-	IdentificadorDePago varchar(22),
-	Fecha datetime,
-	MedioDePago int,
-	FOREIGN KEY (MedioDePago) REFERENCES facturacion.MedioDePago(IDMedioDePago),
-	FOREIGN KEY (IDComprobante) REFERENCES facturacion.comprobante(ID)
-)
-go
-
 create table deposito.categoria(
 	IDCategoria int Identity(1,1) primary key,
 	Descripcion varchar(50) Unique NOT NULL,
@@ -179,12 +159,10 @@ go
 
 create table facturacion.comprobante(
 	ID int Identity(1,1) primary key,
-	MontoIVA decimal (9,2), -- no se inserta, se modifica
 	MontoNeto decimal (9,2), -- no se inserta, se modifica
-	MontoBruto decimal (9,2), -- no se inserta, se modifica
 	Cliente int,
 	Empleado int,
-	Cerrado boolean default 0,
+	Cerrado BIT DEFAULT 0,
 	FOREIGN KEY (Cliente) REFERENCES facturacion.cliente(IDCliente),
 	FOREIGN KEY (Empleado) REFERENCES infraestructura.Empleado(Legajo)
 )
@@ -201,23 +179,55 @@ create table facturacion.lineaComprobante(
 )
 go
 
-create table facturacion.documento(
+create table facturacion.factura(
 	ID int Identity(1,1) primary key,
-	Comprobante int
-	tipo char(2) check (tipo='FC' or tipo='NC' or tipo='ND'), 
+	Comprobante int,
 	letra char check (Letra='A' or Letra='B' or Letra='C'),
 	numero char(11),
 	Fecha date,
 	Hora time,
-	Importe decimal (9,2),
+	MontoIVA decimal (9,2),
+	MontoNeto decimal (9,2),
+	MontoBruto decimal (9,2),
 	CUIL char(13),
 	FOREIGN KEY (Comprobante) REFERENCES facturacion.comprobante(ID)
 )
 go
 
-CREATE NONCLUSTERED INDEX idx_Comprobante_Numero
+create table facturacion.nota(
+	ID int Identity(1,1) primary key,
+	factura int,
+	tipo char(2) check (tipo='NC' or tipo='ND'), 
+	numero char(11),
+	Fecha date,
+	Hora time,
+	Importe decimal (9,2),
+	CUIL char(13),
+	FOREIGN KEY (factura) REFERENCES facturacion.factura(ID)
+)
+go
+
+create table facturacion.MedioDePago(
+	IDMedioDePago int Identity(1,1) primary key,
+	Nombre varchar(20) Unique NOT NULL,
+	Descripcion varchar(50)
+)
+go
+
+create table facturacion.Pago(
+	IDPago int Identity(1,1) primary key,
+	factura int,
+	IdentificadorDePago varchar(22),
+	Fecha datetime,
+	MedioDePago int,
+	FOREIGN KEY (MedioDePago) REFERENCES facturacion.MedioDePago(IDMedioDePago),
+	FOREIGN KEY (factura) REFERENCES facturacion.factura(ID)
+)
+go
+
+/*CREATE NONCLUSTERED INDEX idx_Comprobante_Numero
 ON facturacion.Comprobante (numero);
-GO
+GO*/
 
 CREATE NONCLUSTERED INDEX idx_Empleado_DNI
 ON infraestructura.Empleado (DNI);
