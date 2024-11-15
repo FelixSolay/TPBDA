@@ -64,10 +64,35 @@ CREATE OR ALTER PROCEDURE facturacion.InsertarCliente
     @IDTipoCliente INT
 AS
 BEGIN
+    DECLARE @CUIL_G INT
+    DECLARE @CUIL_N INT
+    DECLARE @CUIL   INT
+
+    -- Numero por genero
+    IF @Genero = 'M'
+    BEGIN
+        SET @CUIL_G = 20
+    END
+    ELSE
+    BEGIN
+        SET @CUIL_G = 27
+    END
+    
+    -- Numero de verificacion
+    SET @CUIL_N = 11 - FLOOR( ( ( LEFT(CAST(@CUIL_G AS CHAR), 1) * 5 )          + ( RIGHT(CAST(@CUIL_G AS CHAR), 1) * 4 ) +
+                                ( SUBSTRING(CAST(@DNI AS CHAR), 1, 1) * 3 )     + ( SUBSTRING(CAST(@DNI AS CHAR), 2, 1) * 2 )    + 
+                                ( SUBSTRING(CAST(@DNI AS CHAR), 3, 1) * 7 )     + ( SUBSTRING(CAST(@DNI AS CHAR), 4, 1) * 6 )    + 
+                                ( SUBSTRING(CAST(@DNI AS CHAR), 5, 1) * 5 )     + ( SUBSTRING(CAST(@DNI AS CHAR), 6, 1) * 4 )    + 
+                                ( SUBSTRING(CAST(@DNI AS CHAR), 7, 1) * 3 )     + ( SUBSTRING(CAST(@DNI AS CHAR), 8, 1) * 2 )    )
+                                / 11 ) -- SET @CUIL_N = SELECT FLOOR(RAND() * (9 - 1 + 1)) + 1;
+
+    -- Armado de CUIL
+    SET @CUIL = ( @CUIL_G * 1000000000 ) + ( @DNI * 10 ) + @CUIL_N
+
     BEGIN TRANSACTION;
     BEGIN TRY
-        INSERT INTO facturacion.Cliente (DNI, Nombre, Apellido, Genero, IDTipoCliente)
-        VALUES (@DNI, @Nombre, @Apellido, @Genero, @IDTipoCliente);        
+        INSERT INTO facturacion.Cliente (DNI, CUIL, Nombre, Apellido, Genero, IDTipoCliente)
+        VALUES (@DNI, @CUIL, @Nombre, @Apellido, @Genero, @IDTipoCliente);        
         COMMIT TRANSACTION;
         PRINT 'Cliente insertado correctamente.';
     END TRY
@@ -101,18 +126,40 @@ END;
 GO
 
 CREATE OR ALTER PROCEDURE facturacion.InsertarLineaComprobante
-    @ID INT,
+    @ID         INT,
     @IdProducto INT,
-    @Cantidad INT,
-    @Monto DECIMAL(9,2)
+    @Cantidad   INT,
+    @Monto      DECIMAL(9,2)
 AS
 BEGIN
+    DECLARE @ExCant INT
+
     BEGIN TRANSACTION;
     BEGIN TRY
-        INSERT INTO facturacion.LineaComprobante (ID, IdProducto, Cantidad, Monto)
-        VALUES (@ID, @IdProducto, @Cantidad, @Monto);
-        COMMIT TRANSACTION;
-        PRINT 'Linea de Comprobante insertada correctamente.';
+        IF EXISTS (SELECT *
+                    FROM facturacion.comprobante 
+                        WHERE ID = @ID 
+                          AND Cerrado = 0 )
+        BEGIN
+            IF EXISTS (SELECT @ExCant = cantidad
+                    FROM facturacion.LineaComprobante 
+                        WHERE ID = @ID
+                          AND IDProducto = @IdProducto )
+            BEGIN
+                UPDATE facturacion.LineaComprobante
+                    SET Cantidad = @ExCant + @Cantidad
+                        WHERE ID = @ID
+                          AND IDProducto = @IDProducto
+            END
+            ELSE
+            BEGIN
+                INSERT INTO facturacion.LineaComprobante (ID, IdProducto, Cantidad, Monto)
+                    VALUES (@ID, @IdProducto, @Cantidad, @Monto);
+            END
+
+            COMMIT TRANSACTION;
+            PRINT 'Linea de Comprobante insertada correctamente.'
+        END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
@@ -121,31 +168,71 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.InsertarComprobante
-    @tipo CHAR(2),
-    @numero CHAR(11),
-    @letra CHAR(1),
-    @Fecha DATE,
-    @Hora TIME,
-    @Total DECIMAL(9,2),
-    @Cliente INT,
-    @Empleado INT,
-    @Pago INT
+CREATE OR ALTER PROCEDURE facturacion.IniciarComprobante
+    @Cliente  INT,
+    @Empleado INT
 AS
 BEGIN
-    BEGIN TRANSACTION;
+    DECLARE @ID INT
+
+    BEGIN TRANSACTION
     BEGIN TRY
-        INSERT INTO facturacion.Comprobante (tipo, numero, letra, Fecha, Hora, Total, Cliente, Empleado, Pago)
-        VALUES (@tipo, @numero, @letra, @Fecha, @Hora, @Total, @Cliente, @Empleado, @Pago);
+        INSERT INTO facturacion.Comprobante (Cliente, Empleado)
+        VALUES (@Cliente, @Empleado);
         
+        SELECT @ID = SCOPE_IDENTITY()
+            FROM facturacion.Comprobante
+
         COMMIT TRANSACTION;
-        PRINT 'Comprobante insertado correctamente.';
+        PRINT 'Comprobante insertado correctamente.'
+
+        RETURN @ID
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar el Comprobante: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar insertar el Comprobante: ' + ERROR_MESSAGE()
     END CATCH;
-END;
+END
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.GenerarFactura -- SOLO SE EJECUTA DENTRO DE facturacion.CerrarComprobante. NO SE PUEDE LLAMAR POR SI SOLO
+    @IDComprobante INT,
+    @Importe DECIMAL(9,2)
+AS
+BEGIN
+    DECLARE @NewFac CHAR(11)
+    DECLARE @CUIL CHAR(13)
+    DECLARE @chk BOOLEAN
+    SET @chk = 1
+
+    BEGIN TRY
+        SELECT CUIL
+            FROM facturacion.cliente
+
+        WHILE @chk
+        BEGIN
+            SELECT @NewFac = CAST(FLOOR(RAND() * (99999999999 - 1000000000) + 1000000000) AS CHAR)
+            IF NOT EXISTS (SELECT *
+                            FROM facturacion.documento 
+                                WHERE tipo = 'FC' 
+                                  AND letra = 'A'
+                                  AND numero = @NewFac)
+            BEGIN
+                SET @chk = 0
+            END
+        END
+
+        SELECT @CUIL = CUIL
+            FROM facturacion.cliente
+
+        INSERT INTO facturacion.documento(Comprobante, tipo, letra, numero, Fecha, Hora, Importe, CUIL)
+            VALUES (@IDComprobante, 'FC', 'C', @NewFac, GETDATE(), SELECT CONVERT(VARCHAR(10), GETDATE(), 108), @Importe, 
+                    LEFT(@CUIL, 2) + '-' + SUBSTRING(@CUIL, 3, 8) + '-' + RIGHT(@CUIL, 1))
+    END TRY
+    BEGIN CATCH
+        PRINT 'Error al intentar generar la factura A' + @NewFac + ': ' + ERROR_MESSAGE();
+    END CATCH;
+END
 GO
 
 --DEPOSITO
@@ -768,34 +855,27 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.ActualizarComprobante
+CREATE OR ALTER PROCEDURE facturacion.CerrarComprobante
     @ID INT,
-    @Tipo CHAR(2) = NULL,
-    @Numero CHAR(11) = NULL,
-    @Letra CHAR(1) = NULL,
-    @Fecha DATE = NULL,
-    @Hora TIME = NULL,
-    @Total DECIMAL(9,2) = NULL,
-    @Cliente INT = NULL,
-    @Empleado INT = NULL,
-    @Pago INT = NULL
 AS
 BEGIN
+    DECLARE @Total DECIMAL(9,2)
+
+    SELECT @Total = SUM(Importe)
+        from (SELECT IDProducto, Cantidad * Monto AS Importe
+                FROM facturacion.LineaComprobante)
+
     BEGIN TRANSACTION;
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM facturacion.Comprobante WHERE ID = @ID)
         BEGIN
             UPDATE facturacion.Comprobante
-            SET Tipo = COALESCE(@Tipo, Tipo),
-                Numero = COALESCE(@Numero, Numero),
-                Letra = COALESCE(@Letra, Letra),
-                Fecha = COALESCE(@Fecha, Fecha),
-                Hora = COALESCE(@Hora, Hora),
-                Total = COALESCE(@Total, Total),
-                Cliente = COALESCE(@Cliente, Cliente),
-                Empleado = COALESCE(@Empleado, Empleado),
-                Pago = COALESCE(@Pago, Pago)
+                SET Total   = COALESCE(@Total, Total),
+                SET Cerrado = COALESCE(1, Cerrado)
             WHERE ID = @ID;
+
+            -- llamar SP de creacion de factura
+
             COMMIT TRANSACTION;
             PRINT 'Comprobante actualizado correctamente.';
         END
