@@ -1,76 +1,11 @@
 USE COM2900G09
 GO
 
-CREATE TYPE facturacion.TipoProductos AS TABLE
-(
-    IdProducto INT,
-    Cantidad INT,
-    Monto DECIMAL(9, 2)
-);
-GO
-
-CREATE OR ALTER PROCEDURE facturacion.GenerarFactura
-    @ClienteID INT,                      -- ID del cliente
-    @EmpleadoID INT,                     -- ID del empleado que genera la factura
-	@Letra CHAR(1),
-    @Productos facturacion.TipoProductos READONLY -- Parametro en forma de tabla
-AS
-BEGIN
-    BEGIN TRANSACTION;
-    BEGIN TRY
-        -- Generar un nuevo número secuencial para la factura
-        DECLARE @NuevoNumero CHAR(11);
-        SELECT @NuevoNumero = RIGHT('0000000000' + CAST(ISNULL(MAX(CAST(numero AS INT)) + 1, 1) AS VARCHAR), 11)
-        FROM facturacion.comprobante
-        WHERE tipo = 'FC';
-
-        
-        DECLARE @Fecha DATE = GETDATE();
-        DECLARE @Hora TIME = CONVERT(TIME, GETDATE());
-        DECLARE @TotalFactura DECIMAL(9, 2) = 0.0; 
-
-        
-        SELECT @TotalFactura = SUM(Monto * Cantidad)
-        FROM @Productos;
-
-        EXEC facturacion.InsertarComprobante
-            @tipo = 'FC',
-            @numero = @NuevoNumero,
-            @letra = @Letra,                  
-            @Fecha = @Fecha,
-            @Hora = @Hora,
-            @Total = @TotalFactura,
-            @Cliente = @ClienteID,
-            @Empleado = @EmpleadoID,
-            @Pago = NULL;
-
-       
-        DECLARE @FacturaID INT = SCOPE_IDENTITY();
-
-        
-        INSERT INTO facturacion.LineaComprobante (ID, IdProducto, Cantidad, Monto)
-        SELECT @FacturaID, IdProducto, Cantidad, Monto
-        FROM @Productos;
-
-        PRINT 'Factura generada exitosamente con todos los productos.';
-
-        COMMIT TRANSACTION;
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al generar la factura: ' + ERROR_MESSAGE();
-    END CATCH;
-END;
-GO
----faltan ver cosas propias del calculo de la factura. ----
-
-
-
 CREATE OR ALTER PROCEDURE facturacion.GenerarNotaCredito
     @ComprobanteID INT,                -- ID de la factura original
 	@EmpleadoID INT,                   -- ID del empleado que genera la nota
     @MontoCredito DECIMAL(9, 2),       
-    @DevolucionProducto BIT = 0,        -- 0: Devolución monetaria, 1: Devolucion de producto
+    @DevolucionProducto BIT = 0,        -- 0: Devoluciï¿½n monetaria, 1: Devolucion de producto
 	@IdProductoDevolucion INT = NULL 
 AS
 BEGIN
@@ -85,7 +20,7 @@ BEGIN
 
         IF @IDPago IS NULL
         BEGIN
-            PRINT 'Error: La nota de crédito solo se puede emitir para facturas pagadas.';
+            PRINT 'Error: La nota de crï¿½dito solo se puede emitir para facturas pagadas.';
             ROLLBACK TRANSACTION;
             RETURN;
         END
@@ -96,7 +31,7 @@ BEGIN
 
         IF @MontoCredito > @TotalVenta
         BEGIN
-            PRINT 'Error: El monto de la nota de crédito no puede exceder el total de la venta.';
+            PRINT 'Error: El monto de la nota de crï¿½dito no puede exceder el total de la venta.';
             ROLLBACK TRANSACTION;
             RETURN;
         END
@@ -168,24 +103,24 @@ BEGIN
                 @Cantidad = @Cantidad,
                 @Monto = @MontoTotal;
 
-            PRINT 'Nota de credito generada con devolución de producto específico de la misma categoria.';
+            PRINT 'Nota de credito generada con devoluciï¿½n de producto especï¿½fico de la misma categoria.';
         END
         ELSE
         BEGIN
-            -- Devolución monetaria
+            -- Devoluciï¿½n monetaria
 			EXEC facturacion.InsertarLineaComprobante
                 @ID = @NotaCreditoID,
                 @IdProducto = NULL,           -- No asociado a ningun prod
                 @Cantidad = 1,                
                 @Monto = @MontoCredito;     
 
-            PRINT 'Nota de crédito generada como devolución monetaria.';
+            PRINT 'Nota de crï¿½dito generada como devoluciï¿½n monetaria.';
         END
         COMMIT TRANSACTION;
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al generar la nota de crédito: ' + ERROR_MESSAGE();
+        PRINT 'Error al generar la nota de crï¿½dito: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
@@ -232,18 +167,18 @@ BEGIN
         
         EXEC facturacion.InsertarLineaComprobante
             @ID = @NotaDebitoID,
-            @IdProducto = NULL,         -- no asociada a un producto específico
+            @IdProducto = NULL,         -- no asociada a un producto especï¿½fico
             @Cantidad = 1,              
             @Monto = @MontoDebito;     
 
-        PRINT 'Nota de débito generada exitosamente.';
+        PRINT 'Nota de dï¿½bito generada exitosamente.';
 
         COMMIT TRANSACTION;
     END TRY
 
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al generar la nota de débito: ' + ERROR_MESSAGE();
+        PRINT 'Error al generar la nota de dï¿½bito: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
@@ -468,7 +403,7 @@ BEGIN
                 @Nombre,
                 @Apellido,
                 @DNI,
-                -- Encriptación de Direccion y EmailPersonal al momento de la inserción
+                -- Encriptaciï¿½n de Direccion y EmailPersonal al momento de la inserciï¿½n
                 EncryptByPassPhrase(@FraseClave, @Direccion, 1, CONVERT(VARBINARY, @Legajo)),
                 EncryptByPassPhrase(@FraseClave, @EmailPersonal, 1, CONVERT(VARBINARY, @Legajo)),
                 @EmailEmpresa,

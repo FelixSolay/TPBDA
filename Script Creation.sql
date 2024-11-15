@@ -27,7 +27,6 @@ Correa
 De Solay, Félix 40971636
 Weidmann
 
-
 Script de Creación de Base de datos y tablas para el trabajo práctico
 */
 
@@ -133,6 +132,7 @@ go
 create table facturacion.cliente(
 	IDCliente int Identity(1,1) primary key,
 	DNI int Unique,
+	CUIL int unique, -- calculable
 	Nombre varchar(25),
 	Apellido varchar(25),
 	Genero char(1) check (Genero='M' or Genero='F'),
@@ -150,27 +150,12 @@ go
 
 create table facturacion.Pago(
 	IDPago int Identity(1,1) primary key,
+	IDComprobante int,
 	IdentificadorDePago varchar(22),
 	Fecha datetime,
 	MedioDePago int,
-	FOREIGN KEY (MedioDePago) REFERENCES facturacion.MedioDePago(IDMedioDePago)
-)
-go
-
-create table facturacion.comprobante(
-	ID int Identity(1,1) primary key,
-	tipo char(2) check (tipo='FC' or tipo='NC' or tipo='ND'), 
-	numero char(11),
-	letra char check (Letra='A' or Letra='B' or Letra='C'),
-	Fecha date,
-	Hora time,
-	Total decimal (9,2),
-	Cliente int,
-	Empleado int,
-	Pago int,
-	FOREIGN KEY (Cliente) REFERENCES facturacion.cliente(IDCliente),
-	FOREIGN KEY (Empleado) REFERENCES infraestructura.Empleado(Legajo),
-	FOREIGN KEY (Pago) REFERENCES facturacion.Pago(IdPago)
+	FOREIGN KEY (MedioDePago) REFERENCES facturacion.MedioDePago(IDMedioDePago),
+	FOREIGN KEY (IDComprobante) REFERENCES facturacion.comprobante(ID)
 )
 go
 
@@ -192,14 +177,41 @@ create table deposito.producto(
 )
 go
 
+create table facturacion.comprobante(
+	ID int Identity(1,1) primary key,
+	MontoIVA decimal (9,2), -- no se inserta, se modifica
+	MontoNeto decimal (9,2), -- no se inserta, se modifica
+	MontoBruto decimal (9,2), -- no se inserta, se modifica
+	Cliente int,
+	Empleado int,
+	Cerrado boolean default 0,
+	FOREIGN KEY (Cliente) REFERENCES facturacion.cliente(IDCliente),
+	FOREIGN KEY (Empleado) REFERENCES infraestructura.Empleado(Legajo)
+)
+go
+
 create table facturacion.lineaComprobante(
 	ID int,
-	IdProducto int,
+	IDProducto int,
 	Cantidad int,
 	Monto decimal (9,2),
 	FOREIGN KEY (ID) REFERENCES facturacion.Comprobante(ID),
 	FOREIGN KEY (IdProducto) REFERENCES deposito.producto(IDProducto),
 	constraint pkLineaVenta primary key (ID, IdProducto)
+)
+go
+
+create table facturacion.documento(
+	ID int Identity(1,1) primary key,
+	Comprobante int
+	tipo char(2) check (tipo='FC' or tipo='NC' or tipo='ND'), 
+	letra char check (Letra='A' or Letra='B' or Letra='C'),
+	numero char(11),
+	Fecha date,
+	Hora time,
+	Importe decimal (9,2),
+	CUIL char(13),
+	FOREIGN KEY (Comprobante) REFERENCES facturacion.comprobante(ID)
 )
 go
 
