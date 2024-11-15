@@ -226,7 +226,7 @@ BEGIN
             FROM facturacion.cliente
 
         INSERT INTO facturacion.factura(Pedido, letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto, CUIL)
-            VALUES (@IDPedido, 'FC', 'C', @NewFac, GETDATE(), CONVERT(VARCHAR(10), GETDATE(), 108), 
+            VALUES (@IDPedido, 'C', @NewFac, GETDATE(), CONVERT(VARCHAR(10), GETDATE(), 108), 
 					@Importe, @Importe * 0.21, @Importe * 1.21,
                     LEFT(@CUIL, 2) + '-' + SUBSTRING(@CUIL, 3, 8) + '-' + RIGHT(@CUIL, 1))
     END TRY
