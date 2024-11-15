@@ -4,7 +4,6 @@ Creacion de los Store procedures
 Genere store procedures para manejar la insercion, modificado, borrado (si corresponde,
 tambien debe decidir si determinadas entidades solo admitiran borrado logico) de cada tabla.
 Los nombres de los store procedures NO deben comenzar con “SP”.
-
 */
 
 use COM2900G09

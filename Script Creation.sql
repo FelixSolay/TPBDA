@@ -27,7 +27,6 @@ Correa
 De Solay, Félix 40971636
 Weidmann
 
-
 Script de Creación de Base de datos y tablas para el trabajo práctico
 */
 
