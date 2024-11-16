@@ -114,6 +114,7 @@ CREATE TABLE infraestructura.empleado(
 	Direccion 	  VARCHAR(100),
 	EmailPersonal VARCHAR(100),
 	EmailEmpresa  VARCHAR(100),
+	CUIL          CHAR(11),
 	Turno 		  CHAR(16) CHECK (Turno ='TN' OR Turno ='TM' OR turno = 'TT' OR Turno ='Jornada Completa'),
 	Cargo 		  INT,
 	Sucursal 	  INT,

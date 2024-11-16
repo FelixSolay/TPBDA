@@ -19,7 +19,7 @@ CREATE OR ALTER PROCEDURE infraestructura.InsertarEmpleado
     @Direccion     VARCHAR(100),
     @EmailPersonal VARCHAR(100),
     @EmailEmpresa  VARCHAR(100),
-    @CUIL          CHAR(11), -- se puede sacar?
+    @CUIL          CHAR(11),
     @Turno         CHAR(16),
     @Cargo         INT,
     @Sucursal      INT
@@ -49,7 +49,7 @@ CREATE OR ALTER PROCEDURE infraestructura.ActualizarEmpleado
     @Direccion	   VARCHAR(100) = NULL,
     @EmailPersonal VARCHAR(100) = NULL,
     @EmailEmpresa  VARCHAR(100) = NULL,
-    @CUIL		   CHAR(11)		= NULL, -- se puede sacar?
+    @CUIL		   CHAR(11)		= NULL,
     @Turno		   CHAR(16)		= NULL,
     @Cargo		   INT			= NULL,
     @Sucursal	   INT			= NULL
@@ -66,7 +66,7 @@ BEGIN
 					Direccion	  = COALESCE(@Direccion, Direccion),
 					EmailPersonal = COALESCE(@EmailPersonal, EmailPersonal),
 					EmailEmpresa  = COALESCE(@EmailEmpresa, EmailEmpresa),
-					CUIL		  = COALESCE(@CUIL, CUIL), -- se puede sacar?
+					CUIL		  = COALESCE(@CUIL, CUIL),
 					Turno		  = COALESCE(@Turno, Turno),
 					Cargo		  = COALESCE(@Cargo, Cargo),
 					Sucursal	  = COALESCE(@Sucursal, Sucursal)
