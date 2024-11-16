@@ -28,7 +28,7 @@ BEGIN
         PRINT 'Categoria insertada correctamente.'
     END TRY
     BEGIN CATCH
-        ROLLBACK TRANSACTION;
+        ROLLBACK TRANSACTION
         PRINT 'Error al intentar insertar la Categoria: ' + ERROR_MESSAGE()
 
         DBCC CHECKIDENT ('deposito.Categoria', RESEED, @MaxID)
@@ -60,11 +60,11 @@ BEGIN
         END
     END TRY
     BEGIN CATCH
-        ROLLBACK TRANSACTION;
+        ROLLBACK TRANSACTION
         PRINT 'Error al intentar actualizar la categoria: ' + ERROR_MESSAGE()
     END CATCH
 
-	COMMIT TRANSACTION;
+	COMMIT TRANSACTION
 END
 GO
 
@@ -72,7 +72,8 @@ CREATE OR ALTER PROCEDURE deposito.EliminarCategoria
     @IDCategoria INT
 AS
 BEGIN
-    BEGIN TRANSACTION;
+    BEGIN TRANSACTION
+
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM deposito.categoria WHERE IDCategoria = @IDCategoria)
         BEGIN
@@ -87,7 +88,7 @@ BEGIN
         END
     END TRY
     BEGIN CATCH
-        ROLLBACK TRANSACTION;
+        ROLLBACK TRANSACTION
         PRINT 'Error al intentar eliminar la Categoria: ' + ERROR_MESSAGE()
     END CATCH
 
@@ -106,22 +107,27 @@ CREATE OR ALTER PROCEDURE deposito.InsertarProducto
     @Fecha			  DATETIME
 AS
 BEGIN
-    BEGIN TRANSACTION;
-	DECLARE @MaxID INT;
-	SET @MaxID = (SELECT isnull(MAX(IDProducto),0) FROM deposito.producto);
+    BEGIN TRANSACTION
+
+	DECLARE @MaxID INT
+	SET @MaxID = (SELECT isnull(MAX(IDProducto),0) FROM deposito.producto)
+
     BEGIN TRY
         INSERT INTO deposito.Producto (Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha)
-        VALUES (@Categoria, @Nombre, @Precio, @PrecioReferencia, @UnidadReferencia, @Fecha);
-        DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID);
-        COMMIT TRANSACTION;
-        PRINT 'Producto insertado correctamente.';
+            VALUES (@Categoria, @Nombre, @Precio, @PrecioReferencia, @UnidadReferencia, @Fecha)
+        DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID)
+        
+        PRINT 'Producto insertado correctamente.'
     END TRY
     BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar el Producto: ' + ERROR_MESSAGE();
-        DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID);
-    END CATCH;
-END;
+        ROLLBACK TRANSACTION
+        PRINT 'Error al intentar insertar el Producto: ' + ERROR_MESSAGE()
+
+        DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID)
+    END CATCH
+
+    COMMIT TRANSACTION
+END
 GO
 
 CREATE OR ALTER PROCEDURE deposito.ActualizarProducto
@@ -152,12 +158,12 @@ BEGIN
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el producto con el Id especificado.';
+            PRINT 'No se encontro el producto con el Id especificado.'
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar actualizar el producto: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar actualizar el producto: ' + ERROR_MESSAGE()
     END CATCH
 
     COMMIT TRANSACTION
@@ -174,13 +180,13 @@ BEGIN
         IF EXISTS (SELECT 1 FROM deposito.producto WHERE IDProducto = @IDProducto)
         BEGIN
             DELETE FROM deposito.producto 
-                WHERE IDProducto = @IDProducto;
+                WHERE IDProducto = @IDProducto
 
             PRINT 'Producto eliminado correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el registro de Producto con el ID especificado.';
+            PRINT 'No se encontro el registro de Producto con el ID especificado.'
         END
     END TRY
     BEGIN CATCH

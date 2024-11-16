@@ -25,7 +25,8 @@ CREATE OR ALTER PROCEDURE infraestructura.InsertarEmpleado
     @Sucursal      INT
 AS
 BEGIN
-    BEGIN TRANSACTION;
+    BEGIN TRANSACTION
+
     BEGIN TRY
         INSERT INTO infraestructura.Empleado (Legajo, Nombre, Apellido, DNI, Direccion, EmailPersonal, EmailEmpresa, CUIL, Turno, Cargo, Sucursal)
             VALUES (@Legajo, @Nombre, @Apellido, @DNI, @Direccion, @EmailPersonal, @EmailEmpresa, @CUIL, @Turno, @Cargo, @Sucursal)
@@ -35,7 +36,7 @@ BEGIN
     BEGIN CATCH
         ROLLBACK TRANSACTION
         PRINT 'Error al intentar insertar el Empleado: ' + ERROR_MESSAGE()
-    END CATCH;
+    END CATCH
 
     COMMIT TRANSACTION
 END
@@ -55,7 +56,7 @@ CREATE OR ALTER PROCEDURE infraestructura.ActualizarEmpleado
     @Sucursal	   INT			= NULL
 AS
 BEGIN
-    BEGIN TRANSACTION;
+    BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM infraestructura.Empleado WHERE Legajo = @Legajo)
         BEGIN
@@ -92,7 +93,7 @@ CREATE OR ALTER PROCEDURE infraestructura.EliminarEmpleado
     @Legajo INT
 AS
 BEGIN
-    BEGIN TRANSACTION;
+    BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM infraestructura.empleado WHERE Legajo = @Legajo)
         BEGIN
@@ -107,7 +108,7 @@ BEGIN
         END
     END TRY
     BEGIN CATCH
-        ROLLBACK TRANSACTION;
+        ROLLBACK TRANSACTION
         PRINT 'Error al intentar eliminar el Empleado: ' + ERROR_MESSAGE()
     END CATCH
 
@@ -134,7 +135,7 @@ BEGIN
         PRINT 'Cargo insertado correctamente.'
     END TRY
     BEGIN CATCH
-        ROLLBACK TRANSACTION;
+        ROLLBACK TRANSACTION
         PRINT 'Error al intentar insertar el Cargo: ' + ERROR_MESSAGE()
 
         DBCC CHECKIDENT ('infraestructura.Cargo', RESEED, @MaxID)
@@ -149,7 +150,7 @@ CREATE OR ALTER PROCEDURE infraestructura.ActualizarCargo
     @Descripcion VARCHAR(25) = NULL
 AS
 BEGIN
-    BEGIN TRANSACTION;
+    BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM infraestructura.Cargo WHERE IdCargo = @IdCargo)
         BEGIN
@@ -161,7 +162,7 @@ BEGIN
         END
         ELSE
         BEGIN
-            ROLLBACK TRANSACTION;
+            ROLLBACK TRANSACTION
             PRINT 'No se encontro el cargo con el Id especificado.'
         END
     END TRY
@@ -178,7 +179,7 @@ CREATE OR ALTER PROCEDURE infraestructura.EliminarCargo
     @IdCargo INT
 AS
 BEGIN
-    BEGIN TRANSACTION;
+    BEGIN TRANSACTION
 
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM infraestructura.cargo WHERE IdCargo = @IdCargo)
@@ -240,7 +241,7 @@ CREATE OR ALTER PROCEDURE infraestructura.ActualizarSucursal
     @Telefono	CHAR(11)     = NULL
 AS
 BEGIN
-    BEGIN TRANSACTION;
+    BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM infraestructura.Sucursal WHERE IDSucursal = @IDSucursal)
         BEGIN
@@ -271,7 +272,7 @@ CREATE OR ALTER PROCEDURE infraestructura.EliminarSucursal
     @IDsucursal INT
 AS
 BEGIN
-    BEGIN TRANSACTION;
+    BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM infraestructura.sucursal WHERE IDsucursal = @IDsucursal)
         BEGIN
@@ -290,5 +291,5 @@ BEGIN
     END CATCH
 
     COMMIT TRANSACTION
-END;
+END
 GO

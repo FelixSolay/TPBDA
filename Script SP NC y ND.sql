@@ -13,7 +13,7 @@ BEGIN
     BEGIN TRY
 
         --si tiene pago asociado
-        DECLARE @IDPago INT;
+        DECLARE @IDPago INT
         SELECT @IDPago = Pago
         FROM facturacion.Venta
         WHERE ID = @VentaID;

@@ -6,18 +6,18 @@ GO
 INSERT INTO ddbba.categoria VALUES ('Almacen'),('Bazar'),('Bebidas'),
 ('Comida'),('Congelados'),('Frescos'),
 ('Hogar'),('Limpieza'),('Mascota'),
-('Otros'),('Perfumeria');
+('Otros'),('Perfumeria')
 GO
 -- Cargo
-INSERT INTO ddbba.cargo VALUES ('Cajero'),('Supervisor'),('Gerente de Sucursal');
+INSERT INTO ddbba.cargo VALUES ('Cajero'),('Supervisor'),('Gerente de Sucursal')
 
 select * from ddbba.sucursal
 GO
 -- Tipo Cliente
-INSERT INTO ddbba.TipoCliente VALUES('Member'),('Normal');
+INSERT INTO ddbba.TipoCliente VALUES('Member'),('Normal')
 GO
 -- Medio Pago
-INSERT INTO ddbba.MedioDePago VALUES('Credit card','Tarjeta de credito'),('Cash','Efectivo'),('Ewallet','Billetera Electronica');
+INSERT INTO ddbba.MedioDePago VALUES('Credit card','Tarjeta de credito'),('Cash','Efectivo'),('Ewallet','Billetera Electronica')
 GO
 -- Sucursal
 INSERT INTO ddbba.sucursal VALUES ('Av. Brig. Gral. Juan Manuel de Rosas 3634, B1754 San Justo, Provincia de Buenos Aires','San Justo','L a V 8 a. m.–9 p. m.S y D 9 a. m.-8 p. m.','5555-5551'),

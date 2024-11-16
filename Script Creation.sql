@@ -228,31 +228,31 @@ CREATE TABLE facturacion.Pago(
 GO
 
 /*CREATE NONCLUSTERED INDEX idx_Venta_Numero
-ON facturacion.Venta (numero);
+ON facturacion.Venta (numero)
 GO*/
 
 CREATE NONCLUSTERED INDEX idx_Empleado_DNI
-ON infraestructura.Empleado (DNI);
+ON infraestructura.Empleado (DNI)
 GO
 
 CREATE NONCLUSTERED INDEX idx_Cliente_DNI
-ON facturacion.Cliente (DNI);
+ON facturacion.Cliente (DNI)
 GO
 
 CREATE NONCLUSTERED INDEX idx_Empleado_Nombre
-ON infraestructura.Empleado (Nombre);
+ON infraestructura.Empleado (Nombre)
 GO
 
 CREATE NONCLUSTERED INDEX idx_Cliente_Nombre
-ON facturacion.Cliente (Nombre);
+ON facturacion.Cliente (Nombre)
 GO
 
 CREATE NONCLUSTERED INDEX idx_Empleado_Apellido
-ON infraestructura.Empleado (Apellido);
+ON infraestructura.Empleado (Apellido)
 GO
 
 CREATE NONCLUSTERED INDEX idx_Cliente_Apellido
-ON facturacion.Cliente (Apellido);
+ON facturacion.Cliente (Apellido)
 GO
 
 USE master

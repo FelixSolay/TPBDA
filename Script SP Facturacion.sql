@@ -19,11 +19,11 @@ BEGIN
 
 	DECLARE @MaxID INT
 
-	SET @MaxID = (SELECT isnull(MAX(IDTipoCliente),0) FROM facturacion.TipoCliente);
+	SET @MaxID = (SELECT isnull(MAX(IDTipoCliente),0) FROM facturacion.TipoCliente)
     BEGIN TRY
         INSERT INTO facturacion.TipoCliente (Nombre)
             VALUES (@Nombre)
-        DBCC CHECKIDENT ('facturacion.TipoCliente', RESEED, @MaxID);
+        DBCC CHECKIDENT ('facturacion.TipoCliente', RESEED, @MaxID)
 
         PRINT 'TipoCliente insertado correctamente.'
     END TRY
@@ -43,7 +43,7 @@ CREATE OR ALTER PROCEDURE facturacion.ActualizarTipoCliente
     @Nombre        VARCHAR(20) = NULL
 AS
 BEGIN
-    BEGIN TRANSACTION;
+    BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM facturacion.TipoCliente WHERE IDTipoCliente = @IDTipoCliente)
         BEGIN
@@ -128,18 +128,18 @@ BEGIN
                                 ( SUBSTRING(CAST(@DNI AS CHAR), 3, 1) * 7 )     + ( SUBSTRING(CAST(@DNI AS CHAR), 4, 1) * 6 )    + 
                                 ( SUBSTRING(CAST(@DNI AS CHAR), 5, 1) * 5 )     + ( SUBSTRING(CAST(@DNI AS CHAR), 6, 1) * 4 )    + 
                                 ( SUBSTRING(CAST(@DNI AS CHAR), 7, 1) * 3 )     + ( SUBSTRING(CAST(@DNI AS CHAR), 8, 1) * 2 )    )
-                                / 11 ) -- SET @CUIL_N = SELECT FLOOR(RAND() * (9 - 1 + 1)) + 1;
+                                / 11 ) -- SET @CUIL_N = SELECT FLOOR(RAND() * (9 - 1 + 1)) + 1
 
     -- Armado de CUIL
     SET @CUIL = ( @CUIL_G * 1000000000 ) + ( @DNI * 10 ) + @CUIL_N
         INSERT INTO facturacion.Cliente (DNI, CUIL, Nombre, Apellido, Genero, IDTipoCliente)
-            VALUES (@DNI, @CUIL, @Nombre, @Apellido, @Genero, @IDTipoCliente);        
+            VALUES (@DNI, @CUIL, @Nombre, @Apellido, @Genero, @IDTipoCliente)
         
         PRINT 'Cliente insertado correctamente.'
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar insertar el Cliente: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar insertar el Cliente: ' + ERROR_MESSAGE()
     END CATCH
 
     COMMIT TRANSACTION
@@ -195,7 +195,7 @@ BEGIN
         IF EXISTS (SELECT 1 FROM facturacion.cliente WHERE IDCliente = @IDCliente)
         BEGIN
             DELETE FROM facturacion.cliente 
-                WHERE IDCliente = @IDCliente;
+                WHERE IDCliente = @IDCliente
             
             PRINT 'Cliente eliminado correctamente.'
         END
@@ -253,7 +253,7 @@ BEGIN
 			FROM facturacion.factura
     END TRY
     BEGIN CATCH
-        PRINT 'Error al intentar generar la factura A' + @NewFac + ': ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar generar la factura A' + @NewFac + ': ' + ERROR_MESSAGE()
     END CATCH
 
 	RETURN @Factura
@@ -321,12 +321,12 @@ BEGIN
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el Venta con el Id especificado.';
+            PRINT 'No se encontro el Venta con el Id especificado.'
         END
     END TRY
     BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar actualizar el Venta: ' + ERROR_MESSAGE();
+        ROLLBACK TRANSACTION
+        PRINT 'Error al intentar actualizar el Venta: ' + ERROR_MESSAGE()
     END CATCH
 
     COMMIT TRANSACTION
@@ -337,7 +337,7 @@ CREATE OR ALTER PROCEDURE facturacion.EliminarVenta
     @ID INT
 AS
 BEGIN
-    BEGIN TRANSACTION;
+    BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM facturacion.Venta WHERE ID = @ID)
         BEGIN
@@ -371,7 +371,7 @@ AS
 BEGIN
     DECLARE @ExCant INT
 
-    BEGIN TRANSACTION;
+    BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT *
                     FROM facturacion.Venta 
@@ -445,13 +445,13 @@ CREATE OR ALTER PROCEDURE facturacion.EliminarLineaVenta
     @IDProducto INT
 AS
 BEGIN
-    BEGIN TRANSACTION;
+    BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM facturacion.LineaVenta WHERE ID = @ID AND IdProducto = @IDProducto)
         BEGIN
             DELETE FROM facturacion.lineaVenta 
                 WHERE ID         = @ID
-                  AND IdProducto = @IDProducto;
+                  AND IdProducto = @IDProducto
 
             PRINT 'Linea de Venta eliminada correctamente.'
         END
@@ -483,13 +483,13 @@ BEGIN
 
     BEGIN TRY
         INSERT INTO facturacion.MedioDePago (Nombre, Descripcion)
-            VALUES (@Nombre, @Descripcion);
-        DBCC CHECKIDENT ('facturacion.MedioDePago', RESEED, @MaxID);
+            VALUES (@Nombre, @Descripcion)
+        DBCC CHECKIDENT ('facturacion.MedioDePago', RESEED, @MaxID)
 
         PRINT 'MedioDePago insertado correctamente.'
     END TRY
     BEGIN CATCH
-        ROLLBACK TRANSACTION;
+        ROLLBACK TRANSACTION
         PRINT 'Error al intentar insertar el MedioDePago: ' + ERROR_MESSAGE()
 
         DBCC CHECKIDENT ('facturacion.MedioDePago', RESEED, @MaxID)
@@ -513,7 +513,7 @@ BEGIN
             UPDATE facturacion.MedioDePago
                 SET Nombre      = COALESCE(@Nombre, Nombre),
                     Descripcion = COALESCE(@Descripcion, Descripcion)
-                    WHERE IDMedioDePago = @IDMedioDePago;
+                    WHERE IDMedioDePago = @IDMedioDePago
             
             PRINT 'Medio de pago actualizado correctamente.'
         END
@@ -541,7 +541,7 @@ BEGIN
         IF EXISTS (SELECT 1 FROM facturacion.MedioDePago WHERE IDMedioDePago = @IDMedioDePago)
         BEGIN
             DELETE FROM facturacion.MedioDePago 
-                WHERE IDMedioDePago = @IDMedioDePago;
+                WHERE IDMedioDePago = @IDMedioDePago
             
             PRINT 'Medio De Pago eliminado correctamente.'
         END
@@ -576,7 +576,7 @@ BEGIN
         PRINT 'Pago insertado correctamente.'
     END TRY
     BEGIN CATCH
-        ROLLBACK TRANSACTION;
+        ROLLBACK TRANSACTION
         PRINT 'Error al intentar insertar el Pago: ' + ERROR_MESSAGE()
     END CATCH
 
@@ -591,7 +591,7 @@ CREATE OR ALTER PROCEDURE facturacion.ActualizarPago
     @MedioDePago         INT = NULL
 AS
 BEGIN
-    BEGIN TRANSACTION;
+    BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM facturacion.Pago WHERE IDPago = @IDPago)
         BEGIN
@@ -627,7 +627,7 @@ BEGIN
         IF EXISTS (SELECT 1 FROM facturacion.Pago WHERE IDPago = @IDPago)
         BEGIN
             DELETE FROM facturacion.Pago 
-                WHERE IDPago = @IDPago;
+                WHERE IDPago = @IDPago
             
             PRINT 'Pago eliminado correctamente.'
         END
