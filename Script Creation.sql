@@ -64,7 +64,7 @@ USE COM2900G09
 GO
 
 --Se crean esquemas para trabajar sin usar el default 'dbo'
---Facturación se encargará de la generación y gestión de comprobantes, pagos y clientes
+--Facturación se encargará de la generación y gestión de Ventas, pagos y clientes
 create schema facturacion
 go
 --Destinamos el esquema Depósito a lo relacionado a gestión de Productos
@@ -75,8 +75,8 @@ create schema infraestructura
 GO
 
 --Se respeta este orden de borrado para que no haya conflictos con las Foreign Keys
-DROP TABLE IF EXISTS facturacion.LineaComprobante;
-DROP TABLE IF EXISTS facturacion.Comprobante;
+DROP TABLE IF EXISTS facturacion.LineaVenta;
+DROP TABLE IF EXISTS facturacion.Venta;
 DROP TABLE IF EXISTS facturacion.Pago;
 DROP TABLE IF EXISTS facturacion.Cliente;
 DROP TABLE IF EXISTS facturacion.MedioDePago;
@@ -112,8 +112,7 @@ create table infraestructura.empleado(
 	Direccion varchar(100),
 	EmailPersonal varchar(100),
 	EmailEmpresa varchar(100),
-	CUIL char(11),
-	Turno char (16) check (Turno='TN' or Turno='TM' or turno= 'TT' or Turno='Jornada Completa'),
+	Turno char(16) check (Turno='TN' or Turno='TM' or turno= 'TT' or Turno='Jornada Completa'),
 	Cargo int,
 	Sucursal int,
 	FOREIGN KEY (Cargo) REFERENCES infraestructura.cargo(IdCargo),
@@ -151,37 +150,14 @@ create table deposito.producto(
 	Nombre varchar(100),
 	Precio decimal (9,2),
 	PrecioReferencia decimal (9,2),
-	UnidadReferencia char(2),
+	UnidadReferencia char(100),
     Fecha datetime,
 	FOREIGN KEY (categoria) REFERENCES deposito.categoria(IDCategoria)
 )
 go
 
-create table facturacion.comprobante(
-	ID int Identity(1,1) primary key,
-	MontoNeto decimal (9,2), -- no se inserta, se modifica
-	Cliente int,
-	Empleado int,
-	Cerrado BIT DEFAULT 0,
-	FOREIGN KEY (Cliente) REFERENCES facturacion.cliente(IDCliente),
-	FOREIGN KEY (Empleado) REFERENCES infraestructura.Empleado(Legajo)
-)
-go
-
-create table facturacion.lineaComprobante(
-	ID int,
-	IDProducto int,
-	Cantidad int,
-	Monto decimal (9,2),
-	FOREIGN KEY (ID) REFERENCES facturacion.Comprobante(ID),
-	FOREIGN KEY (IdProducto) REFERENCES deposito.producto(IDProducto),
-	constraint pkLineaVenta primary key (ID, IdProducto)
-)
-go
-
 create table facturacion.factura(
 	ID int Identity(1,1) primary key,
-	Comprobante int,
 	letra char check (Letra='A' or Letra='B' or Letra='C'),
 	numero char(11),
 	Fecha date,
@@ -190,7 +166,30 @@ create table facturacion.factura(
 	MontoNeto decimal (9,2),
 	MontoBruto decimal (9,2),
 	CUIL char(13),
-	FOREIGN KEY (Comprobante) REFERENCES facturacion.comprobante(ID)
+)
+go
+
+create table facturacion.Venta(
+	ID int Identity(1,1) primary key,
+	IDFactura int,
+	Cliente int,
+	Empleado int,
+	MontoNeto decimal (9,2), -- no se inserta, se modifica
+	Cerrado BIT DEFAULT 0,
+	FOREIGN KEY (Cliente)  REFERENCES facturacion.cliente(IDCliente),
+	FOREIGN KEY (Empleado) REFERENCES infraestructura.Empleado(Legajo),
+	FOREIGN KEY (IDFactura)  REFERENCES facturacion.Factura(ID)
+)
+go
+
+create table facturacion.lineaVenta(
+	ID int,
+	IDProducto int,
+	Cantidad int,
+	Monto decimal (9,2),
+	FOREIGN KEY (ID) REFERENCES facturacion.Venta(ID),
+	FOREIGN KEY (IdProducto) REFERENCES deposito.producto(IDProducto),
+	constraint pkLineaVenta primary key (ID, IdProducto)
 )
 go
 
@@ -225,8 +224,8 @@ create table facturacion.Pago(
 )
 go
 
-/*CREATE NONCLUSTERED INDEX idx_Comprobante_Numero
-ON facturacion.Comprobante (numero);
+/*CREATE NONCLUSTERED INDEX idx_Venta_Numero
+ON facturacion.Venta (numero);
 GO*/
 
 CREATE NONCLUSTERED INDEX idx_Empleado_DNI

@@ -2,7 +2,7 @@ USE COM2900G09
 GO
 
 CREATE OR ALTER PROCEDURE facturacion.GenerarNotaCredito
-    @ComprobanteID INT,                -- ID de la factura original
+    @VentaID INT,                -- ID de la factura original
 	@EmpleadoID INT,                   -- ID del empleado que genera la nota
     @MontoCredito DECIMAL(9, 2),       
     @DevolucionProducto BIT = 0,        -- 0: Devoluci�n monetaria, 1: Devolucion de producto
@@ -15,8 +15,8 @@ BEGIN
         --si tiene pago asociado
         DECLARE @IDPago INT;
         SELECT @IDPago = Pago
-        FROM facturacion.comprobante
-        WHERE ID = @ComprobanteID;
+        FROM facturacion.Venta
+        WHERE ID = @VentaID;
 
         IF @IDPago IS NULL
         BEGIN
@@ -27,7 +27,7 @@ BEGIN
 
 
         DECLARE @TotalVenta DECIMAL(9, 2);
-        SELECT @TotalVenta = Total FROM facturacion.comprobante WHERE ID = @ComprobanteID;
+        SELECT @TotalVenta = Total FROM facturacion.Venta WHERE ID = @VentaID;
 
         IF @MontoCredito > @TotalVenta
         BEGIN
@@ -40,20 +40,20 @@ BEGIN
 		-- sacamos datos de la factura original
         DECLARE @ClienteID INT, @Letra CHAR(1);
         SELECT @ClienteID = Cliente, @Letra = Letra
-        FROM facturacion.comprobante
-        WHERE ID = @ComprobanteID;
+        FROM facturacion.Venta
+        WHERE ID = @VentaID;
 
         -- para generar el numero correspondiente de la Factura NC
         DECLARE @NuevoNumero CHAR(11);
         SELECT @NuevoNumero = RIGHT('0000000000' + CAST(ISNULL(MAX(CAST(numero AS INT)) + 1, 1) AS VARCHAR), 11)
-        FROM facturacion.comprobante
+        FROM facturacion.Venta
         WHERE tipo = 'NC';
 
         
         DECLARE @Fecha DATETIME = GETDATE();
 		DECLARE @Hora TIME = CONVERT(TIME, GETDATE());
 
-        EXEC facturacion.InsertarComprobante 
+        EXEC facturacion.InsertarVenta 
             @tipo = 'NC',
             @numero = @NuevoNumero,
             @letra = @Letra,
@@ -74,9 +74,9 @@ BEGIN
 
             
             SELECT TOP 1 @IdCategoriaOriginal = p.categoria
-            FROM facturacion.lineaComprobante lc
+            FROM facturacion.lineaVenta lc
             INNER JOIN deposito.producto p ON lc.IdProducto = p.IDProducto
-            WHERE lc.ID = @ComprobanteID;
+            WHERE lc.ID = @VentaID;
 
            
             SELECT @PrecioProducto = Precio, @IdCategoriaProducto = categoria
@@ -97,7 +97,7 @@ BEGIN
                 SET @Cantidad = @Cantidad + 1;
             END
 
-            EXEC facturacion.InsertarLineaComprobante
+            EXEC facturacion.InsertarLineaVenta
                 @ID = @NotaCreditoID,
                 @IdProducto = @IdProductoDevolucion,
                 @Cantidad = @Cantidad,
@@ -108,7 +108,7 @@ BEGIN
         ELSE
         BEGIN
             -- Devoluci�n monetaria
-			EXEC facturacion.InsertarLineaComprobante
+			EXEC facturacion.InsertarLineaVenta
                 @ID = @NotaCreditoID,
                 @IdProducto = NULL,           -- No asociado a ningun prod
                 @Cantidad = 1,                
@@ -126,7 +126,7 @@ END;
 GO
 
 CREATE OR ALTER PROCEDURE facturacion.GenerarNotaDebito
-    @ComprobanteID INT,               -- ID de la factura original
+    @VentaID INT,               -- ID de la factura original
     @EmpleadoID INT,                  -- ID del empleado que genera la nota
     @MontoDebito DECIMAL(9, 2)       
 AS
@@ -137,20 +137,20 @@ BEGIN
        
         DECLARE @ClienteID INT, @Letra CHAR(1);
         SELECT @ClienteID = Cliente, @Letra = Letra
-        FROM facturacion.comprobante
-        WHERE ID = @ComprobanteID;
+        FROM facturacion.Venta
+        WHERE ID = @VentaID;
 
         
         DECLARE @NuevoNumero CHAR(11);
         SELECT @NuevoNumero = RIGHT('0000000000' + CAST(ISNULL(MAX(CAST(numero AS INT)) + 1, 1) AS VARCHAR), 11)
-        FROM facturacion.comprobante
+        FROM facturacion.Venta
         WHERE tipo = 'ND';
 
        
         DECLARE @Fecha DATETIME = GETDATE();
 		DECLARE @Hora TIME = CONVERT(TIME, GETDATE());
 
-        EXEC facturacion.InsertarComprobante
+        EXEC facturacion.InsertarVenta
             @tipo = 'ND',
             @numero = @NuevoNumero,
             @letra = @Letra,
@@ -165,7 +165,7 @@ BEGIN
         DECLARE @NotaDebitoID INT = SCOPE_IDENTITY();
 
         
-        EXEC facturacion.InsertarLineaComprobante
+        EXEC facturacion.InsertarLineaVenta
             @ID = @NotaDebitoID,
             @IdProducto = NULL,         -- no asociada a un producto espec�fico
             @Cantidad = 1,              
@@ -216,7 +216,7 @@ DECLARE @EmpleadoSupervisorID INT = 1;
 
 EXECUTE AS LOGIN = 'usuario_supervisor';
 EXEC facturacion.GenerarNotaCredito 
-    @ComprobanteID = 1, 
+    @VentaID = 1, 
 	@EmpleadoID = @EmpleadoSupervisorID, 
     @MontoCredito = 100.00, 
     @DevolucionProducto = 0; 
@@ -232,7 +232,7 @@ DECLARE @IdProductoDevolucion INT = 102;
 EXECUTE AS LOGIN = 'usuario_supervisor';
 EXEC facturacion.GenerarNotaCredito
 	@EmpleadoID = @EmpleadoSupervisorID, 
-	@ComprobanteID = 1,
+	@VentaID = 1,
     @MontoCredito = 100.00,
     @DevolucionProducto = 1,                  -- Indica que es devolucion por producto
     @IdProductoDevolucion = @IdProductoDevolucion;
@@ -245,7 +245,7 @@ GO
 DECLARE @EmpleadoNoSupervisorID INT = 2;
 EXECUTE AS LOGIN = 'usuario_vendedor';
 EXEC facturacion.GenerarNotaCredito 
-    @ComprobanteID = 1, 
+    @VentaID = 1, 
     @EmpleadoID = @EmpleadoNoSupervisorID, 
     @MontoCredito = 100.00, 
     @DevolucionProducto = 0; 
