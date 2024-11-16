@@ -64,7 +64,7 @@ USE COM2900G09
 GO
 
 --Se crean esquemas para trabajar sin usar el default 'dbo'
---Facturación se encargará de la generación y gestión de comprobantes, pagos y clientes
+--Facturación se encargará de la generación y gestión de Ventas, pagos y clientes
 create schema facturacion
 go
 --Destinamos el esquema Depósito a lo relacionado a gestión de Productos
@@ -75,8 +75,8 @@ create schema infraestructura
 GO
 
 --Se respeta este orden de borrado para que no haya conflictos con las Foreign Keys
-DROP TABLE IF EXISTS facturacion.LineaComprobante;
-DROP TABLE IF EXISTS facturacion.Comprobante;
+DROP TABLE IF EXISTS facturacion.LineaVenta;
+DROP TABLE IF EXISTS facturacion.Venta;
 DROP TABLE IF EXISTS facturacion.Pago;
 DROP TABLE IF EXISTS facturacion.Cliente;
 DROP TABLE IF EXISTS facturacion.MedioDePago;
@@ -157,7 +157,7 @@ create table deposito.producto(
 )
 go
 
-create table facturacion.comprobante(
+create table facturacion.Venta(
 	ID int Identity(1,1) primary key,
 	MontoNeto decimal (9,2), -- no se inserta, se modifica
 	Cliente int,
@@ -168,12 +168,12 @@ create table facturacion.comprobante(
 )
 go
 
-create table facturacion.lineaComprobante(
+create table facturacion.lineaVenta(
 	ID int,
 	IDProducto int,
 	Cantidad int,
 	Monto decimal (9,2),
-	FOREIGN KEY (ID) REFERENCES facturacion.Comprobante(ID),
+	FOREIGN KEY (ID) REFERENCES facturacion.Venta(ID),
 	FOREIGN KEY (IdProducto) REFERENCES deposito.producto(IDProducto),
 	constraint pkLineaVenta primary key (ID, IdProducto)
 )
@@ -181,7 +181,7 @@ go
 
 create table facturacion.factura(
 	ID int Identity(1,1) primary key,
-	Comprobante int,
+	Venta int,
 	letra char check (Letra='A' or Letra='B' or Letra='C'),
 	numero char(11),
 	Fecha date,
@@ -190,7 +190,7 @@ create table facturacion.factura(
 	MontoNeto decimal (9,2),
 	MontoBruto decimal (9,2),
 	CUIL char(13),
-	FOREIGN KEY (Comprobante) REFERENCES facturacion.comprobante(ID)
+	FOREIGN KEY (Venta) REFERENCES facturacion.Venta(ID)
 )
 go
 
@@ -225,8 +225,8 @@ create table facturacion.Pago(
 )
 go
 
-/*CREATE NONCLUSTERED INDEX idx_Comprobante_Numero
-ON facturacion.Comprobante (numero);
+/*CREATE NONCLUSTERED INDEX idx_Venta_Numero
+ON facturacion.Venta (numero);
 GO*/
 
 CREATE NONCLUSTERED INDEX idx_Empleado_DNI

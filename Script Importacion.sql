@@ -15,18 +15,18 @@ CREATE OR ALTER PROCEDURE facturacion.ImportVentas
 AS
 BEGIN
 	create table #VentasRegistradasCSV(
-		Factura			  VARCHAR(MAX), --comprobante.numero
-		TipoFactura		  VARCHAR(MAX), --comprobante.tipo
+		Factura			  VARCHAR(MAX), --Venta.numero
+		TipoFactura		  VARCHAR(MAX), --Venta.tipo
 		Ciudad			  VARCHAR(MAX), --sucursal.ciudad NO SIRVE
 		TipoCliente		  VARCHAR(MAX), --cliente.tipocliente NO SIRVE
 		Genero			  VARCHAR(MAX), --cliente.genero NO SIRVE
 		Producto		  VARCHAR(MAX),	--producto.nombre
-		PrecioUnitario	  VARCHAR(MAX),	--lineaComprobante.Monto
-		Cantidad		  VARCHAR(MAX),	--lineaComprobante.cantidad
-		Fecha			  VARCHAR(MAX),	--comprobante.fecha
-		Hora			  VARCHAR(MAX),	--comprobante.hora
+		PrecioUnitario	  VARCHAR(MAX),	--lineaVenta.Monto
+		Cantidad		  VARCHAR(MAX),	--lineaVenta.cantidad
+		Fecha			  VARCHAR(MAX),	--Venta.fecha
+		Hora			  VARCHAR(MAX),	--Venta.hora
 		MedioPago		  VARCHAR(MAX),	--MedioDePago.nombre
-		Empleado		  VARCHAR(MAX),	--comprobante.Empleado
+		Empleado		  VARCHAR(MAX),	--Venta.Empleado
 		IdentificadorPago VARCHAR(MAX)	--pago.IdentificadorDePago
 	)
 
@@ -53,15 +53,15 @@ BEGIN
 				FROM #VentasRegistradasCSV AS a
 				LEFT JOIN facturacion.MedioDePago AS b ON a.MedioPago = b.nombre
 
-		INSERT facturacion.comprobante(numero, letra, Fecha, Hora, Empleado, Pago)
+		INSERT facturacion.Venta(numero, letra, Fecha, Hora, Empleado, Pago)
 			SELECT a.Factura, a.TipoFactura, a.Fecha, a.Hora, CAST(a.Empleado AS INT), b.IDPago
 				FROM #VentasRegistradasCSV AS a
 				LEFT JOIN facturacion.pago AS b ON a.IdentificadorPago = b.IdentificadorDePago
 
-		INSERT facturacion.lineaComprobante(ID, IdProducto, Cantidad, Monto)
+		INSERT facturacion.lineaVenta(ID, IdProducto, Cantidad, Monto)
 			SELECT b.ID, c.IdProducto, a.Cantidad, a.PrecioUnitario
 				FROM #VentasRegistradasCSV 		  AS a
-				LEFT JOIN facturacion.comprobante AS b ON a.Factura  = b.numero
+				LEFT JOIN facturacion.Venta AS b ON a.Factura  = b.numero
 				LEFT JOIN deposito.producto 	  AS c ON a.producto = c.nombre
 
 		DROP TABLE #VentasRegistradasCSV

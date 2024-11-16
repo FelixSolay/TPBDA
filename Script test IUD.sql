@@ -715,51 +715,51 @@ EXEC infraestructura.EliminarEmpleado
 GO
 --ESQUEMA FACTURACION
 -- Facturacion
--- Insert Liena Comprobante
+-- Insert Liena Venta
 -- Insert valido
-EXEC facturacion.InsertarLineaComprobante
+EXEC facturacion.InsertarLineaVenta
 	@ID = 1,
 	@IdProducto = 1,
 	@Cantidad = 1,
 	@Monto = 120
 GO
 -- Insert ID invalido
-EXEC facturacion.InsertarLineaComprobante
+EXEC facturacion.InsertarLineaVenta
 	@ID = 'Paco',
 	@IdProducto = 1,
 	@Cantidad = 1,
 	@Monto = 120
 GO
 -- Insert ID invalido
-EXEC facturacion.InsertarLineaComprobante
+EXEC facturacion.InsertarLineaVenta
 	@ID = NULL,
 	@IdProducto = 1,
 	@Cantidad = 1,
 	@Monto = 120
 GO
 -- Insert IdProducto invalido
-EXEC facturacion.InsertarLineaComprobante
+EXEC facturacion.InsertarLineaVenta
 	@ID = 1,
 	@IdProducto = 'Paco',
 	@Cantidad = 1,
 	@Monto = 120
 GO
 -- Insert Cantidad invalida
-EXEC facturacion.InsertarLineaComprobante
+EXEC facturacion.InsertarLineaVenta
 	@ID = 1,
 	@IdProducto = 1,
 	@Cantidad = 'Paco',
 	@Monto = 120
 GO
 -- Insert Monto invalido
-EXEC facturacion.InsertarLineaComprobante
+EXEC facturacion.InsertarLineaVenta
 	@ID = 1,
 	@IdProducto = 1,
 	@Cantidad = 5,
 	@Monto = 'Paco'
 GO
 -- Insert Monto invalido
-EXEC facturacion.InsertarLineaComprobante
+EXEC facturacion.InsertarLineaVenta
 	@ID = 1,
 	@IdProducto = 1,
 	@Cantidad = 5,
@@ -767,56 +767,56 @@ EXEC facturacion.InsertarLineaComprobante
 GO
 -- Update
 -- Update valido
-EXEC facturacion.ActualizarLineaComprobante
+EXEC facturacion.ActualizarLineaVenta
 	@ID = 1,
 	@IdProducto = 1,
 	@Cantidad = 10,
 	@Monto = 1200
 GO
 -- Update ID invalido
-EXEC facturacion.ActualizarLineaComprobante
+EXEC facturacion.ActualizarLineaVenta
 	@ID = 'Paco',
 	@IdProducto = 1,
 	@Cantidad = 10,
 	@Monto = 1200
 GO
 -- Update ID invalido
-EXEC facturacion.ActualizarLineaComprobante
+EXEC facturacion.ActualizarLineaVenta
 	@ID = NULL,
 	@IdProducto = 1,
 	@Cantidad = 10,
 	@Monto = 1200
 GO
 -- Update ID invalido, inexistente
-EXEC facturacion.ActualizarLineaComprobante
+EXEC facturacion.ActualizarLineaVenta
 	@ID = 999999,
 	@IdProducto = 1,
 	@Cantidad = 10,
 	@Monto = 1200
 GO
 -- Update IdProducto invalido
-EXEC facturacion.ActualizarLineaComprobante
+EXEC facturacion.ActualizarLineaVenta
 	@ID = 1,
 	@IdProducto = NULL,
 	@Cantidad = 10,
 	@Monto = 1200
 GO
 -- Update IdProducto invalido
-EXEC facturacion.ActualizarLineaComprobante
+EXEC facturacion.ActualizarLineaVenta
 	@ID = 1,
 	@IdProducto = 'Paco',
 	@Cantidad = 10,
 	@Monto = 1200
 GO
 -- Update Cantidadinvalida
-EXEC facturacion.ActualizarLineaComprobante
+EXEC facturacion.ActualizarLineaVenta
 	@ID = 1,
 	@IdProducto = 1,
 	@Cantidad = 'Paco',
 	@Monto = 1200
 GO
 -- Update Cantidadinvalida
-EXEC facturacion.ActualizarLineaComprobante
+EXEC facturacion.ActualizarLineaVenta
 	@ID = 1,
 	@IdProducto = 1,
 	@Cantidad = 20,
@@ -824,33 +824,33 @@ EXEC facturacion.ActualizarLineaComprobante
 GO
 -- Delete
 -- Delete valido
-EXEC facturacion.EliminarLineaComprobante
+EXEC facturacion.EliminarLineaVenta
 	@ID = 1,
 	@IdProducto  = 1
 GO
 -- Delete ID invalido
-EXEC facturacion.EliminarLineaComprobante
+EXEC facturacion.EliminarLineaVenta
 	@ID = 999999,
 	@IdProducto = 1
 GO
 -- Delete ID invalido
-EXEC facturacion.EliminarLineaComprobante
+EXEC facturacion.EliminarLineaVenta
 	@ID = NULL,
 	@IdProducto = 1
 GO
 -- Delete ID invalido
-EXEC facturacion.EliminarLineaComprobante
+EXEC facturacion.EliminarLineaVenta
 	@ID = 1,
 	@IdProducto = 999999
 GO
 -- Delete ID invalido
-EXEC facturacion.EliminarLineaComprobante
+EXEC facturacion.EliminarLineaVenta
 	@ID = 1,
 	@IdProducto = NULL
 GO
--- Comprobante
--- Insertar Comprobante valido
-EXEC facturacion.InsertarComprobante
+-- Venta
+-- Insertar Venta valido
+EXEC facturacion.InsertarVenta
 	@Tipo = 'FC',
 	@Numero = 11223344556,
 	@Letra = 'A',
@@ -862,7 +862,7 @@ EXEC facturacion.InsertarComprobante
 	@Pago = 1
 GO
 -- Insertar ID invalido
-EXEC facturacion.InsertarComprobante
+EXEC facturacion.InsertarVenta
 	@Tipo = 'FC',
 	@Numero = 11223344556,
 	@Letra = 'A',
@@ -874,7 +874,7 @@ EXEC facturacion.InsertarComprobante
 	@Pago = 1
 GO
 -- Insertar Tipo valido
-EXEC facturacion.InsertarComprobante
+EXEC facturacion.InsertarVenta
 	@Tipo = 'FC',
 	@Numero = 11223344556,
 	@Letra = 'A',
@@ -886,7 +886,7 @@ EXEC facturacion.InsertarComprobante
 	@Pago = 1
 GO
 -- Insertar Tipo invalido
-EXEC facturacion.InsertarComprobante
+EXEC facturacion.InsertarVenta
 	@Tipo = 'UI',
 	@Numero = 11223344556,
 	@Letra = 'A',
@@ -898,7 +898,7 @@ EXEC facturacion.InsertarComprobante
 	@Pago = 1
 GO
 -- Insertar Tipo invalido
-EXEC facturacion.InsertarComprobante
+EXEC facturacion.InsertarVenta
 	@Tipo = 'Aca escribimos un texto mayor a 50 a fin de que salga por error de tamaño invalido',
 	@Numero = 11223344556,
 	@Letra = 'A',
@@ -910,7 +910,7 @@ EXEC facturacion.InsertarComprobante
 	@Pago = 1
 GO
 -- Insertar Numero invalido
-EXEC facturacion.InsertarComprobante
+EXEC facturacion.InsertarVenta
 	@Tipo = 'FC',
 	@Numero = 1234567891011,
 	@Letra = 'A',
@@ -922,7 +922,7 @@ EXEC facturacion.InsertarComprobante
 	@Pago = 1
 GO
 -- Insertar Letra invalida
-EXEC facturacion.InsertarComprobante
+EXEC facturacion.InsertarVenta
 	@Tipo = 'FC',
 	@Numero = 12345678910,
 	@Letra = 'FC',
@@ -934,7 +934,7 @@ EXEC facturacion.InsertarComprobante
 	@Pago = 1
 GO
 -- Insertar Letra invalida
-EXEC facturacion.InsertarComprobante
+EXEC facturacion.InsertarVenta
 	@Tipo = 'FC',
 	@Numero = 12345678910,
 	@Letra = 'Paco',
@@ -946,7 +946,7 @@ EXEC facturacion.InsertarComprobante
 	@Pago = 1
 GO
 -- Insertar Fechainvalido
-EXEC facturacion.InsertarComprobante
+EXEC facturacion.InsertarVenta
 	@Tipo = 'FC',
 	@Numero = 12345678910,
 	@Letra = 'A',
@@ -958,7 +958,7 @@ EXEC facturacion.InsertarComprobante
 	@Pago = 1
 GO
 -- Insertar Fechainvalido
-EXEC facturacion.InsertarComprobante
+EXEC facturacion.InsertarVenta
 	@Tipo = 'FC',
 	@Numero = 12345678910,
 	@Letra = 'A',
@@ -970,7 +970,7 @@ EXEC facturacion.InsertarComprobante
 	@Pago = 1
 GO
 -- Insertar Hora invalido
-EXEC facturacion.InsertarComprobante
+EXEC facturacion.InsertarVenta
 	@Tipo = 'FC',
 	@Numero = 12345678910,
 	@Letra = 'A',
@@ -982,7 +982,7 @@ EXEC facturacion.InsertarComprobante
 	@Pago = 1
 GO
 -- Insertar Empleado invalido
-EXEC facturacion.InsertarComprobante
+EXEC facturacion.InsertarVenta
 	@Tipo = 'FC',
 	@Numero = 12345678910,
 	@Letra = 'A',
@@ -994,7 +994,7 @@ EXEC facturacion.InsertarComprobante
 	@Pago = 1
 GO
 -- Insertar Pagoinvalido
-EXEC facturacion.InsertarComprobante
+EXEC facturacion.InsertarVenta
 	@Tipo = 'FC',
 	@Numero = 12345678910,
 	@Letra = 'A',
@@ -1007,7 +1007,7 @@ EXEC facturacion.InsertarComprobante
 GO
 -- Update
 -- Update valido
-EXEC facturacion.ActualizarComprobante
+EXEC facturacion.ActualizarVenta
 	@ID = 1,
 	@Tipo = 'FC',
 	@Numero = 12345678910,
@@ -1020,7 +1020,7 @@ EXEC facturacion.ActualizarComprobante
 	@Pago = 1
 GO
 -- Update ID invalido, inexistente
-EXEC facturacion.ActualizarComprobante
+EXEC facturacion.ActualizarVenta
 	@ID = 999999,
 	@Tipo = 'FC',
 	@Numero = 12345678910,
@@ -1033,7 +1033,7 @@ EXEC facturacion.ActualizarComprobante
 	@Pago = 1
 GO
 -- Update ID invalido
-EXEC facturacion.ActualizarComprobante
+EXEC facturacion.ActualizarVenta
 	@ID = NULL,
 	@Tipo = 'FC',
 	@Numero = 12345678910,
@@ -1046,7 +1046,7 @@ EXEC facturacion.ActualizarComprobante
 	@Pago = 1
 GO
 -- Update Tipo invalido
-EXEC facturacion.ActualizarComprobante
+EXEC facturacion.ActualizarVenta
 	@ID = 2,
 	@Tipo = 'UI',
 	@Numero = 11223344556,
@@ -1059,7 +1059,7 @@ EXEC facturacion.ActualizarComprobante
 	@Pago = 1
 GO
 -- Update Tipo invalido
-EXEC facturacion.ActualizarComprobante
+EXEC facturacion.ActualizarVenta
 	@ID = 2,
 	@Tipo = 'Aca escribimos un texto mayor a 50 a fin de que salga por error de tamaño invalido',
 	@Numero = 11223344556,
@@ -1072,7 +1072,7 @@ EXEC facturacion.ActualizarComprobante
 	@Pago = 1
 GO
 -- Update Numero Invalido
-EXEC facturacion.ActualizarComprobante
+EXEC facturacion.ActualizarVenta
 	@ID = 2,
 	@Tipo = 'FC',
 	@Numero = 1234567891011,
@@ -1085,7 +1085,7 @@ EXEC facturacion.ActualizarComprobante
 	@Pago = 1
 GO
 -- Update LetraInvalida
-EXEC facturacion.ActualizarComprobante
+EXEC facturacion.ActualizarVenta
 	@ID = 2,
 	@Tipo = 'FC',
 	@Numero = 12345678910,
@@ -1098,7 +1098,7 @@ EXEC facturacion.ActualizarComprobante
 	@Pago = 1
 GO
 -- Update Letra Invalida
-EXEC facturacion.ActualizarComprobante
+EXEC facturacion.ActualizarVenta
 	@ID = 2,
 	@Tipo = 'FC',
 	@Numero = 12345678910,
@@ -1111,7 +1111,7 @@ EXEC facturacion.ActualizarComprobante
 	@Pago = 1
 GO
 -- Update Numero Invalido
-EXEC facturacion.ActualizarComprobante
+EXEC facturacion.ActualizarVenta
 	@ID = 2,
 	@Tipo = 'FC',
 	@Numero = 12345678910,
@@ -1124,7 +1124,7 @@ EXEC facturacion.ActualizarComprobante
 	@Pago = 1
 GO
 -- Update Hora Invalida
-EXEC facturacion.ActualizarComprobante
+EXEC facturacion.ActualizarVenta
 	@ID = 2,
 	@Tipo = 'FC',
 	@Numero = 12345678910,
@@ -1137,7 +1137,7 @@ EXEC facturacion.ActualizarComprobante
 	@Pago = 1
 GO
 -- Update Empleado Invalido
-EXEC facturacion.ActualizarComprobante
+EXEC facturacion.ActualizarVenta
 	@ID = 2,
 	@Tipo = 'FC',
 	@Numero = 12345678910,
@@ -1150,7 +1150,7 @@ EXEC facturacion.ActualizarComprobante
 	@Pago = 1
 GO
 -- Update PagoInvalido
-EXEC facturacion.ActualizarComprobante
+EXEC facturacion.ActualizarVenta
 	@ID = 2,
 	@Tipo = 'FC',
 	@Numero = 12345678910,
@@ -1164,15 +1164,15 @@ EXEC facturacion.ActualizarComprobante
 GO
 -- Delete
 -- Delete valido
-EXEC facturacion.EliminarComprobante
+EXEC facturacion.EliminarVenta
 	@ID = 2
 GO
 -- Delete invalido
-EXEC facturacion.EliminarComprobante
+EXEC facturacion.EliminarVenta
 	@ID = NULL
 GO
 -- Delete invalido, inexistente
-EXEC facturacion.EliminarComprobante
+EXEC facturacion.EliminarVenta
 	@ID = 999999
 GO
 --PAGO

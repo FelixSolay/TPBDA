@@ -124,7 +124,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.InsertarLineaPedido
+CREATE OR ALTER PROCEDURE facturacion.InsertarLineaVenta
     @ID         INT,
     @IdProducto INT,
     @Cantidad   INT,
@@ -136,40 +136,40 @@ BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
         IF EXISTS (SELECT *
-                    FROM facturacion.Pedido 
+                    FROM facturacion.Venta 
                         WHERE ID = @ID 
                           AND Cerrado = 0 )
         BEGIN
 			SELECT @ExCant = cantidad
-                    FROM facturacion.LineaPedido
+                    FROM facturacion.LineaVenta
                         WHERE ID = @ID
                           AND IDProducto = @IdProducto
 
             IF ( @ExCant <> '' )
             BEGIN
-                UPDATE facturacion.LineaPedido
+                UPDATE facturacion.LineaVenta
                     SET Cantidad = @ExCant + @Cantidad
                         WHERE ID = @ID
                           AND IDProducto = @IDProducto
             END
             ELSE
             BEGIN
-                INSERT INTO facturacion.LineaPedido (ID, IdProducto, Cantidad, Monto)
+                INSERT INTO facturacion.LineaVenta (ID, IdProducto, Cantidad, Monto)
                     VALUES (@ID, @IdProducto, @Cantidad, @Monto);
             END
 
             COMMIT TRANSACTION;
-            PRINT 'Linea de Pedido insertada correctamente.'
+            PRINT 'Linea de Venta insertada correctamente.'
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar la Linea de Pedido: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar insertar la Linea de Venta: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.IniciarPedido
+CREATE OR ALTER PROCEDURE facturacion.IniciarVenta
     @Cliente  INT,
     @Empleado INT
 AS
@@ -178,26 +178,26 @@ BEGIN
 
     BEGIN TRANSACTION
     BEGIN TRY
-        INSERT INTO facturacion.Pedido (Cliente, Empleado)
+        INSERT INTO facturacion.Venta (Cliente, Empleado)
         VALUES (@Cliente, @Empleado);
         
         SELECT @ID = SCOPE_IDENTITY()
-            FROM facturacion.Pedido
+            FROM facturacion.Venta
 
         COMMIT TRANSACTION;
-        PRINT 'Pedido insertado correctamente.'
+        PRINT 'Venta insertado correctamente.'
 
         RETURN @ID
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar el Pedido: ' + ERROR_MESSAGE()
+        PRINT 'Error al intentar insertar el Venta: ' + ERROR_MESSAGE()
     END CATCH;
 END
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.GenerarFactura -- SOLO SE EJECUTA DENTRO DE facturacion.CerrarPedido. NO SE PUEDE LLAMAR POR SI SOLO
-    @IDPedido INT,
+CREATE OR ALTER PROCEDURE facturacion.GenerarFactura -- SOLO SE EJECUTA DENTRO DE facturacion.CerrarVenta. NO SE PUEDE LLAMAR POR SI SOLO
+    @IDVenta INT,
     @Importe DECIMAL(9,2)
 AS
 BEGIN
@@ -225,8 +225,8 @@ BEGIN
         SELECT @CUIL = CUIL
             FROM facturacion.cliente
 
-        INSERT INTO facturacion.factura(Pedido, letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto, CUIL)
-            VALUES (@IDPedido, 'C', @NewFac, GETDATE(), CONVERT(VARCHAR(10), GETDATE(), 108), 
+        INSERT INTO facturacion.factura(Venta, letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto, CUIL)
+            VALUES (@IDVenta, 'C', @NewFac, GETDATE(), CONVERT(VARCHAR(10), GETDATE(), 108), 
 					@Importe, @Importe * 0.21, @Importe * 1.21,
                     LEFT(@CUIL, 2) + '-' + SUBSTRING(@CUIL, 3, 8) + '-' + RIGHT(@CUIL, 1))
     END TRY
@@ -238,53 +238,53 @@ GO
 
 -------------------- DELETES --------------------
 
-CREATE OR ALTER PROCEDURE facturacion.EliminarLineaPedido
+CREATE OR ALTER PROCEDURE facturacion.EliminarLineaVenta
     @ID INT,
     @IDProducto INT
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.LineaPedido WHERE ID = @ID AND IdProducto = @IDProducto)
+        IF EXISTS (SELECT 1 FROM facturacion.LineaVenta WHERE ID = @ID AND IdProducto = @IDProducto)
         BEGIN
-            DELETE FROM facturacion.lineaPedido WHERE ID = @ID AND IdProducto = @IDProducto;
+            DELETE FROM facturacion.lineaVenta WHERE ID = @ID AND IdProducto = @IDProducto;
             COMMIT TRANSACTION;
-            PRINT 'Linea de Pedido eliminada correctamente.';
+            PRINT 'Linea de Venta eliminada correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el registro de Linea de Pedido con el ID y Producto especificados.';
+            PRINT 'No se encontro el registro de Linea de Venta con el ID y Producto especificados.';
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar eliminar la Linea de Pedido: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar eliminar la Linea de Venta: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.EliminarPedido
+CREATE OR ALTER PROCEDURE facturacion.EliminarVenta
     @ID INT
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.Pedido WHERE ID = @ID)
+        IF EXISTS (SELECT 1 FROM facturacion.Venta WHERE ID = @ID)
         BEGIN
-            DELETE FROM facturacion.Pedido WHERE ID = @ID;
+            DELETE FROM facturacion.Venta WHERE ID = @ID;
             COMMIT TRANSACTION;
-            PRINT 'Pedido eliminado correctamente.';
+            PRINT 'Venta eliminado correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el registro de Pedido con el ID especificado.';
+            PRINT 'No se encontro el registro de Venta con el ID especificado.';
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar eliminar el Pedido: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar eliminar el Venta: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
@@ -393,7 +393,7 @@ GO
 
 -------------------- UPDATES --------------------
 
-CREATE OR ALTER PROCEDURE facturacion.ActualizarLineaPedido
+CREATE OR ALTER PROCEDURE facturacion.ActualizarLineaVenta
     @ID INT,
     @IdProducto INT,
     @Cantidad INT = NULL,
@@ -402,25 +402,25 @@ AS
 BEGIN
     BEGIN TRANSACTION
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.LineaPedido WHERE ID = @ID AND IdProducto = @IdProducto)
+        IF EXISTS (SELECT 1 FROM facturacion.LineaVenta WHERE ID = @ID AND IdProducto = @IdProducto)
         BEGIN
-            UPDATE facturacion.LineaPedido
+            UPDATE facturacion.LineaVenta
 				SET Cantidad = COALESCE(@Cantidad, Cantidad),
 					Monto	 = COALESCE(@Monto, Monto)
 					WHERE ID = @ID AND IdProducto = @IdProducto;
 
             COMMIT TRANSACTION;
-            PRINT 'Linea de Pedido actualizada correctamente.';
+            PRINT 'Linea de Venta actualizada correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontro la linea de Pedido con los Ids especificados.';
+            PRINT 'No se encontro la linea de Venta con los Ids especificados.';
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar actualizar la linea de Pedido: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar actualizar la linea de Venta: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
@@ -555,7 +555,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.CerrarPedido
+CREATE OR ALTER PROCEDURE facturacion.CerrarVenta
     @ID INT
 AS
 BEGIN
@@ -563,32 +563,32 @@ BEGIN
 
     SELECT @MontoNeto = SUM(Importe)
         from (SELECT IDProducto, Cantidad * Monto AS Importe
-                FROM facturacion.LineaPedido
+                FROM facturacion.LineaVenta
 					WHERE ID = @ID) AS a
 
     BEGIN TRANSACTION
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.Pedido WHERE ID = @ID)
+        IF EXISTS (SELECT 1 FROM facturacion.Venta WHERE ID = @ID)
         BEGIN
-            UPDATE facturacion.Pedido
+            UPDATE facturacion.Venta
                 SET MontoNeto   = COALESCE(@MontoNeto, MontoNeto),
 					Cerrado = 1
 					WHERE ID = @ID;
 
-            EXEC facturacion.GenerarFactura @IDPedido = @ID, @Importe = @MontoNeto
+            EXEC facturacion.GenerarFactura @IDVenta = @ID, @Importe = @MontoNeto
 
             COMMIT TRANSACTION;
-            PRINT 'Pedido actualizado correctamente.';
+            PRINT 'Venta actualizado correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el Pedido con el Id especificado.';
+            PRINT 'No se encontro el Venta con el Id especificado.';
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar actualizar el Pedido: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar actualizar el Venta: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
