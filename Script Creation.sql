@@ -51,6 +51,7 @@ GO
 SET DATEFORMAT mdy
 GO
 
+-- hay que agregar esto
 /*
 CONTAINMENT = NONE
 ON PRIMARY(
@@ -59,6 +60,7 @@ FILEGROUP [Memoria] CONTAINS MEMORY_OPTIMIZED_DATA DEFAULT(
 	NAME = N'MemoryDB', FILENAME = N'D:\DataTP\AuroraVentasMem')
 GO
 */
+
 --Para trabajar sobre la base de datos creada
 USE COM2900G09
 GO
@@ -75,154 +77,154 @@ create schema infraestructura
 GO
 
 --Se respeta este orden de borrado para que no haya conflictos con las Foreign Keys
-DROP TABLE IF EXISTS facturacion.LineaVenta;
-DROP TABLE IF EXISTS facturacion.Venta;
-DROP TABLE IF EXISTS facturacion.Pago;
-DROP TABLE IF EXISTS facturacion.Cliente;
-DROP TABLE IF EXISTS facturacion.MedioDePago;
-DROP TABLE IF EXISTS facturacion.TipoCliente;   
-DROP TABLE IF EXISTS deposito.Producto;
-DROP TABLE IF EXISTS deposito.Categoria;
-DROP TABLE IF EXISTS infraestructura.Empleado;
-DROP TABLE IF EXISTS infraestructura.Sucursal;
-DROP TABLE IF EXISTS infraestructura.Cargo;
-go
+DROP TABLE IF EXISTS facturacion.LineaVenta
+DROP TABLE IF EXISTS facturacion.Venta
+DROP TABLE IF EXISTS facturacion.Pago
+DROP TABLE IF EXISTS facturacion.Cliente
+DROP TABLE IF EXISTS facturacion.MedioDePago
+DROP TABLE IF EXISTS facturacion.TipoCliente
+DROP TABLE IF EXISTS deposito.Producto
+DROP TABLE IF EXISTS deposito.Categoria
+DROP TABLE IF EXISTS infraestructura.Empleado
+DROP TABLE IF EXISTS infraestructura.Sucursal
+DROP TABLE IF EXISTS infraestructura.Cargo
+GO
 
 --Utilizamos como Pk en las tablas un int Identity para mejorar la velocidad de las consultas
-create table infraestructura.cargo(
-	IdCargo int Identity(1,1) primary key,
-	Descripcion varchar(25) Unique NOT NULL
+CREATE TABLE infraestructura.cargo(
+	IdCargo 	INT IDENTITY(1,1) PRIMARY KEY,
+	Descripcion VARCHAR(25) UNIQUE NOT NULL
 )
-go
+GO
 
-create table infraestructura.sucursal(
-	IDsucursal int Identity(1,1) primary key,
-	Direccion varchar(100),
-	Ciudad varchar(20),
-	Horario char(45),
-	Telefono char(11)
+CREATE TABLE infraestructura.sucursal(
+	IDsucursal INT IDENTITY(1,1) PRIMARY KEY,
+	Direccion  VARCHAR(100),
+	Ciudad 	   VARCHAR(20),
+	Horario    CHAR(45),
+	Telefono   CHAR(11)
 )
-go
+GO
 
-create table infraestructura.empleado(
-	Legajo int primary key,
-	Nombre varchar(30),
-	Apellido varchar(30),
-	DNI int Unique,
-	Direccion varchar(100),
-	EmailPersonal varchar(100),
-	EmailEmpresa varchar(100),
-	Turno char(16) check (Turno='TN' or Turno='TM' or turno= 'TT' or Turno='Jornada Completa'),
-	Cargo int,
-	Sucursal int,
-	FOREIGN KEY (Cargo) REFERENCES infraestructura.cargo(IdCargo),
+CREATE TABLE infraestructura.empleado(
+	Legajo 		  INT PRIMARY KEY,
+	Nombre 	  	  VARCHAR(30),
+	Apellido 	  VARCHAR(30),
+	DNI 		  INT UNIQUE NOT NULL,
+	Direccion 	  VARCHAR(100),
+	EmailPersonal VARCHAR(100),
+	EmailEmpresa  VARCHAR(100),
+	Turno 		  CHAR(16) CHECK (Turno ='TN' OR Turno ='TM' OR turno = 'TT' OR Turno ='Jornada Completa'),
+	Cargo 		  INT,
+	Sucursal 	  INT,
+	FOREIGN KEY (Cargo)    REFERENCES infraestructura.cargo(IdCargo),
 	FOREIGN KEY (Sucursal) REFERENCES infraestructura.Sucursal(IdSucursal)
 )
-go
+GO
 
-create table facturacion.TipoCliente(
-    IDTipoCliente int Identity(1,1) primary key, 
-	nombre varchar(20) Unique NOT NULL 	
+CREATE TABLE facturacion.TipoCliente(
+    IDTipoCliente INT IDENTITY(1,1) PRIMARY KEY,
+	nombre 		  VARCHAR(20) UNIQUE NOT NULL 	
 )
-go
+GO
 
-create table facturacion.cliente(
-	IDCliente int Identity(1,1) primary key,
-	DNI int Unique,
-	CUIL int unique, -- calculable
-	Nombre varchar(25),
-	Apellido varchar(25),
-	Genero char(1) check (Genero='M' or Genero='F'),
-	IDTipoCliente int,
+CREATE TABLE facturacion.cliente(
+	IDCliente 	  INT IDENTITY(1,1) PRIMARY KEY,
+	DNI 	  	  INT UNIQUE NOT NULL,
+	CUIL 	  	  INT UNIQUE NOT NULL, -- calculable
+	Nombre 	  	  VARCHAR(25),
+	Apellido  	  VARCHAR(25),
+	Genero 		  CHAR(1) CHECK (Genero='M' OR Genero='F'),
+	IDTipoCliente INT,
 	FOREIGN KEY (IDTipoCliente) REFERENCES facturacion.TipoCliente(IDTipoCliente)
 )
-go
+GO
 
-create table deposito.categoria(
-	IDCategoria int Identity(1,1) primary key,
-	Descripcion varchar(50) Unique NOT NULL,
+CREATE TABLE deposito.categoria(
+	IDCategoria INT IDENTITY(1,1) PRIMARY KEY,
+	Descripcion VARCHAR(50) UNIQUE NOT NULL,
 )
-go
+GO
 
-create table deposito.producto(
-	IDProducto int Identity(1,1) primary key,
-    categoria int,
-	Nombre varchar(100),
-	Precio decimal (9,2),
-	PrecioReferencia decimal (9,2),
-	UnidadReferencia char(100),
-    Fecha datetime,
+CREATE TABLE deposito.producto(
+	IDProducto 		 INT IDENTITY(1,1) PRIMARY KEY,
+    categoria 		 INT,
+	Nombre 			 VARCHAR(100),
+	Precio 			 DECIMAL(9,2),
+	PrecioReferencia DECIMAL(9,2),
+	UnidadReferencia CHAR(100),
+    Fecha 			 DATETIME,
 	FOREIGN KEY (categoria) REFERENCES deposito.categoria(IDCategoria)
 )
-go
+GO
 
-create table facturacion.factura(
-	ID int Identity(1,1) primary key,
-	letra char check (Letra='A' or Letra='B' or Letra='C'),
-	numero char(11),
-	Fecha date,
-	Hora time,
-	MontoIVA decimal (9,2),
-	MontoNeto decimal (9,2),
-	MontoBruto decimal (9,2),
-	CUIL char(13),
+CREATE TABLE facturacion.factura(
+	ID 		   INT IDENTITY(1,1) PRIMARY KEY,
+	letra 	   CHAR CHECK (Letra = 'A' OR Letra = 'B' OR Letra = 'C'),
+	numero 	   CHAR(11),
+	Fecha 	   DATE,
+	Hora 	   TIME,
+	MontoIVA   DECIMAL(9,2),
+	MontoNeto  DECIMAL(9,2),
+	MontoBruto DECIMAL(9,2),
+	CUIL 	   CHAR(13),
 )
-go
+GO
 
-create table facturacion.Venta(
-	ID int Identity(1,1) primary key,
-	IDFactura int,
-	Cliente int,
-	Empleado int,
-	MontoNeto decimal (9,2), -- no se inserta, se modifica
-	Cerrado BIT DEFAULT 0,
-	FOREIGN KEY (Cliente)  REFERENCES facturacion.cliente(IDCliente),
-	FOREIGN KEY (Empleado) REFERENCES infraestructura.Empleado(Legajo),
-	FOREIGN KEY (IDFactura)  REFERENCES facturacion.Factura(ID)
+CREATE TABLE facturacion.Venta(
+	ID 		  INT IDENTITY(1,1) PRIMARY KEY,
+	IDFactura INT,
+	Cliente   INT,
+	Empleado  int,
+	MontoNeto INT(9,2), -- no se inserta, se modifica
+	Cerrado   BIT DEFAULT 0,
+	FOREIGN KEY (Cliente)   REFERENCES facturacion.cliente(IDCliente),
+	FOREIGN KEY (Empleado)  REFERENCES infraestructura.Empleado(Legajo),
+	FOREIGN KEY (IDFactura) REFERENCES facturacion.Factura(ID)
 )
-go
+GO
 
-create table facturacion.lineaVenta(
-	ID int,
-	IDProducto int,
-	Cantidad int,
-	Monto decimal (9,2),
-	FOREIGN KEY (ID) REFERENCES facturacion.Venta(ID),
+CREATE TABLE facturacion.lineaVenta(
+	ID 	   	   INT,
+	IDProducto INT,
+	Cantidad   INT,
+	Monto 	   DECIMAL(9,2),
+	FOREIGN KEY (ID) 		 REFERENCES facturacion.Venta(ID),
 	FOREIGN KEY (IdProducto) REFERENCES deposito.producto(IDProducto),
-	constraint pkLineaVenta primary key (ID, IdProducto)
+	CONSTRAINT pkLineaVenta PRIMARY KEY (ID, IdProducto)
 )
-go
+GO
 
-create table facturacion.nota(
-	ID int Identity(1,1) primary key,
-	factura int,
-	tipo char(2) check (tipo='NC' or tipo='ND'), 
-	numero char(11),
-	Fecha date,
-	Hora time,
-	Importe decimal (9,2),
-	CUIL char(13),
+CREATE TABLE facturacion.nota(
+	ID 		INT IDENTITY(1,1) PRIMARY KEY,
+	factura INT,
+	tipo 	CHAR(2) CHECK (tipo = 'NC' OR tipo = 'ND'), 
+	numero 	CHAR(11),
+	Fecha 	DATE,
+	Hora 	TIME,
+	Importe DECIMAL(9,2),
+	CUIL 	CHAR(13),
 	FOREIGN KEY (factura) REFERENCES facturacion.factura(ID)
 )
-go
+GO
 
-create table facturacion.MedioDePago(
-	IDMedioDePago int Identity(1,1) primary key,
-	Nombre varchar(20) Unique NOT NULL,
-	Descripcion varchar(50)
+CREATE TABLE facturacion.MedioDePago(
+	IDMedioDePago INT IDENTITY(1,1) PRIMARY KEY,
+	Nombre 		  VARCHAR(20) UNIQUE NOT NULL,
+	Descripcion   VARCHAR(50)
 )
-go
+GO
 
-create table facturacion.Pago(
-	IDPago int Identity(1,1) primary key,
-	factura int,
-	IdentificadorDePago varchar(22),
-	Fecha datetime,
-	MedioDePago int,
+CREATE TABLE facturacion.Pago(
+	IDPago 				INT IDENTITY(1,1) PRIMARY KEY,
+	factura 			INT,
+	IdentificadorDePago VARCHAR(22),
+	Fecha 				DATETIME,
+	MedioDePago 		INT,
 	FOREIGN KEY (MedioDePago) REFERENCES facturacion.MedioDePago(IDMedioDePago),
-	FOREIGN KEY (factura) REFERENCES facturacion.factura(ID)
+	FOREIGN KEY (factura) 	  REFERENCES facturacion.factura(ID)
 )
-go
+GO
 
 /*CREATE NONCLUSTERED INDEX idx_Venta_Numero
 ON facturacion.Venta (numero);
