@@ -112,8 +112,7 @@ create table infraestructura.empleado(
 	Direccion varchar(100),
 	EmailPersonal varchar(100),
 	EmailEmpresa varchar(100),
-	CUIL char(11),
-	Turno char (16) check (Turno='TN' or Turno='TM' or turno= 'TT' or Turno='Jornada Completa'),
+	Turno char(16) check (Turno='TN' or Turno='TM' or turno= 'TT' or Turno='Jornada Completa'),
 	Cargo int,
 	Sucursal int,
 	FOREIGN KEY (Cargo) REFERENCES infraestructura.cargo(IdCargo),
@@ -151,20 +150,35 @@ create table deposito.producto(
 	Nombre varchar(100),
 	Precio decimal (9,2),
 	PrecioReferencia decimal (9,2),
-	UnidadReferencia char(2),
+	UnidadReferencia char(100),
     Fecha datetime,
 	FOREIGN KEY (categoria) REFERENCES deposito.categoria(IDCategoria)
 )
 go
 
+create table facturacion.factura(
+	ID int Identity(1,1) primary key,
+	letra char check (Letra='A' or Letra='B' or Letra='C'),
+	numero char(11),
+	Fecha date,
+	Hora time,
+	MontoIVA decimal (9,2),
+	MontoNeto decimal (9,2),
+	MontoBruto decimal (9,2),
+	CUIL char(13),
+)
+go
+
 create table facturacion.Venta(
 	ID int Identity(1,1) primary key,
-	MontoNeto decimal (9,2), -- no se inserta, se modifica
+	IDFactura int,
 	Cliente int,
 	Empleado int,
+	MontoNeto decimal (9,2), -- no se inserta, se modifica
 	Cerrado BIT DEFAULT 0,
-	FOREIGN KEY (Cliente) REFERENCES facturacion.cliente(IDCliente),
-	FOREIGN KEY (Empleado) REFERENCES infraestructura.Empleado(Legajo)
+	FOREIGN KEY (Cliente)  REFERENCES facturacion.cliente(IDCliente),
+	FOREIGN KEY (Empleado) REFERENCES infraestructura.Empleado(Legajo),
+	FOREIGN KEY (IDFactura)  REFERENCES facturacion.Factura(ID)
 )
 go
 
@@ -176,21 +190,6 @@ create table facturacion.lineaVenta(
 	FOREIGN KEY (ID) REFERENCES facturacion.Venta(ID),
 	FOREIGN KEY (IdProducto) REFERENCES deposito.producto(IDProducto),
 	constraint pkLineaVenta primary key (ID, IdProducto)
-)
-go
-
-create table facturacion.factura(
-	ID int Identity(1,1) primary key,
-	Venta int,
-	letra char check (Letra='A' or Letra='B' or Letra='C'),
-	numero char(11),
-	Fecha date,
-	Hora time,
-	MontoIVA decimal (9,2),
-	MontoNeto decimal (9,2),
-	MontoBruto decimal (9,2),
-	CUIL char(13),
-	FOREIGN KEY (Venta) REFERENCES facturacion.Venta(ID)
 )
 go
 

@@ -17,9 +17,9 @@ BEGIN
 	create table #VentasRegistradasCSV(
 		Factura			  VARCHAR(MAX), --Venta.numero
 		TipoFactura		  VARCHAR(MAX), --Venta.tipo
-		Ciudad			  VARCHAR(MAX), --sucursal.ciudad NO SIRVE
-		TipoCliente		  VARCHAR(MAX), --cliente.tipocliente NO SIRVE
-		Genero			  VARCHAR(MAX), --cliente.genero NO SIRVE
+		Ciudad			  VARCHAR(MAX), --sucursal.ciudad
+		TipoCliente		  VARCHAR(MAX), --cliente.tipocliente
+		Genero			  VARCHAR(MAX), --cliente.genero
 		Producto		  VARCHAR(MAX),	--producto.nombre
 		PrecioUnitario	  VARCHAR(MAX),	--lineaVenta.Monto
 		Cantidad		  VARCHAR(MAX),	--lineaVenta.cantidad
@@ -31,7 +31,6 @@ BEGIN
 	)
 
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
-
 	BEGIN TRANSACTION 
 	DECLARE @SQLBulk NVARCHAR(MAX)
 
@@ -48,31 +47,42 @@ BEGIN
 	BEGIN TRY
 		EXEC sp_executesql @SQLBulk
 
-		INSERT facturacion.pago(IdentificadorDePago, Fecha, MedioDePago)
-			SELECT IIF(a.IdentificadorPago = '--', NULL, LEFT(REPLACE(a.IdentificadorPago, '''',''), 22)), a.Fecha, b.IDMedioDePago
-				FROM #VentasRegistradasCSV AS a
-				LEFT JOIN facturacion.MedioDePago AS b ON a.MedioPago = b.nombre
+		INSERT INTO facturacion.factura(letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto)
+			SELECT TipoFactura, Factura, fecha, hora, 
+				   (CAST(Cantidad AS INT) * CAST(PrecioUnitario AS DECIMAL(9,2)) * 0.21), 
+				   (CAST(Cantidad AS INT) * CAST(PrecioUnitario AS DECIMAL(9,2))), 
+				   (CAST(Cantidad AS INT) * CAST(PrecioUnitario AS DECIMAL(9,2)) * 1.21)
+				FROM #VentasRegistradasCSV
 
-		INSERT facturacion.Venta(numero, letra, Fecha, Hora, Empleado, Pago)
-			SELECT a.Factura, a.TipoFactura, a.Fecha, a.Hora, CAST(a.Empleado AS INT), b.IDPago
-				FROM #VentasRegistradasCSV AS a
-				LEFT JOIN facturacion.pago AS b ON a.IdentificadorPago = b.IdentificadorDePago
+		INSERT facturacion.Venta(IDFactura, Empleado, MontoNeto, Cerrado)
+			SELECT b.ID, CAST(a.Empleado AS INT), b.MontoNeto, 1
+				FROM #VentasRegistradasCSV	   AS a
+				INNER JOIN facturacion.factura AS b ON a.TipoFactura = b.letra 
+												   AND a.Factura	 = b.numero
 
-		INSERT facturacion.lineaVenta(ID, IdProducto, Cantidad, Monto)
-			SELECT b.ID, c.IdProducto, a.Cantidad, a.PrecioUnitario
-				FROM #VentasRegistradasCSV 		  AS a
-				LEFT JOIN facturacion.Venta AS b ON a.Factura  = b.numero
-				LEFT JOIN deposito.producto 	  AS c ON a.producto = c.nombre
+		INSERT facturacion.lineaVenta(ID, IdProducto, Cantidad, Monto) --SIGUE VACIA PORQUE NO EXISTEN LOS PRODUCTOS QUE SE VENDIERON (SEGUN EL EXCEL)
+			SELECT b.ID, c.IDProducto, CAST(a.Cantidad AS INT), CAST(a.PrecioUnitario AS DECIMAL(9,2))
+				FROM #VentasRegistradasCSV	   AS a
+				INNER JOIN facturacion.factura AS b ON a.TipoFactura = b.letra 
+												   AND a.Factura	 = b.numero
+				INNER JOIN deposito.producto   AS c ON a.producto	 = c.nombre
+
+		INSERT facturacion.pago(factura, IdentificadorDePago, Fecha, MedioDePago)
+			SELECT b.ID, IIF(a.IdentificadorPago = '--', NULL, LEFT(REPLACE(a.IdentificadorPago, '''',''), 22)), a.Fecha, c.IDMedioDePago
+				FROM #VentasRegistradasCSV		   AS a
+				INNER JOIN facturacion.factura	   AS b ON a.TipoFactura = b.letra 
+													   AND a.Factura	 = b.numero
+				INNER JOIN facturacion.MedioDePago AS c ON a.MedioPago	 = c.nombre
 
 		DROP TABLE #VentasRegistradasCSV
-
-		COMMIT TRANSACTION
 	END TRY
 	BEGIN CATCH
 		SELECT ERROR_MESSAGE() AS ImportVentas
 		--Los identitys se mantienen avanzados a pesar del rollback
 		ROLLBACK TRANSACTION
 	END CATCH
+
+	COMMIT TRANSACTION
 END
 GO
 
@@ -93,7 +103,7 @@ BEGIN
 	)
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 	BEGIN TRANSACTION 
-	DECLARE @SQL   NVARCHAR(MAX)
+	DECLARE @SQL NVARCHAR(MAX)
 
 	BEGIN TRY
 		-- Electronic accessories.xlsx -> Sheet1
@@ -203,17 +213,17 @@ CREATE OR ALTER PROCEDURE infraestructura.ImportEmpleados
 AS
 BEGIN
 	create table #Empleados(
-		Legajo		  VARCHAR(MAX),
+		Legajo		  INT,
 		Nombre		  VARCHAR(MAX),
 		Apellido	  VARCHAR(MAX),
-		DNI			  VARCHAR(MAX),
+		DNI			  INT,
 		Direccion	  VARCHAR(MAX),
 		EmailPersonal VARCHAR(MAX),
 		EmailEmpresa  VARCHAR(MAX),
 		CUIL		  VARCHAR(MAX),
-		Turno		  VARCHAR(MAX),
 		Cargo		  VARCHAR(MAX),
 		Sucursal	  VARCHAR(MAX),
+		Turno		  VARCHAR(MAX)
 	)
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 	BEGIN TRANSACTION 
@@ -222,17 +232,26 @@ BEGIN
 	BEGIN TRY
 		-- Informacion_complementaria.xlsx -> Empleados
 		SET @SQL = 'INSERT INTO #Empleados(Legajo, Nombre, Apellido, DNI, Direccion, EmailPersonal, EmailEmpresa, CUIL, Cargo, Sucursal, Turno)
+					
+
 						SELECT *
 							FROM OPENROWSET(''' + @OLEDB + ''',
 											''' + @EXCEL + ';HDR=YES;Database=' + @Path + '\Informacion_complementaria.xlsx'',
-											''SELECT * FROM [Empleados$]'',
-											FIRSTROW = 2)'
+											''SELECT * FROM [Empleados$]'')'
 
 		EXEC sp_executesql @SQL
 
-		INSERT INTO infraestructura.empleado(Legajo, Nombre, Apellido, DNI, Direccion, EmailPersonal, EmailEmpresa, CUIL, Cargo, Sucursal, Turno)
-			SELECT *
+		INSERT INTO infraestructura.cargo(Descripcion)
+			SELECT DISTINCT Cargo
 				FROM #Empleados
+					WHERE Legajo <> ''
+
+		INSERT INTO infraestructura.empleado(Legajo, Nombre, Apellido, DNI, Direccion, EmailPersonal, EmailEmpresa, Cargo, Sucursal, Turno)
+			SELECT a.Legajo, a.Nombre, a.Apellido, a.DNI, a.Direccion, a.EmailPersonal, a.EmailEmpresa, b.IdCargo, c.IDsucursal, a.Turno
+				FROM #Empleados AS a
+				INNER JOIN infraestructura.cargo AS b ON a.Cargo = b.Descripcion
+				INNER JOIN infraestructura.sucursal AS c ON a.Sucursal = c.Ciudad
+					WHERE Legajo <> ''
 
 		DROP TABLE #Empleados
 
@@ -348,15 +367,14 @@ BEGIN
 		EXEC facturacion.ImportMediosPago 	@Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel
 
 		-- Secuencia 2	
-		EXEC infraestructura.ImportEmpleados @Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel --Da error: Conversion failed when converting the varchar value '3.6383e+007' to data type int.
-		EXEC deposito.ImportProductos 		 @Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel --Da error: String or binary data would be truncated in table 'COM2900G09.deposito.producto', column 'UnidadReferencia'. Truncated value: '10'.
+		EXEC infraestructura.ImportEmpleados @Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel
+		EXEC deposito.ImportProductos 		 @Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel
 
 		-- Secuencia 3
 		EXEC facturacion.ImportVentas @Path = @Path --Depende de empleados y productos
 	END TRY
 	BEGIN CATCH
 		SELECT ERROR_MESSAGE() AS ExecuteImports
-		ROLLBACK TRANSACTION
 	END CATCH
 END
 GO

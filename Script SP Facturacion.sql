@@ -9,7 +9,7 @@ Los nombres de los store procedures NO deben comenzar con “SP”.
 use COM2900G09
 go
 
--------------------- INSERTS --------------------
+-------------------- PAGO --------------------
 
 CREATE OR ALTER PROCEDURE facturacion.InsertarPago
 	@Factura			 INT,
@@ -31,6 +31,66 @@ BEGIN
     END CATCH;
 END;
 GO
+
+CREATE OR ALTER PROCEDURE facturacion.ActualizarPago
+    @IDPago INT,
+    @IdentificadorDePago VARCHAR(22) = NULL,
+    @Fecha DATETIME = NULL,
+    @MedioDePago INT = NULL
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM facturacion.Pago WHERE IDPago = @IDPago)
+        BEGIN
+            UPDATE facturacion.Pago
+                SET IdentificadorDePago = COALESCE(@IdentificadorDePago, IdentificadorDePago),
+                    Fecha = COALESCE(@Fecha, Fecha),
+                    MedioDePago = COALESCE(@MedioDePago, MedioDePago)
+                    WHERE IDPago = @IDPago;
+            
+            COMMIT TRANSACTION;
+            PRINT 'Pago actualizado correctamente.';
+        END
+        ELSE
+        BEGIN
+            ROLLBACK TRANSACTION;
+            PRINT 'No se encontro el pago con el Id especificado.';
+        END
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar actualizar el pago: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.EliminarPago
+    @IDPago INT
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM facturacion.Pago WHERE IDPago = @IDPago)
+        BEGIN
+            DELETE FROM facturacion.Pago WHERE IDPago = @IDPago;
+            COMMIT TRANSACTION;
+            PRINT 'Pago eliminado correctamente.';
+        END
+        ELSE
+        BEGIN
+            ROLLBACK TRANSACTION;
+            PRINT 'No se encontro el registro de Pago con el ID especificado.';
+        END
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar eliminar el Pago: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+-------------------- MEDIO DE PAGO --------------------
 
 CREATE OR ALTER PROCEDURE facturacion.InsertarMedioDePago
     @Nombre VARCHAR(20),
@@ -54,6 +114,64 @@ BEGIN
     END CATCH;
 END;
 GO
+
+CREATE OR ALTER PROCEDURE facturacion.ActualizarMedioDePago
+    @IDMedioDePago INT,
+    @Nombre VARCHAR(20) = NULL,
+    @Descripcion VARCHAR(50) = NULL
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM facturacion.MedioDePago WHERE IDMedioDePago = @IDMedioDePago)
+        BEGIN
+            UPDATE facturacion.MedioDePago
+                SET Nombre = COALESCE(@Nombre, Nombre),
+                    Descripcion = COALESCE(@Descripcion, Descripcion)
+                    WHERE IDMedioDePago = @IDMedioDePago;
+            
+            COMMIT TRANSACTION;
+            PRINT 'Medio de pago actualizado correctamente.';
+        END
+        ELSE
+        BEGIN
+            ROLLBACK TRANSACTION;
+            PRINT 'No se encontro el medio de pago con el Id especificado.';
+        END
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar actualizar el medio de pago: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.EliminarMedioDePago
+    @IDMedioDePago INT
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM facturacion.MedioDePago WHERE IDMedioDePago = @IDMedioDePago)
+        BEGIN
+            DELETE FROM facturacion.MedioDePago WHERE IDMedioDePago = @IDMedioDePago;
+            COMMIT TRANSACTION;
+            PRINT 'Medio De Pago eliminado correctamente.';
+        END
+        ELSE
+        BEGIN
+            ROLLBACK TRANSACTION;
+            PRINT 'No se encontro el registro de Medio De Pago con el ID especificado.';
+        END
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar eliminar el Medio De Pago: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+-------------------- CLIENTE --------------------
 
 CREATE OR ALTER PROCEDURE facturacion.InsertarCliente
     @DNI INT,
@@ -102,27 +220,71 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.InsertarTipoCliente
-    @Nombre VARCHAR(20)
+
+CREATE OR ALTER PROCEDURE facturacion.ActualizarCliente
+    @IDCliente	   INT,
+    @DNI		   INT		   = NULL,
+    @Nombre		   VARCHAR(25) = NULL,
+    @Apellido	   VARCHAR(25) = NULL,
+    @Genero		   CHAR(1)	   = NULL,
+    @IDTipoCliente INT		   = NULL
 AS
 BEGIN
     BEGIN TRANSACTION;
-	DECLARE @MaxID INT;
-	SET @MaxID = (SELECT isnull(MAX(IDTipoCliente),0) FROM facturacion.TipoCliente);
     BEGIN TRY
-        INSERT INTO facturacion.TipoCliente (Nombre)
-        VALUES (@Nombre);
-        DBCC CHECKIDENT ('facturacion.TipoCliente', RESEED, @MaxID);
-        COMMIT TRANSACTION;
-        PRINT 'TipoCliente insertado correctamente.';
+        IF EXISTS (SELECT 1 FROM facturacion.Cliente WHERE IDCliente = @IDCliente)
+        BEGIN
+            UPDATE facturacion.Cliente
+                SET DNI			  = COALESCE(@DNI, DNI),
+                    Nombre		  = COALESCE(@Nombre, Nombre),
+                    Apellido	  = COALESCE(@Apellido, Apellido),
+                    Genero		  = COALESCE(@Genero, Genero),
+                    IDTipoCliente = COALESCE(@IDTipoCliente, IDTipoCliente)
+                        WHERE IDCliente = @IDCliente;
+
+            COMMIT TRANSACTION;
+            PRINT 'Cliente actualizado correctamente.';
+        END
+        ELSE
+        BEGIN
+            ROLLBACK TRANSACTION;
+            PRINT 'No se encontro el cliente con el Id especificado.';
+        END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar el TipoCliente: ' + ERROR_MESSAGE();
-        DBCC CHECKIDENT ('facturacion.TipoCliente', RESEED, @MaxID);
+        PRINT 'Error al intentar actualizar el cliente: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
+
+CREATE OR ALTER PROCEDURE facturacion.EliminarCliente
+    @IDCliente INT
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM facturacion.cliente WHERE IDCliente = @IDCliente)
+        BEGIN
+            DELETE FROM facturacion.cliente WHERE IDCliente = @IDCliente;
+            
+            COMMIT TRANSACTION;
+            PRINT 'Cliente eliminado correctamente.';
+        END
+        ELSE
+        BEGIN
+            ROLLBACK TRANSACTION;
+            PRINT 'No se encontro el registro de Cliente con el ID especificado.';
+        END
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar eliminar el Cliente: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+-------------------- LINEA DE VENTA --------------------
 
 CREATE OR ALTER PROCEDURE facturacion.InsertarLineaVenta
     @ID         INT,
@@ -169,230 +331,6 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.IniciarVenta
-    @Cliente  INT,
-    @Empleado INT
-AS
-BEGIN
-    DECLARE @ID INT
-
-    BEGIN TRANSACTION
-    BEGIN TRY
-        INSERT INTO facturacion.Venta (Cliente, Empleado)
-        VALUES (@Cliente, @Empleado);
-        
-        SELECT @ID = SCOPE_IDENTITY()
-            FROM facturacion.Venta
-
-        COMMIT TRANSACTION;
-        PRINT 'Venta insertado correctamente.'
-
-        RETURN @ID
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar el Venta: ' + ERROR_MESSAGE()
-    END CATCH;
-END
-GO
-
-CREATE OR ALTER PROCEDURE facturacion.GenerarFactura -- SOLO SE EJECUTA DENTRO DE facturacion.CerrarVenta. NO SE PUEDE LLAMAR POR SI SOLO
-    @IDVenta INT,
-    @Importe DECIMAL(9,2)
-AS
-BEGIN
-    DECLARE @NewFac CHAR(11)
-    DECLARE @CUIL CHAR(13)
-    DECLARE @chk BIT
-    SET @chk = 1
-
-    BEGIN TRY
-        SELECT CUIL
-            FROM facturacion.cliente
-
-        WHILE @chk = 1
-        BEGIN
-            SELECT @NewFac = CAST(FLOOR(RAND() * (99999999999 - 1000000000) + 1000000000) AS CHAR)
-            IF NOT EXISTS (SELECT *
-                            FROM facturacion.factura 
-                                WHERE letra = 'A'
-                                  AND numero = @NewFac)
-            BEGIN
-                SET @chk = 0
-            END
-        END
-
-        SELECT @CUIL = CUIL
-            FROM facturacion.cliente
-
-        INSERT INTO facturacion.factura(Venta, letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto, CUIL)
-            VALUES (@IDVenta, 'C', @NewFac, GETDATE(), CONVERT(VARCHAR(10), GETDATE(), 108), 
-					@Importe, @Importe * 0.21, @Importe * 1.21,
-                    LEFT(@CUIL, 2) + '-' + SUBSTRING(@CUIL, 3, 8) + '-' + RIGHT(@CUIL, 1))
-    END TRY
-    BEGIN CATCH
-        PRINT 'Error al intentar generar la factura A' + @NewFac + ': ' + ERROR_MESSAGE();
-    END CATCH;
-END
-GO
-
--------------------- DELETES --------------------
-
-CREATE OR ALTER PROCEDURE facturacion.EliminarLineaVenta
-    @ID INT,
-    @IDProducto INT
-AS
-BEGIN
-    BEGIN TRANSACTION;
-    BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.LineaVenta WHERE ID = @ID AND IdProducto = @IDProducto)
-        BEGIN
-            DELETE FROM facturacion.lineaVenta WHERE ID = @ID AND IdProducto = @IDProducto;
-            COMMIT TRANSACTION;
-            PRINT 'Linea de Venta eliminada correctamente.';
-        END
-        ELSE
-        BEGIN
-            ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el registro de Linea de Venta con el ID y Producto especificados.';
-        END
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar eliminar la Linea de Venta: ' + ERROR_MESSAGE();
-    END CATCH;
-END;
-GO
-
-CREATE OR ALTER PROCEDURE facturacion.EliminarVenta
-    @ID INT
-AS
-BEGIN
-    BEGIN TRANSACTION;
-    BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.Venta WHERE ID = @ID)
-        BEGIN
-            DELETE FROM facturacion.Venta WHERE ID = @ID;
-            COMMIT TRANSACTION;
-            PRINT 'Venta eliminado correctamente.';
-        END
-        ELSE
-        BEGIN
-            ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el registro de Venta con el ID especificado.';
-        END
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar eliminar el Venta: ' + ERROR_MESSAGE();
-    END CATCH;
-END;
-GO
-
-CREATE OR ALTER PROCEDURE facturacion.EliminarPago
-    @IDPago INT
-AS
-BEGIN
-    BEGIN TRANSACTION;
-    BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.Pago WHERE IDPago = @IDPago)
-        BEGIN
-            DELETE FROM facturacion.Pago WHERE IDPago = @IDPago;
-            COMMIT TRANSACTION;
-            PRINT 'Pago eliminado correctamente.';
-        END
-        ELSE
-        BEGIN
-            ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el registro de Pago con el ID especificado.';
-        END
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar eliminar el Pago: ' + ERROR_MESSAGE();
-    END CATCH;
-END;
-GO
-
-CREATE OR ALTER PROCEDURE facturacion.EliminarMedioDePago
-    @IDMedioDePago INT
-AS
-BEGIN
-    BEGIN TRANSACTION;
-    BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.MedioDePago WHERE IDMedioDePago = @IDMedioDePago)
-        BEGIN
-            DELETE FROM facturacion.MedioDePago WHERE IDMedioDePago = @IDMedioDePago;
-            COMMIT TRANSACTION;
-            PRINT 'Medio De Pago eliminado correctamente.';
-        END
-        ELSE
-        BEGIN
-            ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el registro de Medio De Pago con el ID especificado.';
-        END
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar eliminar el Medio De Pago: ' + ERROR_MESSAGE();
-    END CATCH;
-END;
-GO
-
-CREATE OR ALTER PROCEDURE facturacion.EliminarCliente
-    @IDCliente INT
-AS
-BEGIN
-    BEGIN TRANSACTION;
-    BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.cliente WHERE IDCliente = @IDCliente)
-        BEGIN
-            DELETE FROM facturacion.cliente WHERE IDCliente = @IDCliente;
-            
-            COMMIT TRANSACTION;
-            PRINT 'Cliente eliminado correctamente.';
-        END
-        ELSE
-        BEGIN
-            ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el registro de Cliente con el ID especificado.';
-        END
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar eliminar el Cliente: ' + ERROR_MESSAGE();
-    END CATCH;
-END;
-GO
-
-CREATE OR ALTER PROCEDURE facturacion.EliminarTipoCliente
-    @IDTipoCliente INT
-AS
-BEGIN
-    BEGIN TRANSACTION;
-    BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.TipoCliente WHERE IDTipoCliente = @IDTipoCliente)
-        BEGIN
-            DELETE FROM facturacion.TipoCliente WHERE IDTipoCliente = @IDTipoCliente;
-            
-            COMMIT TRANSACTION;
-            PRINT 'Tipo de Cliente eliminado correctamente.';
-        END
-        ELSE
-        BEGIN
-            ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el registro de Tipo de Cliente con el ID especificado.';
-        END
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar eliminar el Tipo de Cliente: ' + ERROR_MESSAGE();
-    END CATCH;
-END;
-GO
-
--------------------- UPDATES --------------------
-
 CREATE OR ALTER PROCEDURE facturacion.ActualizarLineaVenta
     @ID INT,
     @IdProducto INT,
@@ -425,103 +363,196 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.ActualizarPago
-    @IDPago INT,
-    @IdentificadorDePago VARCHAR(22) = NULL,
-    @Fecha DATETIME = NULL,
-    @MedioDePago INT = NULL
+CREATE OR ALTER PROCEDURE facturacion.EliminarLineaVenta
+    @ID INT,
+    @IDProducto INT
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.Pago WHERE IDPago = @IDPago)
+        IF EXISTS (SELECT 1 FROM facturacion.LineaVenta WHERE ID = @ID AND IdProducto = @IDProducto)
         BEGIN
-            UPDATE facturacion.Pago
-                SET IdentificadorDePago = COALESCE(@IdentificadorDePago, IdentificadorDePago),
-                    Fecha = COALESCE(@Fecha, Fecha),
-                    MedioDePago = COALESCE(@MedioDePago, MedioDePago)
-                    WHERE IDPago = @IDPago;
-            
+            DELETE FROM facturacion.lineaVenta WHERE ID = @ID AND IdProducto = @IDProducto;
             COMMIT TRANSACTION;
-            PRINT 'Pago actualizado correctamente.';
+            PRINT 'Linea de Venta eliminada correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el pago con el Id especificado.';
+            PRINT 'No se encontro el registro de Linea de Venta con el ID y Producto especificados.';
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar actualizar el pago: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar eliminar la Linea de Venta: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.ActualizarMedioDePago
-    @IDMedioDePago INT,
-    @Nombre VARCHAR(20) = NULL,
-    @Descripcion VARCHAR(50) = NULL
+-------------------- VENTA --------------------
+
+CREATE OR ALTER PROCEDURE facturacion.IniciarVenta
+    @Cliente  INT,
+    @Empleado INT
 AS
 BEGIN
-    BEGIN TRANSACTION;
+    DECLARE @ID INT
+
+    BEGIN TRANSACTION
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.MedioDePago WHERE IDMedioDePago = @IDMedioDePago)
+        INSERT INTO facturacion.Venta (Cliente, Empleado)
+        VALUES (@Cliente, @Empleado);
+        
+        SELECT @ID = SCOPE_IDENTITY()
+            FROM facturacion.Venta
+
+        COMMIT TRANSACTION;
+        PRINT 'Venta insertado correctamente.'
+
+        RETURN @ID
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar insertar el Venta: ' + ERROR_MESSAGE()
+    END CATCH;
+END
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.CerrarVenta
+    @ID INT
+AS
+BEGIN
+    DECLARE @MontoNeto DECIMAL(9,2)
+	DECLARE @Factura INT
+
+    SELECT @MontoNeto = SUM(Importe)
+        from (SELECT IDProducto, Cantidad * Monto AS Importe
+                FROM facturacion.LineaVenta
+					WHERE ID = @ID) AS a
+
+    BEGIN TRANSACTION
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM facturacion.Venta WHERE ID = @ID)
         BEGIN
-            UPDATE facturacion.MedioDePago
-                SET Nombre = COALESCE(@Nombre, Nombre),
-                    Descripcion = COALESCE(@Descripcion, Descripcion)
-                    WHERE IDMedioDePago = @IDMedioDePago;
-            
-            COMMIT TRANSACTION;
-            PRINT 'Medio de pago actualizado correctamente.';
+            UPDATE facturacion.Venta
+                SET MontoNeto = COALESCE(@MontoNeto, MontoNeto),
+					Cerrado   = 1
+					WHERE ID  = @ID
+
+            EXEC facturacion.GenerarFactura @Importe = @MontoNeto, @Factura = @Factura OUTPUT
+
+			UPDATE facturacion.Venta
+                SET IDFactura = COALESCE(@Factura, IDFactura)
+					WHERE ID  = @ID
+
+            COMMIT TRANSACTION
+            PRINT 'Venta actualizado correctamente.'
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el medio de pago con el Id especificado.';
+            PRINT 'No se encontro el Venta con el Id especificado.';
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar actualizar el medio de pago: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar actualizar el Venta: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.ActualizarCliente
-    @IDCliente	   INT,
-    @DNI		   INT		   = NULL,
-    @Nombre		   VARCHAR(25) = NULL,
-    @Apellido	   VARCHAR(25) = NULL,
-    @Genero		   CHAR(1)	   = NULL,
-    @IDTipoCliente INT		   = NULL
+CREATE OR ALTER PROCEDURE facturacion.EliminarVenta
+    @ID INT
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.Cliente WHERE IDCliente = @IDCliente)
+        IF EXISTS (SELECT 1 FROM facturacion.Venta WHERE ID = @ID)
         BEGIN
-            UPDATE facturacion.Cliente
-                SET DNI			  = COALESCE(@DNI, DNI),
-                    Nombre		  = COALESCE(@Nombre, Nombre),
-                    Apellido	  = COALESCE(@Apellido, Apellido),
-                    Genero		  = COALESCE(@Genero, Genero),
-                    IDTipoCliente = COALESCE(@IDTipoCliente, IDTipoCliente)
-                        WHERE IDCliente = @IDCliente;
-
+            DELETE FROM facturacion.Venta WHERE ID = @ID;
             COMMIT TRANSACTION;
-            PRINT 'Cliente actualizado correctamente.';
+            PRINT 'Venta eliminado correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el cliente con el Id especificado.';
+            PRINT 'No se encontro el registro de Venta con el ID especificado.';
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar actualizar el cliente: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar eliminar el Venta: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+-------------------- FACTURA --------------------
+
+CREATE OR ALTER PROCEDURE facturacion.GenerarFactura -- SOLO SE EJECUTA DENTRO DE facturacion.CerrarVenta. NO SE PUEDE LLAMAR POR SI SOLO
+    @Importe DECIMAL(9,2),
+	@Factura INT OUTPUT
+AS
+BEGIN
+    DECLARE @NewFac CHAR(11)
+    DECLARE @CUIL	CHAR(13)
+    DECLARE @chk	BIT
+    SET @chk = 1
+
+    BEGIN TRY
+        SELECT CUIL
+            FROM facturacion.cliente
+
+        WHILE @chk = 1
+        BEGIN
+            SELECT @NewFac = CAST(FLOOR(RAND() * (99999999999 - 1000000000) + 1000000000) AS CHAR)
+            IF NOT EXISTS (SELECT *
+                            FROM facturacion.factura 
+                                WHERE letra = 'A'
+                                  AND numero = @NewFac)
+            BEGIN
+                SET @chk = 0
+            END
+        END
+
+        SELECT @CUIL = CUIL
+            FROM facturacion.cliente
+
+        INSERT INTO facturacion.factura(letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto, CUIL)
+            VALUES ('C', @NewFac, GETDATE(), CONVERT(VARCHAR(10), GETDATE(), 108), 
+					@Importe, @Importe * 0.21, @Importe * 1.21,
+                    LEFT(@CUIL, 2) + '-' + SUBSTRING(@CUIL, 3, 8) + '-' + RIGHT(@CUIL, 1))
+
+		SELECT @Factura = SCOPE_IDENTITY()
+			FROM facturacion.factura
+    END TRY
+    BEGIN CATCH
+        PRINT 'Error al intentar generar la factura A' + @NewFac + ': ' + ERROR_MESSAGE();
+    END CATCH
+
+	RETURN @Factura
+END
+GO
+
+-------------------- TIPO DE CLIENTE --------------------
+
+CREATE OR ALTER PROCEDURE facturacion.InsertarTipoCliente
+    @Nombre VARCHAR(20)
+AS
+BEGIN
+    BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IDTipoCliente),0) FROM facturacion.TipoCliente);
+    BEGIN TRY
+        INSERT INTO facturacion.TipoCliente (Nombre)
+        VALUES (@Nombre);
+        DBCC CHECKIDENT ('facturacion.TipoCliente', RESEED, @MaxID);
+        COMMIT TRANSACTION;
+        PRINT 'TipoCliente insertado correctamente.';
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar insertar el TipoCliente: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('facturacion.TipoCliente', RESEED, @MaxID);
     END CATCH;
 END;
 GO
@@ -555,40 +586,28 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE facturacion.CerrarVenta
-    @ID INT
+CREATE OR ALTER PROCEDURE facturacion.EliminarTipoCliente
+    @IDTipoCliente INT
 AS
 BEGIN
-    DECLARE @MontoNeto DECIMAL(9,2)
-
-    SELECT @MontoNeto = SUM(Importe)
-        from (SELECT IDProducto, Cantidad * Monto AS Importe
-                FROM facturacion.LineaVenta
-					WHERE ID = @ID) AS a
-
-    BEGIN TRANSACTION
+    BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM facturacion.Venta WHERE ID = @ID)
+        IF EXISTS (SELECT 1 FROM facturacion.TipoCliente WHERE IDTipoCliente = @IDTipoCliente)
         BEGIN
-            UPDATE facturacion.Venta
-                SET MontoNeto   = COALESCE(@MontoNeto, MontoNeto),
-					Cerrado = 1
-					WHERE ID = @ID;
-
-            EXEC facturacion.GenerarFactura @IDVenta = @ID, @Importe = @MontoNeto
-
+            DELETE FROM facturacion.TipoCliente WHERE IDTipoCliente = @IDTipoCliente;
+            
             COMMIT TRANSACTION;
-            PRINT 'Venta actualizado correctamente.';
+            PRINT 'Tipo de Cliente eliminado correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el Venta con el Id especificado.';
+            PRINT 'No se encontro el registro de Tipo de Cliente con el ID especificado.';
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar actualizar el Venta: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar eliminar el Tipo de Cliente: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO

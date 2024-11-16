@@ -9,7 +9,7 @@ Los nombres de los store procedures NO deben comenzar con “SP”.
 use COM2900G09
 go
 
--------------------- INSERTS --------------------
+-------------------- CATEGORIA --------------------
 
 CREATE OR ALTER PROCEDURE deposito.InsertarCategoria
     @Descripcion VARCHAR(50)
@@ -33,56 +33,31 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE deposito.InsertarProducto
-    @Categoria INT,
-    @Nombre VARCHAR(100),
-    @Precio DECIMAL(9, 2),
-    @PrecioReferencia DECIMAL(9, 2),
-    @UnidadReferencia CHAR(2),
-    @Fecha DATETIME
-AS
-BEGIN
-    BEGIN TRANSACTION;
-	DECLARE @MaxID INT;
-	SET @MaxID = (SELECT isnull(MAX(IDProducto),0) FROM deposito.producto);
-    BEGIN TRY
-        INSERT INTO deposito.Producto (Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha)
-        VALUES (@Categoria, @Nombre, @Precio, @PrecioReferencia, @UnidadReferencia, @Fecha);
-        DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID);
-        COMMIT TRANSACTION;
-        PRINT 'Producto insertado correctamente.';
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar insertar el Producto: ' + ERROR_MESSAGE();
-        DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID);
-    END CATCH;
-END;
-GO
-
--------------------- DELETES --------------------
-
-CREATE OR ALTER PROCEDURE deposito.EliminarProducto
-    @IDProducto INT
+CREATE OR ALTER PROCEDURE deposito.ActualizarCategoria
+    @IDCategoria INT,
+    @Descripcion VARCHAR(50) = NULL
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM deposito.producto WHERE IDProducto = @IDProducto)
+        IF EXISTS (SELECT 1 FROM deposito.Categoria WHERE IDCategoria = @IDCategoria)
         BEGIN
-            DELETE FROM deposito.producto WHERE IDProducto = @IDProducto;
+            UPDATE deposito.Categoria
+				SET Descripcion = COALESCE(@Descripcion, Descripcion)
+					WHERE IDCategoria = @IDCategoria;
+
             COMMIT TRANSACTION;
-            PRINT 'Producto eliminado correctamente.';
+            PRINT 'Categoria actualizada correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el registro de Producto con el ID especificado.';
+            PRINT 'No se encontro la categoria con el Id especificado.';
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar eliminar el Producto: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar actualizar la categoria: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
@@ -112,7 +87,34 @@ BEGIN
 END;
 GO
 
--------------------- UPDATES --------------------
+-------------------- PRODUCTO --------------------
+
+CREATE OR ALTER PROCEDURE deposito.InsertarProducto
+    @Categoria INT,
+    @Nombre VARCHAR(100),
+    @Precio DECIMAL(9, 2),
+    @PrecioReferencia DECIMAL(9, 2),
+    @UnidadReferencia CHAR(2),
+    @Fecha DATETIME
+AS
+BEGIN
+    BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IDProducto),0) FROM deposito.producto);
+    BEGIN TRY
+        INSERT INTO deposito.Producto (Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha)
+        VALUES (@Categoria, @Nombre, @Precio, @PrecioReferencia, @UnidadReferencia, @Fecha);
+        DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID);
+        COMMIT TRANSACTION;
+        PRINT 'Producto insertado correctamente.';
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar insertar el Producto: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID);
+    END CATCH;
+END;
+GO
 
 CREATE OR ALTER PROCEDURE deposito.ActualizarProducto
     @IDProducto INT,
@@ -152,31 +154,27 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE deposito.ActualizarCategoria
-    @IDCategoria INT,
-    @Descripcion VARCHAR(50) = NULL
+CREATE OR ALTER PROCEDURE deposito.EliminarProducto
+    @IDProducto INT
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM deposito.Categoria WHERE IDCategoria = @IDCategoria)
+        IF EXISTS (SELECT 1 FROM deposito.producto WHERE IDProducto = @IDProducto)
         BEGIN
-            UPDATE deposito.Categoria
-				SET Descripcion = COALESCE(@Descripcion, Descripcion)
-					WHERE IDCategoria = @IDCategoria;
-
+            DELETE FROM deposito.producto WHERE IDProducto = @IDProducto;
             COMMIT TRANSACTION;
-            PRINT 'Categoria actualizada correctamente.';
+            PRINT 'Producto eliminado correctamente.';
         END
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontro la categoria con el Id especificado.';
+            PRINT 'No se encontro el registro de Producto con el ID especificado.';
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        PRINT 'Error al intentar actualizar la categoria: ' + ERROR_MESSAGE();
+        PRINT 'Error al intentar eliminar el Producto: ' + ERROR_MESSAGE();
     END CATCH;
 END;
 GO
