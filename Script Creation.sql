@@ -176,8 +176,8 @@ CREATE TABLE facturacion.Venta(
 	ID 		  INT IDENTITY(1,1) PRIMARY KEY,
 	IDFactura INT,
 	Cliente   INT,
-	Empleado  int,
-	MontoNeto INT(9,2), -- no se inserta, se modifica
+	Empleado  INT,
+	MontoNeto DECIMAL(9,2), -- no se inserta, se modifica
 	Cerrado   BIT DEFAULT 0,
 	FOREIGN KEY (Cliente)   REFERENCES facturacion.cliente(IDCliente),
 	FOREIGN KEY (Empleado)  REFERENCES infraestructura.Empleado(Legajo),
