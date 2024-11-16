@@ -264,10 +264,11 @@ GO
 
 CREATE OR ALTER PROCEDURE facturacion.IniciarVenta
     @Cliente  INT,
-    @Empleado INT
+    @Empleado INT,
+    @ID       INT OUTPUT
 AS
 BEGIN
-    DECLARE @ID INT
+    DECLARE
 
     BEGIN TRANSACTION
 
