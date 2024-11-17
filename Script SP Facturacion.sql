@@ -9,6 +9,49 @@ Los nombres de los store procedures NO deben comenzar con “SP”.
 use COM2900G09
 go
 
+-------------------- Datos de Facturacion -------------------
+
+CREATE OR ALTER PROCEDURE facturacion.ConfigurarDatosFacturacion
+    @CUIT char(11),
+    @FechaInicio datetime,
+    @RazonSocial varchar(100)
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM facturacion.DatosFacturacion WHERE ID = 1)
+        BEGIN
+            UPDATE facturacion.DatosFacturacion
+            SET CUIT = @CUIT,
+                FechaInicio = @FechaInicio,
+                RazonSocial = @RazonSocial
+            WHERE ID = 1;
+            PRINT 'Datos de facturación actualizados.';
+        END
+        ELSE
+        BEGIN
+            INSERT INTO facturacion.DatosFacturacion (CUIT, FechaInicio, RazonSocial)
+            VALUES (@CUIT, @FechaInicio, @RazonSocial);
+            PRINT 'Datos de facturación configurados por primera vez.';
+        END
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al configurar los datos de facturación: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.ObtenerDatosFacturacion
+AS
+BEGIN
+    SELECT CUIT, FechaInicio, RazonSocial
+    FROM facturacion.DatosFacturacion
+    WHERE ID = 1;
+END;
+GO
+
 -------------------- PAGO --------------------
 
 CREATE OR ALTER PROCEDURE facturacion.InsertarPago
@@ -181,10 +224,11 @@ CREATE OR ALTER PROCEDURE facturacion.InsertarCliente
     @IDTipoCliente INT
 AS
 BEGIN
+
     DECLARE @CUIL_G INT
     DECLARE @CUIL_N INT
     DECLARE @CUIL   INT
-
+    DECLARE @CUIL_FINAL CHAR(11)
     -- Numero por genero
     IF @Genero = 'M'
     BEGIN
@@ -205,11 +249,11 @@ BEGIN
 
     -- Armado de CUIL
     SET @CUIL = ( @CUIL_G * 1000000000 ) + ( @DNI * 10 ) + @CUIL_N
-
+    SET @CUIL_FINAL = CAST(@CUIL AS CHAR(11))
     BEGIN TRANSACTION;
     BEGIN TRY
         INSERT INTO facturacion.Cliente (DNI, CUIL, Nombre, Apellido, Genero, IDTipoCliente)
-        VALUES (@DNI, @CUIL, @Nombre, @Apellido, @Genero, @IDTipoCliente);        
+        VALUES (@DNI, @CUIL_FINAL, @Nombre, @Apellido, @Genero, @IDTipoCliente);        
         COMMIT TRANSACTION;
         PRINT 'Cliente insertado correctamente.';
     END TRY
@@ -438,7 +482,7 @@ BEGIN
                 SET MontoNeto = COALESCE(@MontoNeto, MontoNeto),
 					Cerrado   = 1
 					WHERE ID  = @ID
-
+            
             EXEC facturacion.GenerarFactura @Importe = @MontoNeto, @Factura = @Factura OUTPUT
 
 			UPDATE facturacion.Venta
@@ -451,7 +495,7 @@ BEGIN
         ELSE
         BEGIN
             ROLLBACK TRANSACTION;
-            PRINT 'No se encontro el Venta con el Id especificado.';
+            PRINT 'No se encontro la Venta con el Id especificado.';
         END
     END TRY
     BEGIN CATCH
@@ -488,19 +532,16 @@ GO
 
 -------------------- FACTURA --------------------
 
-CREATE OR ALTER PROCEDURE facturacion.GenerarFactura -- SOLO SE EJECUTA DENTRO DE facturacion.CerrarVenta. NO SE PUEDE LLAMAR POR SI SOLO
+CREATE OR ALTER PROCEDURE facturacion.GenerarFacturaBUP -- SOLO SE EJECUTA DENTRO DE facturacion.CerrarVenta. NO SE PUEDE LLAMAR POR SI SOLO
     @Importe DECIMAL(9,2),
 	@Factura INT OUTPUT
 AS
 BEGIN
     DECLARE @NewFac CHAR(11)
-    DECLARE @CUIL	CHAR(13)
     DECLARE @chk	BIT
     SET @chk = 1
 
     BEGIN TRY
-        SELECT CUIL
-            FROM facturacion.cliente
 
         WHILE @chk = 1
         BEGIN
@@ -514,13 +555,9 @@ BEGIN
             END
         END
 
-        SELECT @CUIL = CUIL
-            FROM facturacion.cliente
-
-        INSERT INTO facturacion.factura(letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto, CUIL)
+        INSERT INTO facturacion.factura(letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto)
             VALUES ('C', @NewFac, GETDATE(), CONVERT(VARCHAR(10), GETDATE(), 108), 
-					@Importe, @Importe * 0.21, @Importe * 1.21,
-                    LEFT(@CUIL, 2) + '-' + SUBSTRING(@CUIL, 3, 8) + '-' + RIGHT(@CUIL, 1))
+					@Importe, @Importe * 0.21, @Importe * 1.21)
 
 		SELECT @Factura = SCOPE_IDENTITY()
 			FROM facturacion.factura
@@ -532,6 +569,29 @@ BEGIN
 	RETURN @Factura
 END
 GO
+
+CREATE OR ALTER PROCEDURE facturacion.GenerarFactura
+    @Letra CHAR(1)
+    @Importe DECIMAL(9,2),
+    @Factura INT OUTPUT
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        DECLARE @NewFac CHAR(11) = CAST(NEXT VALUE FOR FacturaSecuencial AS CHAR); --toma el próximo valor posible
+        INSERT INTO facturacion.factura (letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto)
+        VALUES (@Letra, @NewFac, GETDATE(), CONVERT(VARCHAR(10), GETDATE(), 108), 
+                @Importe * 0.21, @Importe, @Importe * 1.21);
+        SET @Factura = SCOPE_IDENTITY();
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al generar la factura: ' + ERROR_MESSAGE();
+    END CATCH
+END;
+GO
+
 
 -------------------- TIPO DE CLIENTE --------------------
 

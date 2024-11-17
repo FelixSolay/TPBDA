@@ -75,6 +75,9 @@ create schema infraestructura
 GO
 
 --Se respeta este orden de borrado para que no haya conflictos con las Foreign Keys
+DROP TABLE IF EXISTS facturacion.nota;
+DROP TABLE IF EXISTS facturacion.Factura;
+DROP TABLE IF EXISTS facturacion.DatosFacturacion;
 DROP TABLE IF EXISTS facturacion.LineaVenta;
 DROP TABLE IF EXISTS facturacion.Venta;
 DROP TABLE IF EXISTS facturacion.Pago;
@@ -112,6 +115,7 @@ create table infraestructura.empleado(
 	Direccion varchar(100),
 	EmailPersonal varchar(100),
 	EmailEmpresa varchar(100),
+	CUIL char(11) UNIQUE CHECK (CUIL LIKE '[0-9]%'),
 	Turno char(16) check (Turno='TN' or Turno='TM' or turno= 'TT' or Turno='Jornada Completa'),
 	Cargo int,
 	Sucursal int,
@@ -129,7 +133,7 @@ go
 create table facturacion.cliente(
 	IDCliente int Identity(1,1) primary key,
 	DNI int Unique,
-	CUIL int unique, -- calculable
+	CUIL char(11) UNIQUE CHECK (CUIL LIKE '[0-9]%'), -- calculable
 	Nombre varchar(25),
 	Apellido varchar(25),
 	Genero char(1) check (Genero='M' or Genero='F'),
@@ -150,7 +154,7 @@ create table deposito.producto(
 	Nombre varchar(100),
 	Precio decimal (9,2),
 	PrecioReferencia decimal (9,2),
-	UnidadReferencia char(100),
+	UnidadReferencia varchar(25),
     Fecha datetime,
 	FOREIGN KEY (categoria) REFERENCES deposito.categoria(IDCategoria)
 )
@@ -165,7 +169,6 @@ create table facturacion.factura(
 	MontoIVA decimal (9,2),
 	MontoNeto decimal (9,2),
 	MontoBruto decimal (9,2),
-	CUIL char(13),
 )
 go
 
@@ -201,7 +204,6 @@ create table facturacion.nota(
 	Fecha date,
 	Hora time,
 	Importe decimal (9,2),
-	CUIL char(13),
 	FOREIGN KEY (factura) REFERENCES facturacion.factura(ID)
 )
 go
@@ -223,6 +225,15 @@ create table facturacion.Pago(
 	FOREIGN KEY (factura) REFERENCES facturacion.factura(ID)
 )
 go
+
+CREATE TABLE facturacion.DatosFacturacion (
+    ID int IDENTITY(1,1) PRIMARY KEY,
+    CUIT char(11) NOT NULL UNIQUE CHECK (CUIT LIKE '[0-9]%'),
+    FechaInicio datetime NOT NULL,
+    RazonSocial varchar(100) NOT NULL,
+    constraint CHK_Unico CHECK (ID = 1)
+);
+GO
 
 /*CREATE NONCLUSTERED INDEX idx_Venta_Numero
 ON facturacion.Venta (numero);
