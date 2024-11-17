@@ -32,16 +32,56 @@ BEGIN
     -- Generar .XML
 END
 GO
-/*
--- Trimestral: mostrar el total facturado por turnos de trabajo por mes.
-CREATE OR ALTER PROCEDURE reportes.Trimestral
 
+-- Trimestral: mostrar el total facturado por turnos de trabajo por "trimestre".
+CREATE OR ALTER PROCEDURE reportes.Trimestral
 AS
 BEGIN
+	WITH Datos AS(
+	-- Trimetre 1
+	SELECT c.Turno, SUM(a.MontoBruto) AS Acumulado
+		FROM facturacion.factura			AS a
+		INNER JOIN facturacion.venta		AS b ON b.IDFactura  = a.ID
+		INNER JOIN infraestructura.empleado AS c ON c.Legajo	 = b.empleado
+			WHERE a.fecha <= DATEFROMPARTS(YEAR(GETDATE()), 1, 1)
+              AND a.fecha >= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE()), 3, 1))
+			GROUP BY c.Turno
+	UNION ALL
+	-- Trimetre 2
+	SELECT c.Turno, SUM(a.MontoBruto) AS Acumulado
+		FROM facturacion.factura			AS a
+		INNER JOIN facturacion.venta		AS b ON b.IDFactura  = a.ID
+		INNER JOIN infraestructura.empleado AS c ON c.Legajo	 = b.empleado
+			WHERE a.fecha <= DATEFROMPARTS(YEAR(GETDATE()), 3, 1)
+              AND a.fecha >= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE()), 6, 1))
+			GROUP BY c.Turno
+	UNION ALL
+	-- Trimetre 3
+	SELECT c.Turno, SUM(a.MontoBruto) AS Acumulado
+		FROM facturacion.factura			AS a
+		INNER JOIN facturacion.venta		AS b ON b.IDFactura  = a.ID
+		INNER JOIN infraestructura.empleado AS c ON c.Legajo	 = b.empleado
+			WHERE a.fecha <= DATEFROMPARTS(YEAR(GETDATE()), 6, 1)
+              AND a.fecha >= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE()), 9, 1))
+			GROUP BY c.Turno
+	UNION ALL
+	-- Trimetre 4
+	SELECT c.Turno, SUM(a.MontoBruto) AS Acumulado
+		FROM facturacion.factura			AS a
+		INNER JOIN facturacion.venta		AS b ON b.IDFactura  = a.ID
+		INNER JOIN infraestructura.empleado AS c ON c.Legajo	 = b.empleado
+			WHERE a.fecha <= DATEFROMPARTS(YEAR(GETDATE()), 9, 1)
+              AND a.fecha >= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE())+1, 1, 1))
+			GROUP BY c.Turno
+	)
+	
+	SELECT *
+        FROM Datos
 
+    -- Generar .XML
 END
 GO
-*/
+
 -- Por rango de fechas: ingresando un rango de fechas a demanda, debe poder mostrar la cantidad de productos vendidos en ese rango, ordenado de mayor a menor.
 CREATE OR ALTER PROCEDURE reportes.ProductosFecha
     @Inicio DATE,
@@ -51,17 +91,17 @@ BEGIN
     WITH Datos AS(
     SELECT d.nombre, SUM(c.cantidad) AS Acumulado
         FROM facturacion.factura          AS a
-        INNER JOIN facturacion.venta      AS b ON b.factura = a.ID
-        INNER JOIN facturación.LineaVenta AS c ON c.ID      = b.ID
-        INNER JOIN deposito.producto      AS d ON d.ID      = c.IDProducto
+        INNER JOIN facturacion.venta      AS b ON b.IDFactura  = a.ID
+        INNER JOIN facturacion.lineaVenta AS c ON c.ID		   = b.ID
+        INNER JOIN deposito.producto      AS d ON d.IDProducto = c.IDProducto
             WHERE a.fecha <= @Inicio
               AND a.fecha >= @Fin
-            GROUP BY d.nombre
+            GROUP BY d.nombre		
     )
     
     SELECT *
         FROM Datos
-            ORDER BY Acumulado
+			ORDER BY Acumulado
 
     -- Generar .XML
 END
@@ -69,18 +109,18 @@ GO
 
 -- Por rango de fechas: ingresando un rango de fechas a demanda, debe poder mostrar la cantidad de productos vendidos en ese rango por sucursal, ordenado de mayor a menor.
 CREATE OR ALTER PROCEDURE reportes.ProductosSucursalFecha
-    @Inicio DATE,
-    @Fin    DATE
+  @Inicio DATE,
+  @Fin    DATE
 AS
 BEGIN
     WITH Datos AS(
     SELECT f.Ciudad, d.nombre, SUM(c.cantidad) AS Acumulado
         FROM facturacion.factura            AS a
-        INNER JOIN facturacion.venta        AS b ON b.factura  = a.ID
-        INNER JOIN facturación.LineaVenta   AS c ON c.ID       = b.ID
-        INNER JOIN deposito.producto        AS d ON d.ID       = c.IDProducto
-        INNER JOIN infraestructura.empleado AS e ON e.Legajo   = b.empleado
-        INNER JOIN infraestructura.sucursal AS f ON f.sucursal = b.IDsucursal
+        INNER JOIN facturacion.venta        AS b ON b.IDFactura  = a.ID
+        INNER JOIN facturacion.lineaVenta   AS c ON c.ID		 = b.ID
+        INNER JOIN deposito.producto        AS d ON d.IDProducto = c.IDProducto
+        INNER JOIN infraestructura.empleado AS e ON e.Legajo	 = b.empleado
+        INNER JOIN infraestructura.sucursal AS f ON f.IDsucursal = e.Sucursal
             WHERE a.fecha <= @Inicio
               AND a.fecha >= @Fin
             GROUP BY f.Ciudad, d.nombre
@@ -100,44 +140,48 @@ AS
 BEGIN
     WITH Datos AS(
     -- Semana 1
-    SELECT d.nombre, SUM(c.cantidad) AS Acumulado TOP 5
+    SELECT TOP 5 d.nombre, SUM(c.cantidad) AS Acumulado 
         FROM facturacion.factura          AS a
-        INNER JOIN facturacion.venta      AS b ON b.factura = a.ID
-        INNER JOIN facturación.LineaVenta AS c ON c.ID      = b.ID
-        INNER JOIN deposito.producto      AS d ON d.ID      = c.IDProducto
+        INNER JOIN facturacion.venta      AS b ON b.IDFactura  = a.ID
+        INNER JOIN facturacion.lineaVenta AS c ON c.ID		   = b.ID
+        INNER JOIN deposito.producto      AS d ON d.IDProducto = c.IDProducto
             WHERE a.fecha <= DATEADD(DAY, 1 - DAY(GETDATE()), EOMONTH(GETDATE()))
               AND a.fecha >= DATEADD(DAY, 7 - DAY(GETDATE()), EOMONTH(GETDATE()))
             GROUP BY d.nombre
+			ORDER BY Acumulado
     UNION ALL
     -- Semana 2
-    SELECT d.nombre, SUM(c.cantidad) AS Acumulado TOP 5
+    SELECT TOP 5 d.nombre, SUM(c.cantidad) AS Acumulado 
         FROM facturacion.factura          AS a
-        INNER JOIN facturacion.venta      AS b ON b.factura = a.ID
-        INNER JOIN facturación.LineaVenta AS c ON c.ID      = b.ID
-        INNER JOIN deposito.producto      AS d ON d.ID      = c.IDProducto
+        INNER JOIN facturacion.venta      AS b ON b.IDFactura  = a.ID
+        INNER JOIN facturacion.lineaVenta AS c ON c.ID		   = b.ID
+        INNER JOIN deposito.producto      AS d ON d.IDProducto = c.IDProducto
             WHERE a.fecha <= DATEADD(DAY, 8  - DAY(GETDATE()), EOMONTH(GETDATE()))
               AND a.fecha >= DATEADD(DAY, 14 - DAY(GETDATE()), EOMONTH(GETDATE()))
             GROUP BY d.nombre
+			ORDER BY Acumulado
     UNION ALL
     -- Semana 3
-    SELECT d.nombre, SUM(c.cantidad) AS Acumulado TOP 5
+    SELECT TOP 5 d.nombre, SUM(c.cantidad) AS Acumulado 
         FROM facturacion.factura          AS a
-        INNER JOIN facturacion.venta      AS b ON b.factura = a.ID
-        INNER JOIN facturación.LineaVenta AS c ON c.ID      = b.ID
-        INNER JOIN deposito.producto      AS d ON d.ID      = c.IDProducto
+        INNER JOIN facturacion.venta      AS b ON b.IDFactura  = a.ID
+        INNER JOIN facturacion.lineaVenta AS c ON c.ID		   = b.ID
+        INNER JOIN deposito.producto      AS d ON d.IDProducto = c.IDProducto
             WHERE a.fecha <= DATEADD(DAY, 15 - DAY(GETDATE()), EOMONTH(GETDATE()))
               AND a.fecha >= DATEADD(DAY, 22 - DAY(GETDATE()), EOMONTH(GETDATE()))
             GROUP BY d.nombre
+			ORDER BY Acumulado
     UNION ALL
     -- Semana 4
-    SELECT d.nombre, SUM(c.cantidad) AS Acumulado TOP 5
+    SELECT TOP 5 d.nombre, SUM(c.cantidad) AS Acumulado 
         FROM facturacion.factura          AS a
-        INNER JOIN facturacion.venta      AS b ON b.factura = a.ID
-        INNER JOIN facturación.LineaVenta AS c ON c.ID      = b.ID
-        INNER JOIN deposito.producto      AS d ON d.ID      = c.IDProducto
+        INNER JOIN facturacion.venta      AS b ON b.IDFactura  = a.ID
+        INNER JOIN facturacion.lineaVenta AS c ON c.ID		   = b.ID
+        INNER JOIN deposito.producto      AS d ON d.IDProducto = c.IDProducto
             WHERE a.fecha <= DATEADD(DAY, 23  - DAY(GETDATE()), EOMONTH(GETDATE()))
               AND a.fecha >= DATEADD(DAY, 30 - DAY(GETDATE()), EOMONTH(GETDATE()))
             GROUP BY d.nombre
+			ORDER BY Acumulado
     )
 
     SELECT *
@@ -149,69 +193,92 @@ GO
 
 -- Mostrar los 5 productos menos vendidos en el mes.
 CREATE OR ALTER PROCEDURE reportes.LowProductos
+AS
+BEGIN
     WITH Datos AS(
     -- Semana 1
-    SELECT d.nombre, SUM(c.cantidad) AS Acumulado LAST 5
+    SELECT TOP 5 d.nombre, SUM(c.cantidad) AS Acumulado 
         FROM facturacion.factura          AS a
-        INNER JOIN facturacion.venta      AS b ON b.factura = a.ID
-        INNER JOIN facturación.LineaVenta AS c ON c.ID      = b.ID
-        INNER JOIN deposito.producto      AS d ON d.ID      = c.IDProducto
+        INNER JOIN facturacion.venta      AS b ON b.IDFactura  = a.ID
+        INNER JOIN facturacion.lineaVenta AS c ON c.ID		   = b.ID
+        INNER JOIN deposito.producto      AS d ON d.IDProducto = c.IDProducto
             WHERE a.fecha <= DATEADD(DAY, 1 - DAY(GETDATE()), EOMONTH(GETDATE()))
               AND a.fecha >= DATEADD(DAY, 7 - DAY(GETDATE()), EOMONTH(GETDATE()))
             GROUP BY d.nombre
+			ORDER BY Acumulado ASC
     UNION ALL
     -- Semana 2
-    SELECT d.nombre, SUM(c.cantidad) AS Acumulado LAST 5
+    SELECT TOP 5 d.nombre, SUM(c.cantidad) AS Acumulado 
         FROM facturacion.factura          AS a
-        INNER JOIN facturacion.venta      AS b ON b.factura = a.ID
-        INNER JOIN facturación.LineaVenta AS c ON c.ID      = b.ID
-        INNER JOIN deposito.producto      AS d ON d.ID      = c.IDProducto
+        INNER JOIN facturacion.venta      AS b ON b.IDFactura  = a.ID
+        INNER JOIN facturacion.lineaVenta AS c ON c.ID		   = b.ID
+        INNER JOIN deposito.producto      AS d ON d.IDProducto = c.IDProducto
             WHERE a.fecha <= DATEADD(DAY, 8  - DAY(GETDATE()), EOMONTH(GETDATE()))
               AND a.fecha >= DATEADD(DAY, 14 - DAY(GETDATE()), EOMONTH(GETDATE()))
             GROUP BY d.nombre
+			ORDER BY Acumulado ASC
     UNION ALL
     -- Semana 3
-    SELECT d.nombre, SUM(c.cantidad) AS Acumulado LAST 5
+    SELECT TOP 5 d.nombre, SUM(c.cantidad) AS Acumulado 
         FROM facturacion.factura          AS a
-        INNER JOIN facturacion.venta      AS b ON b.factura = a.ID
-        INNER JOIN facturación.LineaVenta AS c ON c.ID      = b.ID
-        INNER JOIN deposito.producto      AS d ON d.ID      = c.IDProducto
+        INNER JOIN facturacion.venta      AS b ON b.IDFactura  = a.ID
+        INNER JOIN facturacion.lineaVenta AS c ON c.ID		   = b.ID
+        INNER JOIN deposito.producto      AS d ON d.IDProducto = c.IDProducto
             WHERE a.fecha <= DATEADD(DAY, 15 - DAY(GETDATE()), EOMONTH(GETDATE()))
               AND a.fecha >= DATEADD(DAY, 22 - DAY(GETDATE()), EOMONTH(GETDATE()))
             GROUP BY d.nombre
+			ORDER BY Acumulado ASC
     UNION ALL
     -- Semana 4
-    SELECT d.nombre, SUM(c.cantidad) AS Acumulado LAST 5
+    SELECT TOP 5 d.nombre, SUM(c.cantidad) AS Acumulado 
         FROM facturacion.factura          AS a
-        INNER JOIN facturacion.venta      AS b ON b.factura = a.ID
-        INNER JOIN facturación.LineaVenta AS c ON c.ID      = b.ID
-        INNER JOIN deposito.producto      AS d ON d.ID      = c.IDProducto
+        INNER JOIN facturacion.venta      AS b ON b.IDFactura  = a.ID
+        INNER JOIN facturacion.lineaVenta AS c ON c.ID		   = b.ID
+        INNER JOIN deposito.producto      AS d ON d.IDProducto = c.IDProducto
             WHERE a.fecha <= DATEADD(DAY, 23 - DAY(GETDATE()), EOMONTH(GETDATE()))
               AND a.fecha >= DATEADD(DAY, 30 - DAY(GETDATE()), EOMONTH(GETDATE()))
             GROUP BY d.nombre
+			ORDER BY Acumulado ASC
     )
 
     SELECT *
         FROM Datos
 
     -- Generar .XML
-AS
-BEGIN
-
 END
 GO
-/*
--- Mostrar total acumulado de ventas (o sea tambien mostrar el detalle) para una fecha y sucursal particulares
+
+-- Mostrar total acumulado de ventas (o sea, tambien mostrar el detalle) para una fecha y sucursal particulares
 CREATE OR ALTER PROCEDURE reportes.VentasFechaSucursal
-
+	@Fecha    DATE,
+	@Sucursal VARCHAR(20)
 AS
 BEGIN
+	WITH Datos AS(
+	SELECT b.*
+		FROM facturacion.Venta				AS a
+		INNER JOIN facturacion.lineaVenta	AS b ON b.ID		 = a.ID
+		INNER JOIN facturacion.factura		AS c ON c.ID		 = a.IDFactura
+		INNER JOIN infraestructura.empleado AS d ON d.Legajo	 = a.Empleado
+		INNER JOIN infraestructura.sucursal AS e ON e.IDsucursal = d.Sucursal
+			WHERE e.Ciudad = @Sucursal
+			  AND c.Fecha  = @Fecha
+	)
 
+    SELECT *
+        FROM Datos
+
+    -- Generar .XML
 END
 GO
-*/
 
-EXEC reportes.Mensual @Mes = 1, @Año = 2024
+--EXEC reportes.Mensual @Mes = 1, @Año = 2024
+--EXEC reportes.Trimestral
+--EXEC reportes.ProductosFecha
+--EXEC reportes.ProductosSucursalFecha
+--EXEC reportes.TopProductosXSemana
+--EXEC reportes.LowProductos
+--EXEC reportes.VentasFechaSucursal
 
 USE master
 GO
