@@ -67,13 +67,16 @@ GO
 
 --Se crean esquemas para trabajar sin usar el default 'dbo'
 --Facturación se encargará de la generación y gestión de Ventas, pagos y clientes
-create schema facturacion
+CREATE SCHEMA facturacion
 go
 --Destinamos el esquema Depósito a lo relacionado a gestión de Productos
-create schema deposito
+CREATE SCHEMA deposito
 GO
 --El esquema infraestructura tiene como objetivo gestionar sucursales y recursos humanos
-create schema infraestructura
+CREATE SCHEMA infraestructura
+GO
+
+CREATE SCHEMA reportes
 GO
 
 --Se respeta este orden de borrado para que no haya conflictos con las Foreign Keys

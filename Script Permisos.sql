@@ -1,5 +1,7 @@
 -- creacion de roles Supervisor y Vendedor para los SP de NC y ND
-use COM2900G09
+USE COM2900G09
+GO
+
 CREATE ROLE Supervisor
 GO
 
