@@ -51,6 +51,7 @@ GO
 SET DATEFORMAT mdy
 GO
 
+-- hay que agregar esto
 /*
 CONTAINMENT = NONE
 ON PRIMARY(
@@ -59,6 +60,7 @@ FILEGROUP [Memoria] CONTAINS MEMORY_OPTIMIZED_DATA DEFAULT(
 	NAME = N'MemoryDB', FILENAME = N'D:\DataTP\AuroraVentasMem')
 GO
 */
+
 --Para trabajar sobre la base de datos creada
 USE COM2900G09
 GO
@@ -91,21 +93,22 @@ DROP TABLE IF EXISTS infraestructura.Sucursal;
 DROP TABLE IF EXISTS infraestructura.Cargo;
 go
 
---Utilizamos como Pk en las tablas un int Identity para mejorar la velocidad de las consultas
-create table infraestructura.cargo(
-	IdCargo int Identity(1,1) primary key,
-	Descripcion varchar(25) Unique NOT NULL
-)
-go
 
-create table infraestructura.sucursal(
-	IDsucursal int Identity(1,1) primary key,
-	Direccion varchar(100),
-	Ciudad varchar(20),
-	Horario char(45),
-	Telefono char(11)
+--Utilizamos como Pk en las tablas un int Identity para mejorar la velocidad de las consultas
+CREATE TABLE infraestructura.cargo(
+	IdCargo 	INT IDENTITY(1,1) PRIMARY KEY,
+	Descripcion VARCHAR(25) UNIQUE NOT NULL
 )
-go
+GO
+
+CREATE TABLE infraestructura.sucursal(
+	IDsucursal INT IDENTITY(1,1) PRIMARY KEY,
+	Direccion  VARCHAR(100),
+	Ciudad 	   VARCHAR(20),
+	Horario    CHAR(45),
+	Telefono   CHAR(11)
+)
+GO
 
 create table infraestructura.empleado(
 	Legajo int primary key,
@@ -122,13 +125,13 @@ create table infraestructura.empleado(
 	FOREIGN KEY (Cargo) REFERENCES infraestructura.cargo(IdCargo),
 	FOREIGN KEY (Sucursal) REFERENCES infraestructura.Sucursal(IdSucursal)
 )
-go
+GO
 
-create table facturacion.TipoCliente(
-    IDTipoCliente int Identity(1,1) primary key, 
-	nombre varchar(20) Unique NOT NULL 	
+CREATE TABLE facturacion.TipoCliente(
+    IDTipoCliente INT IDENTITY(1,1) PRIMARY KEY,
+	nombre 		  VARCHAR(20) UNIQUE NOT NULL 	
 )
-go
+GO
 
 create table facturacion.cliente(
 	IDCliente int Identity(1,1) primary key,
@@ -140,13 +143,13 @@ create table facturacion.cliente(
 	IDTipoCliente int,
 	FOREIGN KEY (IDTipoCliente) REFERENCES facturacion.TipoCliente(IDTipoCliente)
 )
-go
+GO
 
-create table deposito.categoria(
-	IDCategoria int Identity(1,1) primary key,
-	Descripcion varchar(50) Unique NOT NULL,
+CREATE TABLE deposito.categoria(
+	IDCategoria INT IDENTITY(1,1) PRIMARY KEY,
+	Descripcion VARCHAR(50) UNIQUE NOT NULL,
 )
-go
+GO
 
 create table deposito.producto(
 	IDProducto int Identity(1,1) primary key,
@@ -158,7 +161,7 @@ create table deposito.producto(
     Fecha datetime,
 	FOREIGN KEY (categoria) REFERENCES deposito.categoria(IDCategoria)
 )
-go
+GO
 
 create table facturacion.factura(
 	ID int Identity(1,1) primary key,
@@ -170,31 +173,31 @@ create table facturacion.factura(
 	MontoNeto decimal (9,2),
 	MontoBruto decimal (9,2),
 )
-go
+GO
 
-create table facturacion.Venta(
-	ID int Identity(1,1) primary key,
-	IDFactura int,
-	Cliente int,
-	Empleado int,
-	MontoNeto decimal (9,2), -- no se inserta, se modifica
-	Cerrado BIT DEFAULT 0,
-	FOREIGN KEY (Cliente)  REFERENCES facturacion.cliente(IDCliente),
-	FOREIGN KEY (Empleado) REFERENCES infraestructura.Empleado(Legajo),
-	FOREIGN KEY (IDFactura)  REFERENCES facturacion.Factura(ID)
+CREATE TABLE facturacion.Venta(
+	ID 		  INT IDENTITY(1,1) PRIMARY KEY,
+	IDFactura INT,
+	Cliente   INT,
+	Empleado  INT,
+	MontoNeto DECIMAL(9,2), -- no se inserta, se modifica
+	Cerrado   BIT DEFAULT 0,
+	FOREIGN KEY (Cliente)   REFERENCES facturacion.cliente(IDCliente),
+	FOREIGN KEY (Empleado)  REFERENCES infraestructura.Empleado(Legajo),
+	FOREIGN KEY (IDFactura) REFERENCES facturacion.Factura(ID)
 )
-go
+GO
 
-create table facturacion.lineaVenta(
-	ID int,
-	IDProducto int,
-	Cantidad int,
-	Monto decimal (9,2),
-	FOREIGN KEY (ID) REFERENCES facturacion.Venta(ID),
+CREATE TABLE facturacion.lineaVenta(
+	ID 	   	   INT,
+	IDProducto INT,
+	Cantidad   INT,
+	Monto 	   DECIMAL(9,2),
+	FOREIGN KEY (ID) 		 REFERENCES facturacion.Venta(ID),
 	FOREIGN KEY (IdProducto) REFERENCES deposito.producto(IDProducto),
-	constraint pkLineaVenta primary key (ID, IdProducto)
+	CONSTRAINT pkLineaVenta PRIMARY KEY (ID, IdProducto)
 )
-go
+GO
 
 create table facturacion.nota(
 	ID int Identity(1,1) primary key,
@@ -206,25 +209,25 @@ create table facturacion.nota(
 	Importe decimal (9,2),
 	FOREIGN KEY (factura) REFERENCES facturacion.factura(ID)
 )
-go
+GO
 
-create table facturacion.MedioDePago(
-	IDMedioDePago int Identity(1,1) primary key,
-	Nombre varchar(20) Unique NOT NULL,
-	Descripcion varchar(50)
+CREATE TABLE facturacion.MedioDePago(
+	IDMedioDePago INT IDENTITY(1,1) PRIMARY KEY,
+	Nombre 		  VARCHAR(20) UNIQUE NOT NULL,
+	Descripcion   VARCHAR(50)
 )
-go
+GO
 
-create table facturacion.Pago(
-	IDPago int Identity(1,1) primary key,
-	factura int,
-	IdentificadorDePago varchar(22),
-	Fecha datetime,
-	MedioDePago int,
+CREATE TABLE facturacion.Pago(
+	IDPago 				INT IDENTITY(1,1) PRIMARY KEY,
+	factura 			INT,
+	IdentificadorDePago VARCHAR(22),
+	Fecha 				DATETIME,
+	MedioDePago 		INT,
 	FOREIGN KEY (MedioDePago) REFERENCES facturacion.MedioDePago(IDMedioDePago),
-	FOREIGN KEY (factura) REFERENCES facturacion.factura(ID)
+	FOREIGN KEY (factura) 	  REFERENCES facturacion.factura(ID)
 )
-go
+GO
 
 CREATE TABLE facturacion.DatosFacturacion (
     ID int IDENTITY(1,1) PRIMARY KEY,
@@ -236,31 +239,31 @@ CREATE TABLE facturacion.DatosFacturacion (
 GO
 
 /*CREATE NONCLUSTERED INDEX idx_Venta_Numero
-ON facturacion.Venta (numero);
+ON facturacion.Venta (numero)
 GO*/
 
 CREATE NONCLUSTERED INDEX idx_Empleado_DNI
-ON infraestructura.Empleado (DNI);
+ON infraestructura.Empleado (DNI)
 GO
 
 CREATE NONCLUSTERED INDEX idx_Cliente_DNI
-ON facturacion.Cliente (DNI);
+ON facturacion.Cliente (DNI)
 GO
 
 CREATE NONCLUSTERED INDEX idx_Empleado_Nombre
-ON infraestructura.Empleado (Nombre);
+ON infraestructura.Empleado (Nombre)
 GO
 
 CREATE NONCLUSTERED INDEX idx_Cliente_Nombre
-ON facturacion.Cliente (Nombre);
+ON facturacion.Cliente (Nombre)
 GO
 
 CREATE NONCLUSTERED INDEX idx_Empleado_Apellido
-ON infraestructura.Empleado (Apellido);
+ON infraestructura.Empleado (Apellido)
 GO
 
 CREATE NONCLUSTERED INDEX idx_Cliente_Apellido
-ON facturacion.Cliente (Apellido);
+ON facturacion.Cliente (Apellido)
 GO
 
 USE master
