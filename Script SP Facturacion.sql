@@ -9,7 +9,53 @@ Los nombres de los store procedures NO deben comenzar con “SP”.
 use COM2900G09
 go
 
+-------------------- Datos de Facturacion -------------------
+
+CREATE OR ALTER PROCEDURE facturacion.ConfigurarDatosFacturacion
+    @CUIT char(11),
+    @FechaInicio datetime,
+    @RazonSocial varchar(100)
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM facturacion.DatosFacturacion WHERE ID = 1)
+        BEGIN
+            UPDATE facturacion.DatosFacturacion
+            SET CUIT = @CUIT,
+                FechaInicio = @FechaInicio,
+                RazonSocial = @RazonSocial
+            WHERE ID = 1;
+            PRINT 'Datos de facturación actualizados.';
+        END
+        ELSE
+        BEGIN
+            INSERT INTO facturacion.DatosFacturacion (CUIT, FechaInicio, RazonSocial)
+            VALUES (@CUIT, @FechaInicio, @RazonSocial);
+            PRINT 'Datos de facturación configurados por primera vez.';
+        END
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al configurar los datos de facturación: ' + ERROR_MESSAGE();
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.ObtenerDatosFacturacion
+AS
+BEGIN
+    SELECT CUIT, FechaInicio, RazonSocial
+    FROM facturacion.DatosFacturacion
+    WHERE ID = 1;
+END;
+GO
+
+-------------------- PAGO --------------------
+
 -------------------- TIPO DE CLIENTE --------------------
+
 
 CREATE OR ALTER PROCEDURE facturacion.InsertarTipoCliente
     @Nombre VARCHAR(20)
@@ -105,9 +151,11 @@ CREATE OR ALTER PROCEDURE facturacion.InsertarCliente
     @IDTipoCliente INT
 AS
 BEGIN
+
     DECLARE @CUIL_G INT
     DECLARE @CUIL_N INT
     DECLARE @CUIL   INT
+    DECLARE @CUIL_FINAL CHAR(11)
 
     BEGIN TRANSACTION
 
@@ -132,6 +180,13 @@ BEGIN
 
     -- Armado de CUIL
     SET @CUIL = ( @CUIL_G * 1000000000 ) + ( @DNI * 10 ) + @CUIL_N
+    SET @CUIL_FINAL = CAST(@CUIL AS CHAR(11))
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO facturacion.Cliente (DNI, CUIL, Nombre, Apellido, Genero, IDTipoCliente)
+        VALUES (@DNI, @CUIL_FINAL, @Nombre, @Apellido, @Genero, @IDTipoCliente);        
+        COMMIT TRANSACTION;
+        PRINT 'Cliente insertado correctamente.';
         INSERT INTO facturacion.Cliente (DNI, CUIL, Nombre, Apellido, Genero, IDTipoCliente)
             VALUES (@DNI, @CUIL, @Nombre, @Apellido, @Genero, @IDTipoCliente)
         
@@ -511,6 +566,26 @@ BEGIN
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM facturacion.MedioDePago WHERE IDMedioDePago = @IDMedioDePago)
         BEGIN
+
+            UPDATE facturacion.Venta
+                SET MontoNeto = COALESCE(@MontoNeto, MontoNeto),
+					Cerrado   = 1
+					WHERE ID  = @ID
+            
+            EXEC facturacion.GenerarFactura @Importe = @MontoNeto, @Factura = @Factura OUTPUT
+
+			UPDATE facturacion.Venta
+                SET IDFactura = COALESCE(@Factura, IDFactura)
+					WHERE ID  = @ID
+
+            COMMIT TRANSACTION
+            PRINT 'Venta actualizado correctamente.'
+        END
+        ELSE
+        BEGIN
+            ROLLBACK TRANSACTION;
+            PRINT 'No se encontro la Venta con el Id especificado.';
+
             UPDATE facturacion.MedioDePago
                 SET Nombre      = COALESCE(@Nombre, Nombre),
                     Descripcion = COALESCE(@Descripcion, Descripcion)
@@ -562,6 +637,36 @@ GO
 
 -------------------- PAGO --------------------
 
+CREATE OR ALTER PROCEDURE facturacion.GenerarFacturaBUP -- SOLO SE EJECUTA DENTRO DE facturacion.CerrarVenta. NO SE PUEDE LLAMAR POR SI SOLO
+    @Importe DECIMAL(9,2),
+	@Factura INT OUTPUT
+AS
+BEGIN
+    DECLARE @NewFac CHAR(11)
+    DECLARE @chk	BIT
+    SET @chk = 1
+
+    BEGIN TRY
+
+        WHILE @chk = 1
+        BEGIN
+            SELECT @NewFac = CAST(FLOOR(RAND() * (99999999999 - 1000000000) + 1000000000) AS CHAR)
+            IF NOT EXISTS (SELECT *
+                            FROM facturacion.factura 
+                                WHERE letra = 'A'
+                                  AND numero = @NewFac)
+            BEGIN
+                SET @chk = 0
+            END
+        END
+
+        INSERT INTO facturacion.factura(letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto)
+            VALUES ('C', @NewFac, GETDATE(), CONVERT(VARCHAR(10), GETDATE(), 108), 
+					@Importe, @Importe * 0.21, @Importe * 1.21)
+
+		SELECT @Factura = SCOPE_IDENTITY()
+			FROM facturacion.factura
+
 CREATE OR ALTER PROCEDURE facturacion.InsertarPago
 	@Factura			 INT,
     @IdentificadorDePago VARCHAR(22),
@@ -575,6 +680,7 @@ BEGIN
             VALUES (@Factura, @IdentificadorDePago, GETDATE(), @MedioDePago)
         
         PRINT 'Pago insertado correctamente.'
+
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
@@ -585,6 +691,58 @@ BEGIN
 END
 GO
 
+------------ GENERAR FACTURA (se ejecuta dentro de cerrar venta)
+
+CREATE OR ALTER PROCEDURE facturacion.GenerarFactura
+    @Letra CHAR(1)
+    @Importe DECIMAL(9,2),
+    @Factura INT OUTPUT
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        DECLARE @NewFac CHAR(11) = CAST(NEXT VALUE FOR FacturaSecuencial AS CHAR); --toma el próximo valor posible
+        INSERT INTO facturacion.factura (letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto)
+        VALUES (@Letra, @NewFac, GETDATE(), CONVERT(VARCHAR(10), GETDATE(), 108), 
+                @Importe * 0.21, @Importe, @Importe * 1.21);
+        SET @Factura = SCOPE_IDENTITY();
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al generar la factura: ' + ERROR_MESSAGE();
+    END CATCH
+END;
+GO
+
+
+-------------------- TIPO DE CLIENTE --------------------
+
+CREATE OR ALTER PROCEDURE facturacion.InsertarTipoCliente
+    @Nombre VARCHAR(20)
+AS
+BEGIN
+    BEGIN TRANSACTION;
+	DECLARE @MaxID INT;
+	SET @MaxID = (SELECT isnull(MAX(IDTipoCliente),0) FROM facturacion.TipoCliente);
+    BEGIN TRY
+        INSERT INTO facturacion.TipoCliente (Nombre)
+        VALUES (@Nombre);
+        DBCC CHECKIDENT ('facturacion.TipoCliente', RESEED, @MaxID);
+        COMMIT TRANSACTION;
+        PRINT 'TipoCliente insertado correctamente.';
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al intentar insertar el TipoCliente: ' + ERROR_MESSAGE();
+        DBCC CHECKIDENT ('facturacion.TipoCliente', RESEED, @MaxID);
+    END CATCH;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE facturacion.ActualizarTipoCliente
+    @IDTipoCliente INT,
+    @Nombre VARCHAR(20) = NULL
 CREATE OR ALTER PROCEDURE facturacion.ActualizarPago
     @IDPago              INT,
     @IdentificadorDePago VARCHAR(22) = NULL,
