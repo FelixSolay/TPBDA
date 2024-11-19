@@ -570,6 +570,8 @@ BEGIN
 END
 GO
 
+------------ GENERAR FACTURA (se ejecuta dentro de cerrar venta)
+
 CREATE OR ALTER PROCEDURE facturacion.GenerarFactura
     @Letra CHAR(1)
     @Importe DECIMAL(9,2),
