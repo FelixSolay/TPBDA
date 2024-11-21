@@ -22,10 +22,10 @@ Fecha de entrega:
 Grupo: 09
 Bases de datos Aplicadas
 Alumnos:
-Aguirre
-Correa
+Aguirre, Cesar Alan
+Correa, Juan Pablo
 De Solay, Félix 40971636
-Weidmann
+Weidmann, Germán Ariel 
 
 Script de Creación de Base de datos y tablas para el trabajo práctico
 */
@@ -229,6 +229,7 @@ CREATE TABLE facturacion.Pago(
 )
 GO
 
+--Agregamos los datos de facturación para utilizarlos como una tabla parametrizada
 CREATE TABLE facturacion.DatosFacturacion (
     ID int IDENTITY(1,1) PRIMARY KEY,
     CUIT char(11) NOT NULL UNIQUE CHECK (CUIT LIKE '[0-9]%'),

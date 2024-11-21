@@ -9,12 +9,13 @@ Los nombres de los store procedures NO deben comenzar con “SP”.
 use COM2900G09
 go
 
--------------------- CATEGORIA --------------------
+-------------------- CATEGORIA -------------------------------------------
 
 CREATE OR ALTER PROCEDURE deposito.InsertarCategoria
     @Descripcion VARCHAR(50)
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Insertar la Categoria: '
     BEGIN TRANSACTION
 
 	DECLARE @MaxID INT
@@ -29,9 +30,9 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar insertar la Categoria: ' + ERROR_MESSAGE()
-
         DBCC CHECKIDENT ('deposito.Categoria', RESEED, @MaxID)
+		SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
 	COMMIT TRANSACTION
@@ -43,6 +44,7 @@ CREATE OR ALTER PROCEDURE deposito.ActualizarCategoria
     @Descripcion VARCHAR(50) = NULL
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Actualizar la Categoria: '
     BEGIN TRANSACTION
 
     BEGIN TRY
@@ -61,7 +63,8 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar actualizar la categoria: ' + ERROR_MESSAGE()
+		SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
 	COMMIT TRANSACTION
@@ -72,6 +75,7 @@ CREATE OR ALTER PROCEDURE deposito.EliminarCategoria
     @IDCategoria INT
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Eliminar la Categoria: '	
     BEGIN TRANSACTION
 
     BEGIN TRY
@@ -89,24 +93,26 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar eliminar la Categoria: ' + ERROR_MESSAGE()
+		SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
 	COMMIT TRANSACTION
 END
 GO
 
--------------------- PRODUCTO --------------------
+-------------------- PRODUCTO -------------------------------------------
 
 CREATE OR ALTER PROCEDURE deposito.InsertarProducto
     @Categoria		  INT,
     @Nombre			  VARCHAR(100),
     @Precio			  DECIMAL(9, 2),
     @PrecioReferencia DECIMAL(9, 2),
-    @UnidadReferencia CHAR(2),
+    @UnidadReferencia VARCHAR(25),
     @Fecha			  DATETIME
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Insertar el Producto: '	
     BEGIN TRANSACTION
 
 	DECLARE @MaxID INT
@@ -121,9 +127,9 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar insertar el Producto: ' + ERROR_MESSAGE()
-
         DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID)
+		SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
     COMMIT TRANSACTION
@@ -136,10 +142,11 @@ CREATE OR ALTER PROCEDURE deposito.ActualizarProducto
     @Nombre           VARCHAR(100) = NULL,
     @Precio           DECIMAL(9,2) = NULL,
     @PrecioReferencia DECIMAL(9,2) = NULL,
-    @UnidadReferencia CHAR(2)      = NULL,
+    @UnidadReferencia VARCHAR(25)  = NULL,
     @Fecha            DATETIME     = NULL
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Actualizar el Producto: '
     BEGIN TRANSACTION
 
     BEGIN TRY
@@ -163,7 +170,8 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar actualizar el producto: ' + ERROR_MESSAGE()
+		SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
     COMMIT TRANSACTION
@@ -174,6 +182,7 @@ CREATE OR ALTER PROCEDURE deposito.EliminarProducto
     @IDProducto INT
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Eliminar el Producto: '
     BEGIN TRANSACTION
 
     BEGIN TRY
@@ -191,7 +200,8 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar eliminar el Producto: ' + ERROR_MESSAGE()
+		SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
     COMMIT TRANSACTION
