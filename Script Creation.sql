@@ -266,5 +266,32 @@ CREATE NONCLUSTERED INDEX idx_Cliente_Apellido
 ON facturacion.Cliente (Apellido)
 GO
 
+-- Secuencias para números de facturas
+
+CREATE SEQUENCE FacturaASeq
+    START WITH 1         -- Número inicial
+    INCREMENT BY 1       -- Incremento
+    MINVALUE 1           -- Valor mínimo
+    MAXVALUE 9999999999  -- Valor máximo (opcional)
+    NO CYCLE;            -- No reiniciar cuando se alcance el máximo
+GO
+
+CREATE SEQUENCE FacturaBSeq
+    START WITH 1         -- Número inicial
+    INCREMENT BY 1       -- Incremento
+    MINVALUE 1           -- Valor mínimo
+    MAXVALUE 9999999999  -- Valor máximo (opcional)
+    NO CYCLE;            -- No reiniciar cuando se alcance el máximo
+GO
+
+CREATE SEQUENCE FacturaCSeq
+    START WITH 1         -- Número inicial
+    INCREMENT BY 1       -- Incremento
+    MINVALUE 1           -- Valor mínimo
+    MAXVALUE 9999999999  -- Valor máximo (opcional)
+    NO CYCLE;            -- No reiniciar cuando se alcance el máximo
+GO
+
+
 USE master
 GO
