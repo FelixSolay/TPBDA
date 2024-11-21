@@ -25,6 +25,7 @@ CREATE OR ALTER PROCEDURE infraestructura.InsertarEmpleado
     @Sucursal      INT
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Insertar el Empleado: '
     BEGIN TRANSACTION
 
     BEGIN TRY
@@ -35,7 +36,8 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar insertar el Empleado: ' + ERROR_MESSAGE()
+		SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
     COMMIT TRANSACTION
@@ -56,6 +58,7 @@ CREATE OR ALTER PROCEDURE infraestructura.ActualizarEmpleado
     @Sucursal	   INT			= NULL
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Actualizar el Empleado: '
     BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM infraestructura.Empleado WHERE Legajo = @Legajo)
@@ -82,7 +85,8 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar actualizar el empleado: ' + ERROR_MESSAGE()
+        SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
 	COMMIT TRANSACTION
@@ -93,6 +97,7 @@ CREATE OR ALTER PROCEDURE infraestructura.EliminarEmpleado
     @Legajo INT
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Actualizar el Empleado: '
     BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM infraestructura.empleado WHERE Legajo = @Legajo)
@@ -109,7 +114,8 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar eliminar el Empleado: ' + ERROR_MESSAGE()
+        SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
     COMMIT TRANSACTION
@@ -122,6 +128,7 @@ CREATE OR ALTER PROCEDURE infraestructura.InsertarCargo
     @Descripcion VARCHAR(25)
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Insertar el Cargo: '
     BEGIN TRANSACTION
 
 	DECLARE @MaxID INT
@@ -137,8 +144,9 @@ BEGIN
     BEGIN CATCH
         ROLLBACK TRANSACTION
         PRINT 'Error al intentar insertar el Cargo: ' + ERROR_MESSAGE()
-
         DBCC CHECKIDENT ('infraestructura.Cargo', RESEED, @MaxID)
+        SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
     COMMIT TRANSACTION
@@ -150,6 +158,7 @@ CREATE OR ALTER PROCEDURE infraestructura.ActualizarCargo
     @Descripcion VARCHAR(25) = NULL
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Actualizar el Cargo: '
     BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM infraestructura.Cargo WHERE IdCargo = @IdCargo)
@@ -168,7 +177,8 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar actualizar el cargo: ' + ERROR_MESSAGE()
+        SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
     COMMIT TRANSACTION
@@ -179,6 +189,7 @@ CREATE OR ALTER PROCEDURE infraestructura.EliminarCargo
     @IdCargo INT
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Eliminar el Cargo: '
     BEGIN TRANSACTION
 
     BEGIN TRY
@@ -195,7 +206,8 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar eliminar el Cargo: ' + ERROR_MESSAGE()
+        SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
     COMMIT TRANSACTION
@@ -211,6 +223,7 @@ CREATE OR ALTER PROCEDURE infraestructura.InsertarSucursal
     @Telefono  CHAR(11)
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Insertar la Sucursal: '
     BEGIN TRANSACTION
 
 	DECLARE @MaxID INT
@@ -225,8 +238,9 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar insertar la Sucursal: ' + ERROR_MESSAGE()
         DBCC CHECKIDENT ('infraestructura.Sucursal', RESEED, @MaxID)
+		SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
     COMMIT TRANSACTION
@@ -241,6 +255,7 @@ CREATE OR ALTER PROCEDURE infraestructura.ActualizarSucursal
     @Telefono	CHAR(11)     = NULL
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Actualizar la Sucursal: '
     BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM infraestructura.Sucursal WHERE IDSucursal = @IDSucursal)
@@ -261,7 +276,8 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar actualizar la sucursal: ' + ERROR_MESSAGE()
+		SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
     COMMIT TRANSACTION
@@ -272,6 +288,7 @@ CREATE OR ALTER PROCEDURE infraestructura.EliminarSucursal
     @IDsucursal INT
 AS
 BEGIN
+	DECLARE @error VARCHAR(MAX) = 'Error al intentar Eliminar la Sucursal: '
     BEGIN TRANSACTION
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM infraestructura.sucursal WHERE IDsucursal = @IDsucursal)
@@ -287,7 +304,8 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar eliminar la Sucursal: ' + ERROR_MESSAGE()
+		SET @error = @error + ERROR_MESSAGE()
+		RAISERROR(@error, 16, 1);
     END CATCH
 
     COMMIT TRANSACTION
