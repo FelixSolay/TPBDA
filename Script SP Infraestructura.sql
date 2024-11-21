@@ -9,7 +9,7 @@ Los nombres de los store procedures NO deben comenzar con “SP”.
 use COM2900G09
 go
 
--------------------- EMPLEADO --------------------
+-------------------- EMPLEADO -----------------------------------------
 
 CREATE OR ALTER PROCEDURE infraestructura.InsertarEmpleado
     @Legajo        INT,
@@ -122,7 +122,7 @@ BEGIN
 END
 GO
 
--------------------- CARGO --------------------
+-------------------- CARGO --------------------------------------
 
 CREATE OR ALTER PROCEDURE infraestructura.InsertarCargo
     @Descripcion VARCHAR(25)
@@ -214,7 +214,7 @@ BEGIN
 END
 GO
 
--------------------- SUCURSAL --------------------
+-------------------- SUCURSAL ---------------------------------------------
 
 CREATE OR ALTER PROCEDURE infraestructura.InsertarSucursal
     @Direccion VARCHAR(100),

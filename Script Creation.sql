@@ -229,6 +229,7 @@ CREATE TABLE facturacion.Pago(
 )
 GO
 
+--Agregamos los datos de facturación para utilizarlos como una tabla parametrizada
 CREATE TABLE facturacion.DatosFacturacion (
     ID int IDENTITY(1,1) PRIMARY KEY,
     CUIT char(11) NOT NULL UNIQUE CHECK (CUIT LIKE '[0-9]%'),
