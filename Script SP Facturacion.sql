@@ -68,7 +68,7 @@ BEGIN
     BEGIN TRY
         INSERT INTO facturacion.TipoCliente (Nombre)
             VALUES (@Nombre)
-        DBCC CHECKIDENT ('facturacion.TipoCliente', RESEED, @MaxID)
+        COMMIT TRANSACTION
         PRINT 'TipoCliente insertado correctamente.'
     END TRY
     BEGIN CATCH
@@ -77,7 +77,6 @@ BEGIN
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-    COMMIT TRANSACTION
 END
 GO
 
@@ -94,12 +93,13 @@ BEGIN
             UPDATE facturacion.TipoCliente
 				SET Nombre = COALESCE(@Nombre, Nombre)
 					WHERE IDTipoCliente = @IDTipoCliente
-            
+            COMMIT TRANSACTION            
             PRINT 'Tipo de cliente actualizado correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el tipo de cliente con el Id especificado.'
+            SET @error = @error + 'No se encontro el tipo de cliente con el Id: ' + cast(@IDTipoCliente as char)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -107,7 +107,6 @@ BEGIN
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-    COMMIT TRANSACTION
 END
 GO
 
@@ -122,12 +121,12 @@ BEGIN
         BEGIN
             DELETE FROM facturacion.TipoCliente 
                 WHERE IDTipoCliente = @IDTipoCliente
-            
             PRINT 'Tipo de Cliente eliminado correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el registro de Tipo de Cliente con el ID especificado.'
+            SET @error = @error + 'No se encontro el tipo de cliente con el Id: ' + cast(@IDTipoCliente as char)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -226,7 +225,8 @@ BEGIN
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el cliente con el Id especificado.'
+            SET @error = @error +  'No se encontro el cliente con el Id: ' + cast(@IDCliente AS CHAR)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -235,7 +235,7 @@ BEGIN
 		RAISERROR(@error, 16, 1);
     END CATCH
 
-    COMMIT TRANSACTION
+
 END
 GO
 
@@ -250,11 +250,13 @@ BEGIN
         BEGIN
             DELETE FROM facturacion.cliente 
                 WHERE IDCliente = @IDCliente
+            COMMIT TRANSACTION    
             PRINT 'Cliente eliminado correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el registro de Cliente con el ID especificado.'
+            SET @error = @error +  'No se encontro el cliente con el Id: ' + cast(@IDCliente AS CHAR)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -313,10 +315,9 @@ BEGIN
     BEGIN TRY
         INSERT INTO facturacion.Venta (Cliente, Empleado)
             VALUES (@Cliente, @Empleado)
-        
         SELECT @ID = SCOPE_IDENTITY()
             FROM facturacion.Venta
-
+        COMMIT TRANSACTION
         PRINT 'Venta insertado correctamente.'
     END TRY
     BEGIN CATCH
@@ -324,7 +325,7 @@ BEGIN
         SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-    COMMIT TRANSACTION
+    
     RETURN @ID
 END
 GO
@@ -343,7 +344,8 @@ BEGIN
         --validación de existencia de venta
         IF NOT EXISTS (SELECT 1 FROM facturacion.Venta WHERE ID = @ID)
         BEGIN
-            RAISERROR('No se encontró la venta con el ID especificado.', 16, 1);
+            SET @error = @error + 'No se encontró la venta con el ID: ' + cast(@ID as CHAR)
+		    RAISERROR(@error, 16, 1);
 			RETURN
         END
         --Carga y validación de monto
@@ -352,7 +354,8 @@ BEGIN
         WHERE ID = @ID;
         IF @MontoNeto IS NULL OR @MontoNeto <= 0
         BEGIN
-            RAISERROR('El importe de la venta debe ser mayor a cero.', 16, 1);
+            SET @error = @error + 'El importe de la venta debe ser mayor a cero.'
+            RAISERROR(@error, 16, 1);
 			RETURN
         END   
         --tomo el DNI para determinar factura A o B
@@ -403,12 +406,13 @@ BEGIN
             END
             ELSE
             BEGIN
-                PRINT 'No se puede eliminar la venta porque tiene una factura asignada.';
+                SET @error = @error + 'No se puede eliminar la venta porque tiene una factura asignada.'
+                RAISERROR(@error, 16, 1);
             END
         END
         ELSE
         BEGIN
-            PRINT 'No se encontró el registro de venta con el ID especificado.';
+            SET @error = @error +  'No se encontró el registro de venta con el ID: ' + cast(@ID as CHAR)
         END
         COMMIT TRANSACTION;
     END TRY
@@ -454,7 +458,7 @@ BEGIN
                 INSERT INTO facturacion.LineaVenta (ID, IdProducto, Cantidad, Monto)
                     VALUES (@ID, @IdProducto, @Cantidad, @Monto)
             END
-
+            COMMIT TRANSACTION
             PRINT 'Linea de Venta insertada correctamente.'
         END
     END TRY
@@ -463,8 +467,6 @@ BEGIN
         SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-
-    COMMIT TRANSACTION
 END
 GO
 
@@ -484,12 +486,13 @@ BEGIN
 				SET Cantidad = COALESCE(@Cantidad, Cantidad),
 					Monto	 = COALESCE(@Monto, Monto)
 					WHERE ID = @ID AND IdProducto = @IdProducto
-
+            COMMIT TRANSACTION
             PRINT 'Linea de Venta actualizada correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro la linea de Venta con los Ids especificados.'
+            SET @error = @error + 'No se encontro la linea de Venta con los Ids especificados.'
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -498,7 +501,6 @@ BEGIN
 		RAISERROR(@error, 16, 1);
     END CATCH
 
-    COMMIT TRANSACTION
 END
 GO
 
@@ -515,12 +517,13 @@ BEGIN
             DELETE FROM facturacion.lineaVenta 
                 WHERE ID         = @ID
                   AND IdProducto = @IDProducto
-
+            COMMIT TRANSACTION
             PRINT 'Linea de Venta eliminada correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el registro de Linea de Venta con el ID y Producto especificados.'
+            SET @error = @error + 'No se encontro el registro de Linea de Venta con el ID y Producto especificados.'
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -528,8 +531,6 @@ BEGIN
         SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-
-    COMMIT TRANSACTION
 END
 GO
 
@@ -548,8 +549,7 @@ BEGIN
     BEGIN TRY
         INSERT INTO facturacion.MedioDePago (Nombre, Descripcion)
             VALUES (@Nombre, @Descripcion)
-        DBCC CHECKIDENT ('facturacion.MedioDePago', RESEED, @MaxID)
-
+        COMMIT TRANSACTION
         PRINT 'Medio De Pago insertado correctamente.'
     END TRY
     BEGIN CATCH
@@ -557,9 +557,7 @@ BEGIN
         DBCC CHECKIDENT ('facturacion.MedioDePago', RESEED, @MaxID)
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
-    END CATCH
-
-    COMMIT TRANSACTION
+    END CATCH    
 END
 GO
 
@@ -578,11 +576,13 @@ BEGIN
                 SET Nombre      = COALESCE(@Nombre, Nombre),
                     Descripcion = COALESCE(@Descripcion, Descripcion)
                     WHERE IDMedioDePago = @IDMedioDePago
+            COMMIT TRANSACTION                    
             PRINT 'Medio de pago actualizado correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el medio de pago con el Id especificado.'
+            SET @error = @error + 'No se encontro el medio de pago con el Id: ' + CAST(@IdMedioDePago as CHAR)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -591,7 +591,6 @@ BEGIN
 		RAISERROR(@error, 16, 1);
     END CATCH
 
-    COMMIT TRANSACTION
 END
 GO
 
@@ -607,12 +606,13 @@ BEGIN
         BEGIN
             DELETE FROM facturacion.MedioDePago 
                 WHERE IDMedioDePago = @IDMedioDePago
-            
+            COMMIT TRANSACTION            
             PRINT 'Medio De Pago eliminado correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el registro de Medio De Pago con el ID especificado.'
+            SET @error = @error + 'No se encontro el medio de pago con el Id: ' + CAST(@IdMedioDePago as CHAR)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -621,7 +621,6 @@ BEGIN
 		RAISERROR(@error, 16, 1);
     END CATCH
 
-    COMMIT TRANSACTION
 END
 GO
 
@@ -640,7 +639,7 @@ BEGIN
     BEGIN TRY
         INSERT INTO facturacion.Pago (factura, IdentificadorDePago, Fecha, MedioDePago)
             VALUES (@Factura, @IdentificadorDePago, GETDATE(), @MedioDePago)
-        
+        COMMIT TRANSACTION
         PRINT 'Pago insertado correctamente.'
 
     END TRY
@@ -649,8 +648,6 @@ BEGIN
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-
-    COMMIT TRANSACTION
 END
 GO
 
@@ -671,12 +668,13 @@ BEGIN
                     Fecha               = COALESCE(@Fecha, Fecha),
                     MedioDePago         = COALESCE(@MedioDePago, MedioDePago)
                     WHERE IDPago = @IDPago
-            
+            COMMIT TRANSACTION            
             PRINT 'Pago actualizado correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el pago con el Id especificado.'
+            SET @error = @error + 'No se encontro el pago con el Id: ' + CAST(@IDPago as CHAR)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -684,7 +682,7 @@ BEGIN
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-    COMMIT TRANSACTION
+
 END
 GO
 
@@ -699,12 +697,13 @@ BEGIN
         BEGIN
             DELETE FROM facturacion.Pago 
                 WHERE IDPago = @IDPago
-            
+            COMMIT TRANSACTION            
             PRINT 'Pago eliminado correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el registro de Pago con el ID especificado.'
+            SET @error = @error + 'No se encontro el pago con el Id: ' + CAST(@IDPago as CHAR)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -712,8 +711,6 @@ BEGIN
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-
-    COMMIT TRANSACTION
 END
 GO
 

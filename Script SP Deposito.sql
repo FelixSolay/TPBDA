@@ -24,8 +24,7 @@ BEGIN
     BEGIN TRY
         INSERT INTO deposito.Categoria (Descripcion)
 			VALUES (@Descripcion)
-        DBCC CHECKIDENT ('deposito.Categoria', RESEED, @MaxID)
-        
+        COMMIT TRANSACTION
         PRINT 'Categoria insertada correctamente.'
     END TRY
     BEGIN CATCH
@@ -33,9 +32,7 @@ BEGIN
         DBCC CHECKIDENT ('deposito.Categoria', RESEED, @MaxID)
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
-    END CATCH
-
-	COMMIT TRANSACTION
+    END CATCH	
 END
 GO
 
@@ -53,21 +50,20 @@ BEGIN
             UPDATE deposito.Categoria
 				SET Descripcion = COALESCE(@Descripcion, Descripcion)
 					WHERE IDCategoria = @IDCategoria
-
+            COMMIT TRANSACTION
             PRINT 'Categoria actualizada correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro la categoria con el Id especificado.'
+            SET @error = @error + 'No se encontro la Categoria con el ID: ' + CAST(@IDCategoria as char)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
-    END CATCH
-
-	COMMIT TRANSACTION
+    END CATCH	
 END
 GO
 
@@ -83,12 +79,13 @@ BEGIN
         BEGIN
             DELETE FROM deposito.categoria 
 				WHERE IDCategoria = @IDCategoria
-
+	        COMMIT TRANSACTION
             PRINT 'Categoria eliminada correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el registro de Categoria con el ID especificado.'
+            SET @error = @error + 'No se encontro la Categoria con el ID: ' + cast(@IDCategoria as char)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -96,8 +93,6 @@ BEGIN
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-
-	COMMIT TRANSACTION
 END
 GO
 
@@ -121,8 +116,7 @@ BEGIN
     BEGIN TRY
         INSERT INTO deposito.Producto (Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha)
             VALUES (@Categoria, @Nombre, @Precio, @PrecioReferencia, @UnidadReferencia, @Fecha)
-        DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID)
-        
+        COMMIT TRANSACTION
         PRINT 'Producto insertado correctamente.'
     END TRY
     BEGIN CATCH
@@ -130,9 +124,7 @@ BEGIN
         DBCC CHECKIDENT ('deposito.Producto', RESEED, @MaxID)
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
-    END CATCH
-
-    COMMIT TRANSACTION
+    END CATCH    
 END
 GO
 
@@ -160,12 +152,13 @@ BEGIN
                     UnidadReferencia = COALESCE(@UnidadReferencia, UnidadReferencia),
                     Fecha = COALESCE(@Fecha, Fecha)
                     WHERE IDProducto = @IDProducto       
-            
+            COMMIT TRANSACTION
             PRINT 'Producto actualizado correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el producto con el Id especificado.'
+            SET @error = @error + 'No se encontró el producto con el ID: ' + CAST(@IdProducto as char)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -173,8 +166,6 @@ BEGIN
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-
-    COMMIT TRANSACTION
 END
 GO
 
@@ -190,12 +181,13 @@ BEGIN
         BEGIN
             DELETE FROM deposito.producto 
                 WHERE IDProducto = @IDProducto
-
+            COMMIT TRANSACTION
             PRINT 'Producto eliminado correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el registro de Producto con el ID especificado.'
+            SET @error = @error + 'No se encontró el producto con el ID: ' + CAST(@IdProducto as char)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -203,7 +195,5 @@ BEGIN
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-
-    COMMIT TRANSACTION
 END
 GO
