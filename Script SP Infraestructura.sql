@@ -31,16 +31,14 @@ BEGIN
     BEGIN TRY
         INSERT INTO infraestructura.Empleado (Legajo, Nombre, Apellido, DNI, Direccion, EmailPersonal, EmailEmpresa, CUIL, Turno, Cargo, Sucursal)
             VALUES (@Legajo, @Nombre, @Apellido, @DNI, @Direccion, @EmailPersonal, @EmailEmpresa, @CUIL, @Turno, @Cargo, @Sucursal)
-        
+        COMMIT TRANSACTION
         PRINT 'Empleado insertado correctamente.'
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
-    END CATCH
-
-    COMMIT TRANSACTION
+    END CATCH    
 END
 GO
 
@@ -75,12 +73,14 @@ BEGIN
 					Cargo		  = COALESCE(@Cargo, Cargo),
 					Sucursal	  = COALESCE(@Sucursal, Sucursal)
 					WHERE Legajo = @Legajo
-            
+
+	        COMMIT TRANSACTION            
             PRINT 'Empleado actualizado correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el empleado con el legajo especificado.'
+            SET @error = @error + 'No se encontró el empleado con Legajo:' + CAST(@Legajo as char)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -88,8 +88,6 @@ BEGIN
         SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-
-	COMMIT TRANSACTION
 END
 GO
 
@@ -104,12 +102,13 @@ BEGIN
         BEGIN
             DELETE FROM infraestructura.empleado 
                 WHERE Legajo = @Legajo
-            
+            COMMIT TRANSACTION
             PRINT 'Empleado eliminado correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el registro de Empleado con el Legajo especificado.'
+            SET @error = @error + 'No se encontró el empleado con Legajo:' + CAST(@Legajo as char)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -117,8 +116,6 @@ BEGIN
         SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-
-    COMMIT TRANSACTION
 END
 GO
 
@@ -133,23 +130,18 @@ BEGIN
 
 	DECLARE @MaxID INT
 	SET @MaxID = (SELECT isnull(MAX(IDcargo),0) FROM infraestructura.cargo)
-
     BEGIN TRY
         INSERT INTO infraestructura.Cargo (Descripcion)
             VALUES (@Descripcion)
-        DBCC CHECKIDENT ('infraestructura.Cargo', RESEED, @MaxID)
-        
+        COMMIT TRANSACTION
         PRINT 'Cargo insertado correctamente.'
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
-        PRINT 'Error al intentar insertar el Cargo: ' + ERROR_MESSAGE()
         DBCC CHECKIDENT ('infraestructura.Cargo', RESEED, @MaxID)
         SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
-    END CATCH
-
-    COMMIT TRANSACTION
+    END CATCH    
 END
 GO
 
@@ -166,13 +158,13 @@ BEGIN
             UPDATE infraestructura.Cargo
                 SET Descripcion = COALESCE(@Descripcion, Descripcion)
     				WHERE IdCargo = @IdCargo
-
+            COMMIT TRANSACTION
             PRINT 'Cargo actualizado correctamente.'
         END
         ELSE
         BEGIN
-            ROLLBACK TRANSACTION
-            PRINT 'No se encontro el cargo con el Id especificado.'
+            SET @error = @error + 'No se encontró el registro de cargo con ID:' + CAST(@IDcargo as char)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -180,8 +172,6 @@ BEGIN
         SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-
-    COMMIT TRANSACTION
 END
 GO
 
@@ -196,12 +186,13 @@ BEGIN
         IF EXISTS (SELECT 1 FROM infraestructura.cargo WHERE IdCargo = @IdCargo)
         BEGIN
             DELETE FROM infraestructura.cargo WHERE IdCargo = @IdCargo
-            
+            COMMIT TRANSACTION
             PRINT 'Cargo eliminado correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el registro de Cargo con el ID especificado.'
+            SET @error = @error + 'No se encontró el registro de cargo con ID:' + CAST(@IDcargo as char)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -209,8 +200,6 @@ BEGIN
         SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-
-    COMMIT TRANSACTION
 END
 GO
 
@@ -232,9 +221,8 @@ BEGIN
     BEGIN TRY
         INSERT INTO infraestructura.Sucursal (Direccion, Ciudad, Horario, Telefono)
             VALUES (@Direccion, @Ciudad, @Horario, @Telefono)
-        DBCC CHECKIDENT ('infraestructura.Sucursal', RESEED, @MaxID)
-        
         PRINT 'Sucursal insertada correctamente.'
+        COMMIT TRANSACTION
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
@@ -242,8 +230,6 @@ BEGIN
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-
-    COMMIT TRANSACTION
 END
 GO
 
@@ -266,12 +252,13 @@ BEGIN
                     Horario	  = COALESCE(@Horario, Horario),
                     Telefono  = COALESCE(@Telefono, Telefono)
                     WHERE IDSucursal = @IDSucursal
-            
+            COMMIT TRANSACTION
             PRINT 'Sucursal actualizada correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro la sucursal con el Id especificado.'
+            SET @error = @error + 'No se encontró la sucursal con ID:' + CAST(@IDsucursal AS CHAR)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -279,8 +266,6 @@ BEGIN
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-
-    COMMIT TRANSACTION
 END
 GO
 
@@ -294,12 +279,13 @@ BEGIN
         IF EXISTS (SELECT 1 FROM infraestructura.sucursal WHERE IDsucursal = @IDsucursal)
         BEGIN
             DELETE FROM infraestructura.sucursal WHERE IDsucursal = @IDsucursal
-            
+            COMMIT TRANSACTION
             PRINT 'Sucursal eliminada correctamente.'
         END
         ELSE
         BEGIN
-            PRINT 'No se encontro el registro de Sucursal con el ID especificado.'
+            SET @error = @error + 'No se encontró la sucursal con ID:' + CAST(@IDsucursal AS CHAR)
+            RAISERROR(@error, 16, 1);
         END
     END TRY
     BEGIN CATCH
@@ -307,7 +293,5 @@ BEGIN
 		SET @error = @error + ERROR_MESSAGE()
 		RAISERROR(@error, 16, 1);
     END CATCH
-
-    COMMIT TRANSACTION
 END
 GO
