@@ -125,12 +125,30 @@ create table infraestructura.empleado(
 	Direccion varchar(100),
 	EmailPersonal varchar(100),
 	EmailEmpresa varchar(100),
-	CUIL char(11) UNIQUE CHECK (CUIL LIKE '[0-9]%'),
+	CUIL char(11) CHECK (CUIL LIKE '[0-9]%'),
 	Turno char(16) check (Turno='TN' or Turno='TM' or turno= 'TT' or Turno='Jornada Completa'),
 	Cargo int,
 	Sucursal int,
 	FOREIGN KEY (Cargo) REFERENCES infraestructura.cargo(IdCargo),
 	FOREIGN KEY (Sucursal) REFERENCES infraestructura.Sucursal(IdSucursal)
+)
+GO
+
+CREATE TABLE facturacion.TipoCliente(
+    IDTipoCliente INT IDENTITY(1,1) PRIMARY KEY,
+	nombre 		  VARCHAR(20) UNIQUE NOT NULL 	
+)
+GO
+
+create table facturacion.cliente(
+	IDCliente int Identity(1,1) primary key,
+	DNI int Unique,
+	CUIL char(11) UNIQUE CHECK (CUIL LIKE '[0-9]%'), -- calculable
+	Nombre varchar(25),
+	Apellido varchar(25),
+	Genero char(1) check (Genero='M' or Genero='F'),
+	IDTipoCliente int,
+	FOREIGN KEY (IDTipoCliente) REFERENCES facturacion.TipoCliente(IDTipoCliente)
 )
 GO
 
@@ -160,8 +178,8 @@ CREATE TABLE facturacion.DatosFacturacion (
     CUIT char(11) NOT NULL UNIQUE CHECK (CUIT LIKE '[0-9]%'),
     FechaInicio datetime NOT NULL,
     RazonSocial varchar(100) NOT NULL,
-    constraint CHK_Unico CHECK (ID = 1)
-);
+    constraint CHK_Unico CHECK (ID = 1) --????????????????????
+)
 GO
 
 create table facturacion.factura(
@@ -233,25 +251,6 @@ CREATE TABLE facturacion.Pago(
 	FOREIGN KEY (factura) 	  REFERENCES facturacion.factura(ID)
 )
 GO
-
-CREATE TABLE facturacion.TipoCliente(
-    IDTipoCliente INT IDENTITY(1,1) PRIMARY KEY,
-	nombre 		  VARCHAR(20) UNIQUE NOT NULL 	
-)
-GO
-
-create table facturacion.cliente(
-	IDCliente int Identity(1,1) primary key,
-	DNI int Unique,
-	CUIL char(11) UNIQUE CHECK (CUIL LIKE '[0-9]%'), -- calculable
-	Nombre varchar(25),
-	Apellido varchar(25),
-	Genero char(1) check (Genero='M' or Genero='F'),
-	IDTipoCliente int,
-	FOREIGN KEY (IDTipoCliente) REFERENCES facturacion.TipoCliente(IDTipoCliente)
-)
-GO
-
 
 /*CREATE NONCLUSTERED INDEX idx_Venta_Numero
 ON facturacion.Venta (numero)
