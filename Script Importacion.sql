@@ -106,7 +106,7 @@ BEGIN
 	DECLARE @SQL NVARCHAR(MAX)
 	DECLARE @dolar DECIMAL (9,2)
 
-	SET @dolar = 1026,50 --https://dolarhoy.com/
+	SET @dolar = 1026.50 --https://dolarhoy.com/
 
 	BEGIN TRY
 		-- Electronic accessories.xlsx -> Sheet1
@@ -244,17 +244,17 @@ BEGIN
 
 		EXEC sp_executesql @SQL
 
+		DELETE #Empleados WHERE Legajo IS NULL
+
 		INSERT INTO infraestructura.cargo(Descripcion)
 			SELECT DISTINCT Cargo
 				FROM #Empleados
-					WHERE Legajo <> ''
 
 		INSERT INTO infraestructura.empleado(Legajo, Nombre, Apellido, DNI, Direccion, EmailPersonal, EmailEmpresa, Cargo, Sucursal, Turno)
 			SELECT a.Legajo, a.Nombre, a.Apellido, a.DNI, a.Direccion, a.EmailPersonal, a.EmailEmpresa, b.IdCargo, c.IDsucursal, a.Turno
 				FROM #Empleados AS a
 				INNER JOIN infraestructura.cargo AS b ON a.Cargo = b.Descripcion
 				INNER JOIN infraestructura.sucursal AS c ON a.Sucursal = c.Ciudad
-					WHERE Legajo <> ''
 
 		DROP TABLE #Empleados
 

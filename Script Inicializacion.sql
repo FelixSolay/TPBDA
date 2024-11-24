@@ -10,7 +10,7 @@ GO
 EXEC deposito.InsertarCategoria @Descripcion = 'Descontinuado'
 GO
 
-EXEC deposito.InsertarProducto @Categoria = 3, @Nombre = 'Descontinuado', @Precio = 0, @PrecioReferencia = '0', @UnidadReferencia = '', @Fecha = GETDATE()
+EXEC deposito.InsertarProducto @Categoria = 3, @Nombre = 'Descontinuado', @Precio = 0, @PrecioReferencia = '0', @UnidadReferencia = '', @Fecha = ''
 GO
 
 USE master
