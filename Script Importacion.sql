@@ -15,16 +15,16 @@ CREATE OR ALTER PROCEDURE facturacion.ImportVentas
 AS
 BEGIN
 	create table #VentasRegistradasCSV(
-		Factura			  VARCHAR(MAX), --Venta.numero
-		TipoFactura		  VARCHAR(MAX), --Venta.tipo
+		Factura			  VARCHAR(MAX), --Factura.numero
+		TipoFactura		  VARCHAR(MAX), --Factura.letra
 		Ciudad			  VARCHAR(MAX), --sucursal.ciudad
-		TipoCliente		  VARCHAR(MAX), --cliente.tipocliente
+		TipoCliente		  VARCHAR(MAX), --cliente.IDtipocliente
 		Genero			  VARCHAR(MAX), --cliente.genero
 		Producto		  VARCHAR(MAX),	--producto.nombre
 		PrecioUnitario	  VARCHAR(MAX),	--lineaVenta.Monto
 		Cantidad		  VARCHAR(MAX),	--lineaVenta.cantidad
-		Fecha			  VARCHAR(MAX),	--Venta.fecha
-		Hora			  VARCHAR(MAX),	--Venta.hora
+		Fecha			  VARCHAR(MAX),	--Factura.fecha
+		Hora			  VARCHAR(MAX),	--Factura.hora
 		MedioPago		  VARCHAR(MAX),	--MedioDePago.nombre
 		Empleado		  VARCHAR(MAX),	--Venta.Empleado
 		IdentificadorPago VARCHAR(MAX)	--pago.IdentificadorDePago
@@ -54,18 +54,18 @@ BEGIN
 				   (CAST(Cantidad AS INT) * CAST(PrecioUnitario AS DECIMAL(9,2)) * 1.21)
 				FROM #VentasRegistradasCSV
 
-		INSERT facturacion.Venta(IDFactura, Empleado, MontoNeto, Cerrado)
+		INSERT facturacion.Venta(IDFactura, Empleado, MontoNeto, Cerrado)--Falta agregar Ncleitne generico
 			SELECT b.ID, CAST(a.Empleado AS INT), b.MontoNeto, 1
 				FROM #VentasRegistradasCSV	   AS a
 				INNER JOIN facturacion.factura AS b ON a.TipoFactura = b.letra 
 												   AND a.Factura	 = b.numero
 
 		INSERT facturacion.lineaVenta(ID, IdProducto, Cantidad, Monto) --SIGUE VACIA PORQUE NO EXISTEN LOS PRODUCTOS QUE SE VENDIERON (SEGUN EL EXCEL)
-			SELECT b.ID, c.IDProducto, CAST(a.Cantidad AS INT), CAST(a.PrecioUnitario AS DECIMAL(9,2))
+			SELECT b.ID, IIF(c.IDProducto = '', 1, c.IDProducto), CAST(a.Cantidad AS INT), CAST(a.PrecioUnitario AS DECIMAL(9,2))
 				FROM #VentasRegistradasCSV	   AS a
 				INNER JOIN facturacion.factura AS b ON a.TipoFactura = b.letra 
 												   AND a.Factura	 = b.numero
-				INNER JOIN deposito.producto   AS c ON a.producto	 = c.nombre
+				LEFT JOIN deposito.producto   AS c ON a.producto	 = c.nombre
 
 		INSERT facturacion.pago(factura, IdentificadorDePago, Fecha, MedioDePago)
 			SELECT b.ID, IIF(a.IdentificadorPago = '--', NULL, LEFT(REPLACE(a.IdentificadorPago, '''',''), 22)), a.Fecha, c.IDMedioDePago
@@ -104,6 +104,9 @@ BEGIN
 	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 	BEGIN TRANSACTION 
 	DECLARE @SQL NVARCHAR(MAX)
+	DECLARE @dolar DECIMAL (9,2)
+
+	SET @dolar = 1026,50 --https://dolarhoy.com/
 
 	BEGIN TRY
 		-- Electronic accessories.xlsx -> Sheet1
@@ -115,8 +118,8 @@ BEGIN
 
 		EXEC sp_executesql @SQL
 
-		INSERT INTO deposito.producto(Categoria, Nombre, Precio, Fecha)
-			SELECT 1, Nombre, Precio, GETDATE()
+		INSERT INTO deposito.producto(Categoria, Nombre, Precio, PrecioReferencia, Fecha) 
+			SELECT 1, Nombre, Precio * @dolar, Precio, GETDATE()
 				FROM #Producto
 
 		TRUNCATE TABLE #Producto
@@ -150,8 +153,8 @@ BEGIN
 
 		EXEC sp_executesql @SQL
 
-		INSERT deposito.producto(Categoria, Nombre, UnidadReferencia, PrecioReferencia, Fecha)
-			SELECT 2, Nombre, UnidadReferencia, PrecioReferencia, GETDATE()
+		INSERT deposito.producto(Categoria, Nombre, UnidadReferencia, PrecioReferencia, Precio, Fecha)
+			SELECT 2, Nombre, UnidadReferencia, PrecioReferencia, PrecioReferencia * @dolar, GETDATE()
 				FROM #Producto
 		
 		DROP TABLE #Producto
