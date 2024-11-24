@@ -173,8 +173,10 @@ create table facturacion.factura(
 	MontoIVA decimal (9,2),
 	MontoNeto decimal (9,2),
 	MontoBruto decimal (9,2),
-	CUIT CHAR(11),
-	FOREIGN KEY (CUIT)  REFERENCES facturacion.DatosFacturacion(CUIT)
+	--CUIT CHAR(11),
+	--FOREIGN KEY (CUIT)  REFERENCES facturacion.DatosFacturacion(CUIT)
+	IDDatoFacturacion int,
+	FOREIGN KEY (ID) REFERENCES facturacion.DatosFacturacion(ID)
 )
 GO
 
