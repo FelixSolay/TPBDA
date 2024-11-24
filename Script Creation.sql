@@ -75,26 +75,30 @@ GO
 --El esquema infraestructura tiene como objetivo gestionar sucursales y recursos humanos
 create schema infraestructura
 GO
+--Utilizamos el esquema test para crear y ejecutar SP de prueba con datos ficticios
+create schema test
+GO
 
 --Se respeta este orden de borrado para que no haya conflictos con las Foreign Keys
-DROP TABLE IF EXISTS facturacion.nota;
-DROP TABLE IF EXISTS facturacion.Factura;
-DROP TABLE IF EXISTS facturacion.DatosFacturacion;
-DROP TABLE IF EXISTS facturacion.LineaVenta;
-DROP TABLE IF EXISTS facturacion.Venta;
-DROP TABLE IF EXISTS facturacion.Pago;
-DROP TABLE IF EXISTS facturacion.Cliente;
 DROP TABLE IF EXISTS facturacion.MedioDePago;
-DROP TABLE IF EXISTS facturacion.TipoCliente;   
-DROP TABLE IF EXISTS deposito.Producto;
+DROP TABLE IF EXISTS facturacion.TipoCliente;
 DROP TABLE IF EXISTS deposito.Categoria;
-DROP TABLE IF EXISTS infraestructura.Empleado;
-DROP TABLE IF EXISTS infraestructura.Sucursal;
+DROP TABLE IF EXISTS facturacion.DatosFacturacion;
 DROP TABLE IF EXISTS infraestructura.Cargo;
+DROP TABLE IF EXISTS infraestructura.Sucursal;
+DROP TABLE IF EXISTS facturacion.Factura;
+DROP TABLE IF EXISTS facturacion.Pago;
+DROP TABLE IF EXISTS facturacion.Nota;
+DROP TABLE IF EXISTS facturacion.Venta;
+DROP TABLE IF EXISTS facturacion.LineaVenta;
+DROP TABLE IF EXISTS deposito.Producto;
+DROP TABLE IF EXISTS infraestructura.Empleado;
+DROP TABLE IF EXISTS facturacion.Cliente;
 go
 
 
 --Utilizamos como Pk en las tablas un int Identity para mejorar la velocidad de las consultas
+--INFRAESTRUCTURA
 CREATE TABLE infraestructura.cargo(
 	IdCargo 	INT IDENTITY(1,1) PRIMARY KEY,
 	Descripcion VARCHAR(25) UNIQUE NOT NULL
@@ -127,24 +131,7 @@ create table infraestructura.empleado(
 )
 GO
 
-CREATE TABLE facturacion.TipoCliente(
-    IDTipoCliente INT IDENTITY(1,1) PRIMARY KEY,
-	nombre 		  VARCHAR(20) UNIQUE NOT NULL 	
-)
-GO
-
-create table facturacion.cliente(
-	IDCliente int Identity(1,1) primary key,
-	DNI int Unique,
-	CUIL char(11) UNIQUE CHECK (CUIL LIKE '[0-9]%'), -- calculable
-	Nombre varchar(25),
-	Apellido varchar(25),
-	Genero char(1) check (Genero='M' or Genero='F'),
-	IDTipoCliente int,
-	FOREIGN KEY (IDTipoCliente) REFERENCES facturacion.TipoCliente(IDTipoCliente)
-)
-GO
-
+--DEPOSITO
 CREATE TABLE deposito.categoria(
 	IDCategoria INT IDENTITY(1,1) PRIMARY KEY,
 	Descripcion VARCHAR(50) UNIQUE NOT NULL,
@@ -163,6 +150,17 @@ create table deposito.producto(
 )
 GO
 
+--FACTURACION
+--Agregamos los datos de facturación para utilizarlos como una tabla parametrizada
+CREATE TABLE facturacion.DatosFacturacion (
+    ID int IDENTITY(1,1) PRIMARY KEY,
+    CUIT char(11) NOT NULL UNIQUE CHECK (CUIT LIKE '[0-9]%'),
+    FechaInicio datetime NOT NULL,
+    RazonSocial varchar(100) NOT NULL,
+    constraint CHK_Unico CHECK (ID = 1)
+);
+GO
+
 create table facturacion.factura(
 	ID int Identity(1,1) primary key,
 	letra char check (Letra='A' or Letra='B' or Letra='C'),
@@ -172,6 +170,8 @@ create table facturacion.factura(
 	MontoIVA decimal (9,2),
 	MontoNeto decimal (9,2),
 	MontoBruto decimal (9,2),
+	CUIT CHAR(11),
+	FOREIGN KEY (CUIT)  REFERENCES facturacion.DatosFacturacion(CUIT)
 )
 GO
 
@@ -229,15 +229,24 @@ CREATE TABLE facturacion.Pago(
 )
 GO
 
---Agregamos los datos de facturación para utilizarlos como una tabla parametrizada
-CREATE TABLE facturacion.DatosFacturacion (
-    ID int IDENTITY(1,1) PRIMARY KEY,
-    CUIT char(11) NOT NULL UNIQUE CHECK (CUIT LIKE '[0-9]%'),
-    FechaInicio datetime NOT NULL,
-    RazonSocial varchar(100) NOT NULL,
-    constraint CHK_Unico CHECK (ID = 1)
-);
+CREATE TABLE facturacion.TipoCliente(
+    IDTipoCliente INT IDENTITY(1,1) PRIMARY KEY,
+	nombre 		  VARCHAR(20) UNIQUE NOT NULL 	
+)
 GO
+
+create table facturacion.cliente(
+	IDCliente int Identity(1,1) primary key,
+	DNI int Unique,
+	CUIL char(11) UNIQUE CHECK (CUIL LIKE '[0-9]%'), -- calculable
+	Nombre varchar(25),
+	Apellido varchar(25),
+	Genero char(1) check (Genero='M' or Genero='F'),
+	IDTipoCliente int,
+	FOREIGN KEY (IDTipoCliente) REFERENCES facturacion.TipoCliente(IDTipoCliente)
+)
+GO
+
 
 /*CREATE NONCLUSTERED INDEX idx_Venta_Numero
 ON facturacion.Venta (numero)
