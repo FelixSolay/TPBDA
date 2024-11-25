@@ -126,7 +126,7 @@ create table infraestructura.empleado(
 	EmailPersonal varchar(100),
 	EmailEmpresa varchar(100),
 	CUIL CHAR(11) CONSTRAINT UQ_Empleado_CUIL UNIQUE
-		CONSTRAINT CHK_Empleado_CUIL CHECK (CUIL LIKE '[0-9]%'),
+        CONSTRAINT CHK_Empleado_CUIL CHECK (CUIL LIKE '[0-9]%'),
 	Turno char(16) check (Turno='TN' or Turno='TM' or turno= 'TT' or Turno='Jornada Completa'),
 	Cargo int,
 	Sucursal int,
