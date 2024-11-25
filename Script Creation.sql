@@ -251,10 +251,6 @@ CREATE TABLE facturacion.Pago(
 )
 GO
 
-/*CREATE NONCLUSTERED INDEX idx_Venta_Numero
-ON facturacion.Venta (numero)
-GO*/
-
 CREATE NONCLUSTERED INDEX idx_Empleado_DNI
 ON infraestructura.Empleado (DNI)
 GO

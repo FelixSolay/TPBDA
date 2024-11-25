@@ -29,6 +29,9 @@ BEGIN
     BEGIN TRANSACTION
 
     BEGIN TRY
+        IF @CUIL IS NULL OR @CUIL = '' 
+            SET @CUIL = '00000000000'; -- CUIL por defecto (11 ceros)
+        
         INSERT INTO infraestructura.Empleado (Legajo, Nombre, Apellido, DNI, Direccion, EmailPersonal, EmailEmpresa, CUIL, Turno, Cargo, Sucursal)
             VALUES (@Legajo, @Nombre, @Apellido, @DNI, @Direccion, @EmailPersonal, @EmailEmpresa, @CUIL, @Turno, @Cargo, @Sucursal)
         COMMIT TRANSACTION
