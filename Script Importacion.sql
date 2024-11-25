@@ -47,21 +47,22 @@ BEGIN
 	BEGIN TRY
 		EXEC sp_executesql @SQLBulk
 
-		INSERT INTO facturacion.factura(letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto)
+		INSERT INTO facturacion.factura(letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto, IDDatosFac)
 			SELECT TipoFactura, Factura, fecha, hora, 
 				   (CAST(Cantidad AS INT) * CAST(PrecioUnitario AS DECIMAL(9,2)) * 0.21), 
 				   (CAST(Cantidad AS INT) * CAST(PrecioUnitario AS DECIMAL(9,2))), 
-				   (CAST(Cantidad AS INT) * CAST(PrecioUnitario AS DECIMAL(9,2)) * 1.21)
+				   (CAST(Cantidad AS INT) * CAST(PrecioUnitario AS DECIMAL(9,2)) * 1.21),
+				   1
 				FROM #VentasRegistradasCSV
 
-		INSERT facturacion.Venta(IDFactura, Empleado, MontoNeto, Cerrado)--Falta agregar Ncleitne generico
+		INSERT facturacion.Venta(IDFactura, Empleado, MontoNeto, Cerrado)
 			SELECT b.ID, CAST(a.Empleado AS INT), b.MontoNeto, 1
 				FROM #VentasRegistradasCSV	   AS a
 				INNER JOIN facturacion.factura AS b ON a.TipoFactura = b.letra 
 												   AND a.Factura	 = b.numero
 
-		INSERT facturacion.lineaVenta(ID, IdProducto, Cantidad, Monto) --SIGUE VACIA PORQUE NO EXISTEN LOS PRODUCTOS QUE SE VENDIERON (SEGUN EL EXCEL)
-			SELECT b.ID, IIF(c.IDProducto = '', 1, c.IDProducto), CAST(a.Cantidad AS INT), CAST(a.PrecioUnitario AS DECIMAL(9,2))
+		INSERT facturacion.lineaVenta(ID, IdProducto, Cantidad, Monto)
+			SELECT b.ID, IIF(c.IDProducto IS NULL, 1, c.IDProducto), CAST(a.Cantidad AS INT), CAST(a.PrecioUnitario AS DECIMAL(9,2))
 				FROM #VentasRegistradasCSV	   AS a
 				INNER JOIN facturacion.factura AS b ON a.TipoFactura = b.letra 
 												   AND a.Factura	 = b.numero
@@ -123,7 +124,7 @@ BEGIN
 				FROM #Producto
 
 		TRUNCATE TABLE #Producto
-
+		
 		-- catalogo.csv -> catalogo
 		SET @SQL = 'BULK INSERT #Producto
 						FROM ''' + @Path + '\catalogo.csv''
@@ -138,12 +139,13 @@ BEGIN
 		EXEC sp_executesql @SQL
 
 		INSERT deposito.producto(Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha)
-			SELECT b.IDCategoria, a.Nombre, a.Precio, a.PrecioReferencia, a.UnidadReferencia, a.Fecha
+			SELECT IIF(b.IDCategoria IS NULL, 3, b.IDCategoria), a.Nombre, a.Precio, a.PrecioReferencia, a.UnidadReferencia, a.Fecha
 				FROM #Producto AS a
-				INNER JOIN deposito.categoria AS b ON a.categoria = b.Descripcion
-
+				LEFT JOIN deposito.categoria AS b ON a.categoria = b.Descripcion
+		
+		
 		TRUNCATE TABLE #Producto
-
+		
 		-- Productos_importados.xlsx -> Listado de Productos
 		SET @SQL = 'INSERT INTO #Producto(Nombre, Categoria, UnidadReferencia, PrecioReferencia)
 						SELECT NombreProducto, Categoría, CantidadPorUnidad, PrecioUnidad
@@ -158,7 +160,7 @@ BEGIN
 				FROM #Producto
 		
 		DROP TABLE #Producto
-
+		
 		COMMIT TRANSACTION 
 	END TRY
 	BEGIN CATCH
@@ -366,7 +368,7 @@ BEGIN
 	BEGIN TRY
 		-- Secuencia 1
 		EXEC infraestructura.ImportSucursal @Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel
-		EXEC deposito.ImportCategoria 		@Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel
+		EXEC deposito.ImportCategoria 		@Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel -- problemas con archivo catalogo.csv
 		EXEC facturacion.ImportMediosPago 	@Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel
 
 		-- Secuencia 2	
@@ -374,7 +376,7 @@ BEGIN
 		EXEC deposito.ImportProductos 		 @Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel
 
 		-- Secuencia 3
-		EXEC facturacion.ImportVentas @Path = @Path --Depende de empleados y productos
+		EXEC facturacion.ImportVentas @Path = @Path
 	END TRY
 	BEGIN CATCH
 		SELECT ERROR_MESSAGE() AS ExecuteImports

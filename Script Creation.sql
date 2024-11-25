@@ -174,27 +174,25 @@ GO
 --FACTURACION
 --Agregamos los datos de facturación para utilizarlos como una tabla parametrizada
 CREATE TABLE facturacion.DatosFacturacion (
-    ID int IDENTITY(1,1) PRIMARY KEY,
-    CUIT char(11) NOT NULL UNIQUE CHECK (CUIT LIKE '[0-9]%'),
-    FechaInicio datetime NOT NULL,
-    RazonSocial varchar(100) NOT NULL,
-    constraint CHK_Unico CHECK (ID = 1) --????????????????????
+    ID 			INT IDENTITY(1,1) PRIMARY KEY,
+    CUIT 		CHAR(11) NOT NULL UNIQUE CHECK (CUIT LIKE '[0-9]%'),
+    FechaInicio DATETIME NOT NULL,
+    RazonSocial VARCHAR(100) NOT NULL,
+    CONSTRAINT CHK_Unico CHECK (ID = 1)
 )
 GO
 
 create table facturacion.factura(
-	ID int Identity(1,1) primary key,
-	letra char check (Letra='A' or Letra='B' or Letra='C'),
-	numero char(11),
-	Fecha date,
-	Hora time,
-	MontoIVA decimal (9,2),
-	MontoNeto decimal (9,2),
-	MontoBruto decimal (9,2),
-	--CUIT CHAR(11),
-	--FOREIGN KEY (CUIT)  REFERENCES facturacion.DatosFacturacion(CUIT)
-	IDDatoFacturacion int,
-	FOREIGN KEY (ID) REFERENCES facturacion.DatosFacturacion(ID)
+	ID INT IDENTITY(1,1) PRIMARY KEY,
+	letra 	   CHAR CHECK (Letra = 'A' OR Letra = 'B' OR Letra = 'C'),
+	numero 	   CHAR(11),
+	Fecha 	   DATE,
+	Hora 	   TIME,
+	MontoIVA   DECIMAL (9,2),
+	MontoNeto  DECIMAL (9,2),
+	MontoBruto DECIMAL (9,2),
+	IDDatosFac INT,
+	FOREIGN KEY (IDDatosFac) REFERENCES facturacion.DatosFacturacion(ID)
 )
 GO
 
