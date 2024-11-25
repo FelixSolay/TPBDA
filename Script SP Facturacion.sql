@@ -56,7 +56,6 @@ GO
 
 -------------------- TIPO DE CLIENTE --------------------
 
-
 CREATE OR ALTER PROCEDURE facturacion.InsertarTipoCliente
     @Nombre VARCHAR(20)
 AS
@@ -763,5 +762,3 @@ BEGIN
 END
 GO
 */
-
-

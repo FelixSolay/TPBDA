@@ -101,8 +101,8 @@ GO
 CREATE OR ALTER PROCEDURE deposito.InsertarProducto
     @Categoria		  INT,
     @Nombre			  VARCHAR(100),
-    @Precio			  DECIMAL(9, 2),
-    @PrecioReferencia DECIMAL(9, 2),
+    @Precio			  DECIMAL(9,2),
+    @PrecioReferencia DECIMAL(9,2),
     @UnidadReferencia VARCHAR(25),
     @Fecha			  DATETIME
 AS
