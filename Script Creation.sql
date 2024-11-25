@@ -33,7 +33,7 @@ Script de Creación de Base de datos y tablas para el trabajo práctico
 DROP DATABASE IF EXISTS COM2900G09
 GO
 
-CREATE DATABASE COM2900G09 COLLATE Latin1_General_CI_AI
+CREATE DATABASE COM2900G09 COLLATE Modern_Spanish_CI_AS --Latin1_General_CI_AS
 GO
 EXEC sp_configure 'show advanced options', 1
 RECONFIGURE

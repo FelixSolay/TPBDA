@@ -17,10 +17,19 @@ AS
 BEGIN
 	DECLARE @FechaActual DATETIME;
 	SET @FechaActual = GETDATE();
-	--Datos Base
-	EXEC infraestructura.InsertarCargo @descripcion='Cajero'
-	EXEC infraestructura.InsertarCargo @descripcion='Supervisor'
-	EXEC infraestructura.InsertarCargo @descripcion='Gerente de Sucursal'
+	--Datos Facturacion
+	EXEC facturacion.ConfigurarDatosFacturacion @CUIT='00123456789', @FechaInicio=@FechaActual, @RazonSocial='Aurora S.A.'
+	--Empleado: Cargo
+	EXEC infraestructura.InsertarCargo @descripcion='Cajero'				--1
+	EXEC infraestructura.InsertarCargo @descripcion='Supervisor'			--2
+	EXEC infraestructura.InsertarCargo @descripcion='Gerente de Sucursal'	--3
+	--Cliente: Tipo
+	EXEC facturacion.InsertarTipoCliente @nombre='Member'--1
+	EXEC facturacion.InsertarTipoCliente @nombre='Normal'--2
+	--Medios de pago
+	EXEC facturacion.insertarMedioDePago @nombre='Credit card',@descripcion='Tarjeta de credito'	--1
+	EXEC facturacion.insertarMedioDePago @nombre='Cash',@descripcion='Efectivo'						--2
+	EXEC facturacion.insertarMedioDePago @nombre='Ewallet',@descripcion='Billetera Electronica'		--3
 	--Categorias
 	EXEC deposito.InsertarCategoria @descripcion = 'Perfumeria'		--1
 	EXEC deposito.InsertarCategoria @descripcion = 'Almacen'		--2
@@ -65,13 +74,36 @@ BEGIN
 	EXEC infraestructura.InsertarSucursal 
 		@Direccion = 'Av. Brig. Gral. Juan Manuel de Rosas 3634, B1754 San Justo, Provincia de Buenos Aires',
 		@Ciudad = 'San Justo',
-		@Horario = 'L a V 8?a. m.–9?p. m.S y D 9 a. m.-8?p. m.',
+		@Horario = 'L a V 8 a. m.–9 p. m.S y D 9 a. m.-8 p. m.',
 		@Telefono = '5555-5551'
 	EXEC infraestructura.InsertarSucursal 
 		@Direccion = 'Av. de Mayo 791, B1704 Ramos Mejía, Provincia de Buenos Aires',
 		@Ciudad = 'Ramos Mejia',
-		@Horario = 'L a V 8?a. m.–9?p. m.S y D 9 a. m.-8?p. m.',
+		@Horario = 'L a V 8 a. m.–9 p. m.S y D 9 a. m.-8 p. m.',
 		@Telefono = '5555-5552'
 	--Empleados
-
+	EXEC infraestructura.insertarEmpleado
+		@Legajo = 257020,
+		@Nombre = 'Romina Alejandra',
+		@Apellido = 'Alias',
+		@DNI=36383025,
+		@Direccion='Bernardo de Irigoyen 2647, San Isidro, Buenos Aires',
+		@EmailPersonal='RominaAlejandra_ALIAS@gmail.com',
+		@EmailEmpresa='RominaAlejandra.ALIAS@superA.com',
+		@CUIL='0',
+		@Turno='TM',
+		@Cargo= 1,
+		@Sucursal= 1
+	EXEC infraestructura.insertarEmpleado
+		@Legajo = 257025,
+		@Nombre = 'Rolando',
+		@Apellido = 'Lopez',
+		@DNI = 29943254,
+		@Direccion = 'Av. Rivadavia 6538, Ciudad Autónoma de Buenos Aires, Ciudad Autónoma de Buenos Aires',
+		@EmailPersonal = 'Rolando_LOPEZ@gmail.com',
+		@EmailEmpresa ='Rolando.LOPEZ@superA.com',
+		@CUIL = '0',
+		@Turno = 'TT',
+		@Cargo = 2,
+		@Sucursal = 2
 END
