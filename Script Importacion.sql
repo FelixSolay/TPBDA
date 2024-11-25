@@ -5,7 +5,7 @@ CREATE TABLE #Constants(
 	ID int identity(1,1),
 	Valor NVARCHAR(MAX)
 )
-INSERT #Constants(Valor) VALUES ('C:\Users\juanp\Downloads')
+INSERT #Constants(Valor) VALUES ('C:\0\bda\TP_integrador_Archivos')
 INSERT #Constants(Valor) VALUES ('Microsoft.ACE.OLEDB.16.0')
 INSERT #Constants(Valor) VALUES ('Excel 12.0')
 GO
@@ -100,16 +100,21 @@ BEGIN
 		Precio			 VARCHAR(MAX),
 		PrecioReferencia VARCHAR(MAX),
 		UnidadReferencia VARCHAR(MAX),
-		Fecha			 VARCHAR(MAX),
+		Fecha			 VARCHAR(MAX)
 	)
-	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
-	BEGIN TRANSACTION 
+
+	create table #Clasificacion(
+		categoria		VARCHAR(MAX),
+		categoriaImport VARCHAR(MAX)
+	)
+
 	DECLARE @SQL NVARCHAR(MAX)
 	DECLARE @dolar DECIMAL (9,2)
 
 	SET @dolar = 1026.50 --https://dolarhoy.com/
 
 	BEGIN TRY
+		
 		-- Electronic accessories.xlsx -> Sheet1
 		SET @SQL = 'INSERT INTO #Producto(Nombre, Precio)
 						SELECT * 
@@ -125,6 +130,14 @@ BEGIN
 
 		TRUNCATE TABLE #Producto
 		
+		-- Electronic accessories.xlsx -> Sheet1
+		SET @SQL = 'INSERT INTO #Clasificacion(Categoria,CategoriaImport)
+						SELECT [Línea de producto], Producto
+							FROM OPENROWSET(''' + @OLEDB + ''',
+											''' + @EXCEL + ';HDR=YES;Database=' + @Path + '\Informacion_complementaria.xlsx'',
+											''SELECT * FROM [Clasificacion productos$]'')'
+
+		EXEC sp_executesql @SQL
 		-- catalogo.csv -> catalogo
 		SET @SQL = 'BULK INSERT #Producto
 						FROM ''' + @Path + '\catalogo.csv''
@@ -137,11 +150,17 @@ BEGIN
 						)'
 
 		EXEC sp_executesql @SQL
-
 		INSERT deposito.producto(Categoria, Nombre, Precio, PrecioReferencia, UnidadReferencia, Fecha)
-			SELECT IIF(b.IDCategoria IS NULL, 3, b.IDCategoria), a.Nombre, a.Precio, a.PrecioReferencia, a.UnidadReferencia, a.Fecha
+			SELECT b.IDCategoria categoria,--IIF(b.IDCategoria IS NULL, 3, b.IDCategoria) categoria,
+			a.Nombre,
+			Precio,
+			PrecioReferencia,
+			a.UnidadReferencia,
+			a.Fecha
 				FROM #Producto AS a
-				LEFT JOIN deposito.categoria AS b ON a.categoria = b.Descripcion
+				LEFT JOIN #clasificacion AS c ON c.categoriaImport = a.Categoria
+				LEFT JOIN deposito.categoria AS b ON c.categoria = b.Descripcion
+				where ISNUMERIC(a.precio)=1 and ISNUMERIC(a.precioreferencia)=1
 		
 		
 		TRUNCATE TABLE #Producto
@@ -160,12 +179,10 @@ BEGIN
 				FROM #Producto
 		
 		DROP TABLE #Producto
-		
-		COMMIT TRANSACTION 
+
 	END TRY
 	BEGIN CATCH
 		SELECT ERROR_MESSAGE() AS ImportProductos
-		ROLLBACK TRANSACTION
 	END CATCH
 END
 GO
@@ -368,13 +385,11 @@ BEGIN
 	BEGIN TRY
 		-- Secuencia 1
 		EXEC infraestructura.ImportSucursal @Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel
-		EXEC deposito.ImportCategoria 		@Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel -- problemas con archivo catalogo.csv
+		EXEC deposito.ImportCategoria 		@Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel 
 		EXEC facturacion.ImportMediosPago 	@Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel
-
 		-- Secuencia 2	
 		EXEC infraestructura.ImportEmpleados @Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel
 		EXEC deposito.ImportProductos 		 @Path = @Path, @OLEDB = @OLEDB, @Excel = @Excel
-
 		-- Secuencia 3
 		EXEC facturacion.ImportVentas @Path = @Path
 	END TRY
