@@ -26,7 +26,7 @@ GRANT EXECUTE
 GO
 
 
-ALTER ROLE Vendedor ADD MEMBER usuario_cajero
+ALTER ROLE Cajero ADD MEMBER usuario_cajero
 DENY EXECUTE
 	ON OBJECT::facturacion.GenerarNotaCredito
 	TO Cajero
@@ -39,28 +39,40 @@ GO
 ------------------- EJEMPLO DE EJECUCION ------------------------
 -----------------------------------------------------------------
 
+select * from facturacion.nota
+
 --Supervisor - monetario
 
-EXECUTE AS LOGIN = 'usuario_supervisor';
+EXECUTE AS LOGIN = 'usuario_supervisor'
 EXEC facturacion.GenerarNotaCredito 
-    @IDFactura = 1,              -- Factura asociada
-    @MontoCredito = 100.00,      -- Monto de la devolución
+    @IDFactura = 2,              -- Factura asociada
+    @MontoCredito = 122200.00,      -- Monto de la devolución
     @DevolucionProducto = 0;     -- Indica devolución monetaria
-REVERT;
+REVERT
 GO
+
+
 
 --Supervisor - producto
 
-DECLARE @IdProductoDevolucion INT = 102;  -- Producto seleccionado para devolución
+DECLARE @IdProductoDevolucion INT = 5  -- Producto seleccionado para devolución
 
-EXECUTE AS LOGIN = 'usuario_supervisor';
+EXECUTE AS LOGIN = 'usuario_supervisor'
 EXEC facturacion.GenerarNotaCredito
-    @IDFactura = 1,                -- Factura asociada
-    @MontoCredito = 100.00,        -- Monto total de la devolución
+    @IDFactura = 2,                -- Factura asociada
+    @MontoCredito = 125000.00,        -- Monto total de la devolución
     @DevolucionProducto = 1,       -- Indica devolución por producto
     @IdProductoDevolucion = @IdProductoDevolucion;  -- Producto a devolver
-REVERT;
+REVERT
 GO
+
+EXECUTE AS LOGIN = 'usuario_supervisor';
+EXEC facturacion.GenerarNotaDebito
+    @IDFactura = 2,                -- Factura asociada
+    @MontoDebito = 100.00        -- Monto total de la devolución
+REVERT
+GO
+
 
 --Cajero - monetario
 
@@ -68,7 +80,8 @@ EXECUTE AS LOGIN = 'usuario_cajero';
 EXEC facturacion.GenerarNotaCredito 
     @IDFactura = 1,              -- Factura asociada
     @MontoCredito = 100.00,      -- Monto de la devolución
-    @DevolucionProducto = 0;     -- Indica devolución monetaria
-REVERT;
+    @DevolucionProducto = 0     -- Indica devolución monetaria
+REVERT
 GO
 
+select*from facturacion.nota
