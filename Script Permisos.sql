@@ -34,3 +34,41 @@ DENY EXECUTE
 	ON OBJECT::facturacion.GenerarNotaDebito
 	TO Cajero
 GO
+
+-----------------------------------------------------------------
+------------------- EJEMPLO DE EJECUCION ------------------------
+-----------------------------------------------------------------
+
+--Supervisor - monetario
+
+EXECUTE AS LOGIN = 'usuario_supervisor';
+EXEC facturacion.GenerarNotaCredito 
+    @IDFactura = 1,              -- Factura asociada
+    @MontoCredito = 100.00,      -- Monto de la devolución
+    @DevolucionProducto = 0;     -- Indica devolución monetaria
+REVERT;
+GO
+
+--Supervisor - producto
+
+DECLARE @IdProductoDevolucion INT = 102;  -- Producto seleccionado para devolución
+
+EXECUTE AS LOGIN = 'usuario_supervisor';
+EXEC facturacion.GenerarNotaCredito
+    @IDFactura = 1,                -- Factura asociada
+    @MontoCredito = 100.00,        -- Monto total de la devolución
+    @DevolucionProducto = 1,       -- Indica devolución por producto
+    @IdProductoDevolucion = @IdProductoDevolucion;  -- Producto a devolver
+REVERT;
+GO
+
+--Cajero - monetario
+
+EXECUTE AS LOGIN = 'usuario_cajero';
+EXEC facturacion.GenerarNotaCredito 
+    @IDFactura = 1,              -- Factura asociada
+    @MontoCredito = 100.00,      -- Monto de la devolución
+    @DevolucionProducto = 0;     -- Indica devolución monetaria
+REVERT;
+GO
+
