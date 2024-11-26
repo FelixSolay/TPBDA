@@ -148,13 +148,29 @@ GO
 CREATE OR ALTER PROCEDURE test.CrearVentas
 AS
 BEGIN
-	print 'Proximamente...'
-	--iniciar venta
-	--agregar lineas de venta
-	--cerrar venta
-
+	DECLARE @IDVenta INT
+	--VENTA 1
+	EXEC facturacion.iniciarVenta @Cliente = 1, @Empleado=257020, @ID = @IDVenta OUTPUT
+	EXEC facturacion.InsertarLineaVenta @IdVenta, @idProducto = 5, @Cantidad = 1
+	EXEC facturacion.InsertarLineaVenta @IdVenta, @idProducto = 98, @Cantidad = 3
+	EXEC facturacion.InsertarLineaVenta @IdVenta, @idProducto = 209, @Cantidad = 1
+	EXEC facturacion.CerrarVenta @ID = @Idventa
+	--VENTA 2
+	EXEC facturacion.iniciarVenta @Cliente = 4, @Empleado=257022, @ID = @IDVenta OUTPUT
+	EXEC facturacion.InsertarLineaVenta @IdVenta, @idProducto = 212, @Cantidad = 5
+	EXEC facturacion.InsertarLineaVenta @IdVenta, @idProducto = 5777, @Cantidad = 12
+	EXEC facturacion.CerrarVenta @ID = @Idventa
 END
 GO
 
+
+/*
 EXEC test.CrearClientes
+EXEC test.CrearVentas
+exec facturacion.EliminarVenta 1001
+
 select * from facturacion.cliente
+select * from facturacion.Venta
+select * from facturacion.lineaVenta
+select * from facturacion.factura
+*/
