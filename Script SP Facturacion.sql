@@ -203,6 +203,7 @@ GO
 CREATE OR ALTER PROCEDURE facturacion.ActualizarCliente
     @IDCliente	   INT,
     @DNI		   INT		   = NULL,
+    @CUIL		   CAHR(11)	   = NULL,
     @Nombre		   VARCHAR(25) = NULL,
     @Apellido	   VARCHAR(25) = NULL,
     @Genero		   CHAR(1)	   = NULL,
@@ -216,6 +217,7 @@ BEGIN
         BEGIN
             UPDATE facturacion.Cliente
                 SET DNI			  = COALESCE(@DNI, DNI),
+                    CUIL    	  = COALESCE(@CUIL, CUIL),
                     Nombre		  = COALESCE(@Nombre, Nombre),
                     Apellido	  = COALESCE(@Apellido, Apellido),
                     Genero		  = COALESCE(@Genero, Genero),
@@ -319,7 +321,7 @@ BEGIN
         SELECT @ID = SCOPE_IDENTITY()
             FROM facturacion.Venta
         COMMIT TRANSACTION
-        PRINT 'Venta insertado correctamente.'
+        PRINT 'Venta insertada correctamente.'
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION
@@ -359,9 +361,9 @@ BEGIN
             RAISERROR(@error, 16, 1);
 			RETURN
         END   
-        --tomo el DNI para determinar factura A o B
+        --tomo el CUIL para determinar factura A o B
         SELECT @IDCliente = Cliente FROM facturacion.venta WHERE ID = @ID 
-        SELECT @Letr = CASE WHEN c.DNI IS NOT NULL THEN 'A' ELSE 'B' END
+        SELECT @Letr = CASE WHEN c.CUIL IS NOT NULL THEN 'A' ELSE 'B' END
             FROM facturacion.Cliente AS c
             WHERE c.IDCliente = @IDCliente;        
         --genero la factura
@@ -429,8 +431,7 @@ GO
 CREATE OR ALTER PROCEDURE facturacion.InsertarLineaVenta
     @ID         INT,
     @IdProducto INT,
-    @Cantidad   INT,
-    @Monto      DECIMAL(9,2)
+    @Cantidad   INT
 AS
 BEGIN
     DECLARE @ExCant INT
@@ -442,6 +443,8 @@ BEGIN
                         WHERE ID = @ID 
                           AND Cerrado = 0 )
         BEGIN
+            DECLARE @Precio DECIMAL(9,2)
+            SELECT @Precio = precio From deposito.producto WHERE IdProducto = @IdProducto
 			SELECT @ExCant = cantidad
                     FROM facturacion.LineaVenta
                         WHERE ID = @ID
@@ -450,14 +453,14 @@ BEGIN
             IF ( @ExCant <> '' )
             BEGIN
                 UPDATE facturacion.LineaVenta
-                    SET Cantidad = @ExCant + @Cantidad
+                    SET Cantidad = @ExCant + @Cantidad, Monto = @Precio * (@Cantidad + @ExCant)
                         WHERE ID = @ID
                           AND IDProducto = @IDProducto
             END
             ELSE
             BEGIN
                 INSERT INTO facturacion.LineaVenta (ID, IdProducto, Cantidad, Monto)
-                    VALUES (@ID, @IdProducto, @Cantidad, @Monto)
+                    VALUES (@ID, @IdProducto, @Cantidad, @Precio * @Cantidad)
             END
             COMMIT TRANSACTION
             PRINT 'Linea de Venta insertada correctamente.'
@@ -483,6 +486,12 @@ BEGIN
     BEGIN TRY
         IF EXISTS (SELECT 1 FROM facturacion.LineaVenta WHERE ID = @ID AND IdProducto = @IdProducto)
         BEGIN
+            DECLARE @Precio DECIMAL(9,2) = NULL
+            IF @Monto IS NULL
+            BEGIN
+                SELECT @Precio = precio From deposito.producto WHERE IdProducto = @IdProducto
+                SET @Monto = @Precio * @Cantidad
+            END
             UPDATE facturacion.LineaVenta
 				SET Cantidad = COALESCE(@Cantidad, Cantidad),
 					Monto	 = COALESCE(@Monto, Monto)
