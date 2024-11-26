@@ -39,7 +39,7 @@ BEGIN
 			SUM(MontoBruto) AS TotalFacturado
 		FROM FacMes
 			GROUP BY DiaNum) Datos
-        FOR XML MENSUAL;
+			FOR XML PATH('MENSUAL')
 END
 GO
 
@@ -49,47 +49,54 @@ AS
 BEGIN
 	WITH Datos AS(
 	-- Trimetre 1
-	SELECT c.Turno, SUM(a.MontoBruto) AS Acumulado
+	SELECT c.Turno, 'Trimestre 1' AS Trimestre, SUM(a.MontoBruto) AS Acumulado
 		FROM facturacion.factura			AS a
 		INNER JOIN facturacion.venta		AS b ON b.IDFactura  = a.ID
 		INNER JOIN infraestructura.empleado AS c ON c.Legajo	 = b.empleado
 			WHERE a.fecha >= DATEFROMPARTS(YEAR(GETDATE()), 1, 1)
-              AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE()), 4, 1))
+			  AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE()), 4, 1))
+			/*WHERE a.fecha >= DATEFROMPARTS(2019, 1, 1)
+              AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(2019, 4, 1))*/
 			GROUP BY c.Turno
 	UNION ALL
 	-- Trimetre 2
-	SELECT c.Turno, SUM(a.MontoBruto) AS Acumulado
+	SELECT c.Turno, 'Trimestre 2' AS Trimestre, SUM(a.MontoBruto) AS Acumulado
 		FROM facturacion.factura			AS a
 		INNER JOIN facturacion.venta		AS b ON b.IDFactura  = a.ID
 		INNER JOIN infraestructura.empleado AS c ON c.Legajo	 = b.empleado
 			WHERE a.fecha >= DATEFROMPARTS(YEAR(GETDATE()), 4, 1)
-              AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE()), 7, 1))
+			  AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE()), 7, 1))
+			/*WHERE a.fecha >= DATEFROMPARTS(2019, 4, 1)
+              AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(2019, 7, 1))*/
 			GROUP BY c.Turno
 	UNION ALL
 	-- Trimetre 3
-	SELECT c.Turno, SUM(a.MontoBruto) AS Acumulado
+	SELECT c.Turno, 'Trimestre 3' AS Trimestre, SUM(a.MontoBruto) AS Acumulado
 		FROM facturacion.factura			AS a
 		INNER JOIN facturacion.venta		AS b ON b.IDFactura  = a.ID
 		INNER JOIN infraestructura.empleado AS c ON c.Legajo	 = b.empleado
 			WHERE a.fecha >= DATEFROMPARTS(YEAR(GETDATE()), 7, 1)
               AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE()), 10, 1))
+			/*WHERE a.fecha >= DATEFROMPARTS(2019, 7, 1)
+              AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(2019, 10, 1))*/
 			GROUP BY c.Turno
 	UNION ALL
 	-- Trimetre 4
-	SELECT c.Turno, SUM(a.MontoBruto) AS Acumulado
+	SELECT c.Turno, 'Trimestre 4' AS Trimestre, SUM(a.MontoBruto) AS Acumulado
 		FROM facturacion.factura			AS a
 		INNER JOIN facturacion.venta		AS b ON b.IDFactura  = a.ID
 		INNER JOIN infraestructura.empleado AS c ON c.Legajo	 = b.empleado
 			WHERE a.fecha >= DATEFROMPARTS(YEAR(GETDATE()), 10, 1)
-              AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE())+1, 1, 1))
+              AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE()) +1, 1, 1))
+			/*WHERE a.fecha >= DATEFROMPARTS(2019, 10, 1)
+              AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(2020, 1, 1))*/
 			GROUP BY c.Turno
 	)
 	
     -- Generar .XML
 	SELECT *
         FROM Datos
-        FOR XML TRIMESTRALxTURNO;
-    
+        FOR XML PATH('TRIMESTRALxTURNO')
 END
 GO
 
@@ -114,8 +121,7 @@ BEGIN
     SELECT *
         FROM Datos
 			ORDER BY Acumulado DESC
-        FOR XML CANTIDADxRANGO;
-
+        FOR XML PATH('CANTIDADxRANGO')
 END
 GO
 
@@ -142,7 +148,7 @@ BEGIN
     SELECT *
         FROM Datos
             ORDER BY Acumulado DESC
-        FOR XML CANTIDADxSUCURSAL;
+			FOR XML PATH('CANTIDADxSUCURSAL')
 END
 GO
 
@@ -152,55 +158,81 @@ AS
 BEGIN
     WITH Datos AS(
     -- Semana 1
-    SELECT TOP 5 d.nombre, SUM(c.cantidad) AS Acumulado 
+    --SELECT TOP 5 d.nombre, MONTH(GETDATE()) AS Mes, SUM(c.cantidad) AS Acumulado
+	SELECT TOP 5 d.nombre, '1' AS Mes, SUM(c.cantidad) AS Acumulado 
         FROM facturacion.factura          AS a
         INNER JOIN facturacion.venta      AS b ON b.IDFactura  = a.ID
         INNER JOIN facturacion.lineaVenta AS c ON c.ID		   = b.ID
         INNER JOIN deposito.producto      AS d ON d.IDProducto = c.IDProducto
-            WHERE a.fecha >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)
-              AND a.fecha <= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 7)
+            --WHERE a.fecha >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)
+              --AND a.fecha <= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 7)
+			WHERE a.fecha >= DATEFROMPARTS(2019, 1, 1)
+              AND a.fecha <= DATEFROMPARTS(2019, 1, 7)
             GROUP BY d.nombre
 			ORDER BY Acumulado
     UNION ALL
     -- Semana 2
-    SELECT TOP 5 d.nombre, SUM(c.cantidad) AS Acumulado 
+    --SELECT TOP 5 d.nombre, MONTH(GETDATE()) AS Mes, SUM(c.cantidad) AS Acumulado
+	SELECT TOP 5 d.nombre, '1' AS Mes, SUM(c.cantidad) AS Acumulado 
         FROM facturacion.factura          AS a
         INNER JOIN facturacion.venta      AS b ON b.IDFactura  = a.ID
         INNER JOIN facturacion.lineaVenta AS c ON c.ID		   = b.ID
         INNER JOIN deposito.producto      AS d ON d.IDProducto = c.IDProducto
-            WHERE a.fecha >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 8)
-              AND a.fecha <= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 14)
+            --WHERE a.fecha >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 8)
+              --AND a.fecha <= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 14)
+			WHERE a.fecha >= DATEFROMPARTS(2019, 1, 8)
+              AND a.fecha <= DATEFROMPARTS(2019, 1, 14)
             GROUP BY d.nombre
 			ORDER BY Acumulado
     UNION ALL
     -- Semana 3
-    SELECT TOP 5 d.nombre, SUM(c.cantidad) AS Acumulado 
+    --SELECT TOP 5 d.nombre, MONTH(GETDATE()) AS Mes, SUM(c.cantidad) AS Acumulado 
+	SELECT TOP 5 d.nombre, '1' AS Mes, SUM(c.cantidad) AS Acumulado 
         FROM facturacion.factura          AS a
         INNER JOIN facturacion.venta      AS b ON b.IDFactura  = a.ID
         INNER JOIN facturacion.lineaVenta AS c ON c.ID		   = b.ID
         INNER JOIN deposito.producto      AS d ON d.IDProducto = c.IDProducto
-            WHERE a.fecha >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 15)
-              AND a.fecha <= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 21)
+            --WHERE a.fecha >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 15)
+              --AND a.fecha <= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 21)
+			WHERE a.fecha >= DATEFROMPARTS(2019, 1, 15)
+              AND a.fecha <= DATEFROMPARTS(2019, 1, 21)
             GROUP BY d.nombre
 			ORDER BY Acumulado
     UNION ALL
     -- Semana 4
-    SELECT TOP 5 d.nombre, SUM(c.cantidad) AS Acumulado 
+    --SELECT TOP 5 d.nombre, MONTH(GETDATE()) AS Mes, SUM(c.cantidad) AS Acumulado 
+	SELECT TOP 5 d.nombre, '1' AS Mes, SUM(c.cantidad) AS Acumulado 
         FROM facturacion.factura          AS a
         INNER JOIN facturacion.venta      AS b ON b.IDFactura  = a.ID
         INNER JOIN facturacion.lineaVenta AS c ON c.ID		   = b.ID
         INNER JOIN deposito.producto      AS d ON d.IDProducto = c.IDProducto
-            WHERE a.fecha >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 22)
-              AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE())+1, 1))
+            --WHERE a.fecha >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 22)
+              --AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE())+1, 1))
+			WHERE a.fecha >= DATEFROMPARTS(2019, 1, 22)
+              AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(2019, 2, 1))
             GROUP BY d.nombre
 			ORDER BY Acumulado
     )
 
     -- Generar .XML
-    SELECT *
+    SELECT Nombre,
+		CASE Mes 
+			WHEN 1  THEN 'Enero'
+			WHEN 2  THEN 'Febrero'
+			WHEN 3  THEN 'Marzo'
+			WHEN 4  THEN 'Abril'
+			WHEN 5  THEN 'Mayo'
+			WHEN 6  THEN 'Junio'
+			WHEN 7  THEN 'Julio'
+			WHEN 8  THEN 'Agosto'
+			WHEN 9  THEN 'Septiembre'
+			WHEN 10 THEN 'Octubre'
+			WHEN 11 THEN 'Noviembre'
+			WHEN 12 THEN 'Diciembre'
+			END MesNombre,
+			Acumulado
         FROM Datos
-        FOR XML TOP5xSEMANAxMES;
-        
+        FOR XML PATH('TOP5xSEMANAxMES')
 END
 GO
 
@@ -210,21 +242,39 @@ AS
 BEGIN
     WITH Datos AS(
 
-    SELECT TOP 5 d.nombre, SUM(c.cantidad) AS Acumulado 
+    --SELECT TOP 5 d.nombre, MONTH(GETDATE()) AS Mes, SUM(c.cantidad) AS Acumulado 
+	SELECT TOP 5 d.nombre, '1' AS Mes, SUM(c.cantidad) AS Acumulado 
         FROM facturacion.factura          AS a
         INNER JOIN facturacion.venta      AS b ON b.IDFactura  = a.ID
         INNER JOIN facturacion.lineaVenta AS c ON c.ID		   = b.ID
         INNER JOIN deposito.producto      AS d ON d.IDProducto = c.IDProducto
-            WHERE a.fecha >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)
-              AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE())+1, 1))
+            --WHERE a.fecha >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)
+              --AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE())+1, 1))
+			WHERE a.fecha >= DATEFROMPARTS(2019, 1, 1)
+              AND a.fecha <= DATEADD(DAY, -1, DATEFROMPARTS(2019, 2, 1))
             GROUP BY d.nombre
 			ORDER BY Acumulado ASC
     )
 
     -- Generar .XML
-    SELECT *
+    SELECT Nombre,
+		CASE Mes 
+			WHEN 1  THEN 'Enero'
+			WHEN 2  THEN 'Febrero'
+			WHEN 3  THEN 'Marzo'
+			WHEN 4  THEN 'Abril'
+			WHEN 5  THEN 'Mayo'
+			WHEN 6  THEN 'Junio'
+			WHEN 7  THEN 'Julio'
+			WHEN 8  THEN 'Agosto'
+			WHEN 9  THEN 'Septiembre'
+			WHEN 10 THEN 'Octubre'
+			WHEN 11 THEN 'Noviembre'
+			WHEN 12 THEN 'Diciembre'
+			END MesNombre,
+			Acumulado
         FROM Datos
-        FOR XML LOW5MES;
+        FOR XML PATH('LOW5MES')
 END
 GO
 
@@ -248,18 +298,41 @@ BEGIN
     -- Generar .XML
     SELECT *
         FROM Datos
-    FOR XML ACUMULADOPARTICULAR:
-
+		FOR XML PATH('ACUMULADOPARTICULAR')
 END
 GO
 
---EXEC reportes.Mensual @Mes = 1, @Año = 2019
---EXEC reportes.Trimestral
---EXEC reportes.ProductosFecha @inicio =
---EXEC reportes.ProductosSucursalFecha @inicio =
---EXEC reportes.TopProductosXSemana
---EXEC reportes.LowProductos
---EXEC reportes.VentasFechaSucursal @Fecha = @Sucursal =
+/*
+EXEC reportes.Mensual @Mes = 1, @Año = 2019
+GO
+
+EXEC reportes.Trimestral
+GO
+
+DECLARE @tmp1 DATETIME
+DECLARE @tmp2 DATETIME
+SET @tmp1 = DATEADD(YEAR, -6, GETDATE())
+SET @tmp2 = GETDATE()
+
+EXEC reportes.ProductosFecha @inicio = @tmp1, @fin = @tmp2
+GO
+
+DECLARE @tmp1 DATETIME
+DECLARE @tmp2 DATETIME
+SET @tmp1 = DATEADD(YEAR, -6, GETDATE())
+SET @tmp2 = GETDATE()
+
+EXEC reportes.ProductosSucursalFecha @inicio = @tmp1, @fin = @tmp2
+GO
+
+EXEC reportes.TopProductosXSemana
+GO
+
+EXEC reportes.LowProductos
+GO
+*/
+EXEC reportes.VentasFechaSucursal @Fecha = @Sucursal =
+GO
 
 USE master
 GO
