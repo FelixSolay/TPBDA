@@ -176,3 +176,5 @@ BEGIN
 END;
 GO
 
+use master
+GO

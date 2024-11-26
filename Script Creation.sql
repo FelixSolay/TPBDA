@@ -63,7 +63,7 @@ GO
 --El esquema infraestructura tiene como objetivo gestionar sucursales y recursos humanos
 CREATE SCHEMA infraestructura
 GO
-
+--Utilizamos el esquema test para crear y ejecutar SP de reportes en XML
 CREATE SCHEMA reportes
 GO
 --Utilizamos el esquema test para crear y ejecutar SP de prueba con datos ficticios
@@ -80,6 +80,7 @@ DROP TABLE IF EXISTS infraestructura.Sucursal;
 DROP TABLE IF EXISTS facturacion.Factura;
 DROP TABLE IF EXISTS facturacion.Pago;
 DROP TABLE IF EXISTS facturacion.Nota;
+DROP TABLE IF EXISTS facturacion.LineaNota;
 DROP TABLE IF EXISTS facturacion.Venta;
 DROP TABLE IF EXISTS facturacion.LineaVenta;
 DROP TABLE IF EXISTS deposito.Producto;
@@ -217,6 +218,17 @@ create table facturacion.nota(
 	Hora time,
 	Importe decimal (9,2),
 	FOREIGN KEY (factura) REFERENCES facturacion.factura(ID)
+)
+GO
+
+CREATE TABLE facturacion.lineaNota(
+    ID INT,
+    IDProducto INT,
+    Cantidad INT,
+    Monto DECIMAL(9,2),
+    FOREIGN KEY (ID) REFERENCES facturacion.nota(ID),
+    FOREIGN KEY (IDProducto) REFERENCES deposito.producto(IDProducto),
+    CONSTRAINT PK_lineaNota PRIMARY KEY (ID, IDProducto)
 )
 GO
 
