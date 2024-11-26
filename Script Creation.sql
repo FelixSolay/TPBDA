@@ -22,10 +22,10 @@ Fecha de entrega:
 Grupo: 09
 Bases de datos Aplicadas
 Alumnos:
-Aguirre, Cesar Alan
-Correa, Juan Pablo
-De Solay, Félix 40971636
-Weidmann, Germán Ariel 
+Aguirre, Cesar Alan		
+Correa, Juan Pablo 		40653000
+De Solay, Félix 		40971636
+Weidmann, Germán Ariel 	40676211
 
 Script de Creación de Base de datos y tablas para el trabajo práctico
 */

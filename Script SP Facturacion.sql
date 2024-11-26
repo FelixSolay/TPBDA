@@ -157,33 +157,6 @@ BEGIN
 	DECLARE @error VARCHAR(MAX) = 'Error al intentar Insertar el cliente: '
     BEGIN TRANSACTION;
     BEGIN TRY
-        /*-- Número por género
-        SET @CUIL_G = CASE 
-                        WHEN @Genero = 'M' THEN 20 
-                        ELSE 27 
-                      END;
-
-        -- Calcular número de verificación
-        SET @CUIL_N = 11 - (
-            (LEFT(CAST(@CUIL_G AS CHAR(2)), 1) * 5) +
-            (RIGHT(CAST(@CUIL_G AS CHAR(2)), 1) * 4) +
-            (SUBSTRING(CAST(@DNI AS CHAR(8)), 1, 1) * 3) +
-            (SUBSTRING(CAST(@DNI AS CHAR(8)), 2, 1) * 2) +
-            (SUBSTRING(CAST(@DNI AS CHAR(8)), 3, 1) * 7) +
-            (SUBSTRING(CAST(@DNI AS CHAR(8)), 4, 1) * 6) +
-            (SUBSTRING(CAST(@DNI AS CHAR(8)), 5, 1) * 5) +
-            (SUBSTRING(CAST(@DNI AS CHAR(8)), 6, 1) * 4) +
-            (SUBSTRING(CAST(@DNI AS CHAR(8)), 7, 1) * 3) +
-            (SUBSTRING(CAST(@DNI AS CHAR(8)), 8, 1) * 2)
-        ) % 11;
-
-        -- Ajustar número de verificación en caso de valores fuera de rango
-        IF @CUIL_N = 10 SET @CUIL_N = 0;
-
-        -- Armado de CUIL
-        SET @CUIL = (@CUIL_G * 1000000000) + (@DNI * 10) + @CUIL_N;
-        SET @CUIL_FINAL = CAST(@CUIL AS CHAR(11));
-		*/
         -- Insertar cliente
         INSERT INTO facturacion.Cliente (DNI, CUIL, Nombre, Apellido, Genero, IDTipoCliente)
         VALUES (@DNI, @CUIL, @Nombre, @Apellido, @Genero, @IDTipoCliente);
