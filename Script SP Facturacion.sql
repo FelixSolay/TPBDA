@@ -263,9 +263,9 @@ BEGIN
             SET @NewFac = CAST(NEXT VALUE FOR FacturaBSeq AS CHAR)--toma el próximo valor posible
         ELSE IF @letra = 'C'
             SET @NewFac = CAST(NEXT VALUE FOR FacturaCSeq AS CHAR)--toma el próximo valor posible (debería funcionar para A, B y C)
-        INSERT INTO facturacion.factura (letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto)
+        INSERT INTO facturacion.factura (letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto,IDDatosFac)
         VALUES (@Letra, @NewFac, GETDATE(), CONVERT(VARCHAR(10), GETDATE(), 108), 
-                @Importe * 0.21, @Importe, @Importe * 1.21)
+                @Importe * 0.21, @Importe, @Importe * 1.21,1)
         SET @Factura = SCOPE_IDENTITY()
         COMMIT TRANSACTION
     END TRY
