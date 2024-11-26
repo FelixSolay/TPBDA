@@ -4,14 +4,15 @@ GO
 CREATE OR ALTER PROCEDURE facturacion.GenerarNotaCredito
     @IDFactura INT,                   -- ID de la factura original
     @MontoCredito DECIMAL(9, 2),      -- Monto
-    @DevolucionProducto BIT = 0,      -- 0: Devolución monetaria, 1: Devolucion de producto
+    @DevolucionProducto BIT = 0,      -- 0: Devolución monetaria, 1: Devolución de producto
     @IdProductoDevolucion INT = NULL  -- ID del producto seleccionado como devolución
 AS
 BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
-    
-        DECLARE @VentaID INT, @VentaCerrada BIT, @ClienteID INT, @Letra CHAR(1), @TotalVenta DECIMAL(9, 2);
+       
+
+	    DECLARE @VentaID INT, @VentaCerrada BIT, @ClienteID INT, @Letra CHAR(1), @TotalVenta DECIMAL(9, 2);
         
         SELECT 
             @VentaID = v.ID,
@@ -37,9 +38,6 @@ BEGIN
             RETURN;
         END
 
-
-
-        --validamos monto
         IF @MontoCredito > @TotalVenta
         BEGIN
             PRINT 'Error: El monto de la nota de crédito no puede exceder el total de la venta.';
@@ -47,8 +45,36 @@ BEGIN
             RETURN;
         END
 
+       
+        IF @DevolucionProducto = 1
+        BEGIN
+            DECLARE @PrecioProducto DECIMAL(9, 2), @IdCategoriaProducto INT;
 
-        -- seq de numero dependiendo de letra
+            SELECT @PrecioProducto = Precio, @IdCategoriaProducto = Categoria
+            FROM deposito.producto
+            WHERE IDProducto = @IdProductoDevolucion;
+
+           IF NOT EXISTS (
+                SELECT 1
+                FROM facturacion.lineaVenta lv
+                INNER JOIN deposito.producto p ON lv.IDProducto = p.IDProducto
+                WHERE lv.ID = @VentaID AND p.Categoria = @IdCategoriaProducto
+            )
+            BEGIN
+                PRINT 'Error: No hay productos en la factura original que pertenezcan a la misma categoría que el producto seleccionado.';
+                ROLLBACK TRANSACTION;
+                RETURN;
+            END
+
+            IF @MontoCredito < @PrecioProducto
+            BEGIN
+                PRINT 'Error: El monto de la nota de crédito no puede ser menor al valor del producto seleccionado para devolución.';
+                ROLLBACK TRANSACTION;
+                RETURN;
+            END
+        END
+
+        --generamos número de la nota de crédito después de validar todo
         DECLARE @Numero CHAR(11);
         IF @Letra = 'A'
             SELECT @Numero = RIGHT('0000000000' + CAST(NEXT VALUE FOR FacturaASeq AS VARCHAR), 11);
@@ -57,7 +83,7 @@ BEGIN
         ELSE IF @Letra = 'C'
             SELECT @Numero = RIGHT('0000000000' + CAST(NEXT VALUE FOR FacturaCSeq AS VARCHAR), 11);
 
-		--insertamos
+        
         DECLARE @Fecha DATETIME = GETDATE();
         DECLARE @Hora TIME = CONVERT(TIME, GETDATE());
 
@@ -66,32 +92,10 @@ BEGIN
 
         DECLARE @NotaCreditoID INT = SCOPE_IDENTITY();
 
-        
-        IF @DevolucionProducto = 1
+       
+        IF @DevolucionProducto = 1  --- devol por producto
         BEGIN
-            DECLARE @PrecioProducto DECIMAL(9, 2), @IdCategoriaProducto INT;
-            DECLARE @Cantidad INT = 0, @MontoTotal DECIMAL(9,2) = 0;
-
-            
-            SELECT @IdCategoriaProducto = categoria
-            FROM deposito.producto
-            WHERE IDProducto = @IdProductoDevolucion;
-
-            --check que al menos un producto original tenga la misma categoria que el seleccionado por devolución
-            IF NOT EXISTS (
-                SELECT 1
-                FROM facturacion.lineaVenta lv
-                INNER JOIN deposito.producto p ON lv.IdProducto = p.IDProducto
-                WHERE lv.ID = @VentaID AND p.categoria = @IdCategoriaProducto
-            )
-            BEGIN
-                PRINT 'Error: No hay productos en la factura original que pertenezcan a la misma categoría que el producto seleccionado.';
-                ROLLBACK TRANSACTION;
-                RETURN;
-            END
-
-            
-            SELECT @PrecioProducto = Precio FROM deposito.producto WHERE IDProducto = @IdProductoDevolucion;
+            DECLARE @Cantidad INT = 0, @MontoTotal DECIMAL(9, 2) = 0;
 
             WHILE @MontoTotal + @PrecioProducto <= @MontoCredito
             BEGIN
@@ -99,18 +103,13 @@ BEGIN
                 SET @Cantidad = @Cantidad + 1;
             END
 
-            -- insertamos el detalle de nc
-            INSERT INTO facturacion.lineaVenta (ID, IDProducto, Cantidad, Monto)
+            INSERT INTO facturacion.lineaNota (ID, IDProducto, Cantidad, Monto)
             VALUES (@NotaCreditoID, @IdProductoDevolucion, @Cantidad, @MontoTotal);
 
             PRINT 'Nota de crédito generada con devolución de productos.';
         END
-        ELSE
+        ELSE   --- devol monetaria
         BEGIN
-            -- devol monetaria
-            INSERT INTO facturacion.lineaVenta (ID, IDProducto, Cantidad, Monto)
-            VALUES (@NotaCreditoID, NULL, 1, @MontoCredito);
-
             PRINT 'Nota de crédito generada como devolución monetaria.';
         END
 
@@ -119,8 +118,8 @@ BEGIN
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         PRINT 'Error al generar la nota de crédito: ' + ERROR_MESSAGE();
-    END CATCH;
-END;
+    END CATCH
+END
 GO
 
 
@@ -176,5 +175,3 @@ BEGIN
 END;
 GO
 
-use master
-GO
