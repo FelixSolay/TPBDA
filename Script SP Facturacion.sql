@@ -203,7 +203,7 @@ GO
 CREATE OR ALTER PROCEDURE facturacion.ActualizarCliente
     @IDCliente	   INT,
     @DNI		   INT		   = NULL,
-    @CUIL		   CAHR(11)	   = NULL,
+    @CUIL		   CHAR(11)	   = NULL,
     @Nombre		   VARCHAR(25) = NULL,
     @Apellido	   VARCHAR(25) = NULL,
     @Genero		   CHAR(1)	   = NULL,
@@ -724,54 +724,5 @@ BEGIN
 END
 GO
 
-
-/*
--------------------- FACTURA --------------------
-
-CREATE OR ALTER PROCEDURE facturacion.GenerarFactura -- SOLO SE EJECUTA DENTRO DE facturacion.CerrarVenta. NO SE PUEDE LLAMAR POR SI SOLO
-    @Importe DECIMAL(9,2),
-	@Factura INT OUTPUT
-AS
-BEGIN
-    DECLARE @NewFac CHAR(11)
-    DECLARE @CUIL	CHAR(13)
-    DECLARE @chk	BIT
-    SET @chk = 1
-
-    BEGIN TRY
-        SELECT CUIL
-            FROM facturacion.cliente
-
-        WHILE @chk = 1
-        BEGIN
-            SELECT @NewFac = CAST(FLOOR(RAND() * (99999999999 - 1000000000) + 1000000000) AS CHAR)
-            IF NOT EXISTS (SELECT *
-                            FROM facturacion.factura 
-                                WHERE letra = 'A'
-                                  AND numero = @NewFac)
-            BEGIN
-                SET @chk = 0
-            END
-        END
-
-        SELECT @CUIL = CUIL
-            FROM facturacion.cliente
-
-        INSERT INTO facturacion.factura(letra, numero, Fecha, Hora, MontoIVA, MontoNeto, MontoBruto, CUIL)
-            VALUES ('C', @NewFac, GETDATE(), CONVERT(VARCHAR(10), GETDATE(), 108), 
-					@Importe, @Importe * 0.21, @Importe * 1.21,
-                    LEFT(@CUIL, 2) + '-' + SUBSTRING(@CUIL, 3, 8) + '-' + RIGHT(@CUIL, 1))
-
-		SELECT @Factura = SCOPE_IDENTITY()
-			FROM facturacion.factura
-    END TRY
-    BEGIN CATCH
-        PRINT 'Error al intentar generar la factura A' + @NewFac + ': ' + ERROR_MESSAGE()
-    END CATCH
-
-	RETURN @Factura
-END
-GO
-*/
-
-
+use master
+go
