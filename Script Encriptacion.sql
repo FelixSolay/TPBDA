@@ -30,7 +30,6 @@ BEGIN
 
 
 	ALTER TABLE infraestructura.empleado DROP CONSTRAINT UQ_Empleado_DNI
-	ALTER TABLE infraestructura.empleado DROP CONSTRAINT UQ_Empleado_CUIL
 	ALTER TABLE infraestructura.empleado DROP CONSTRAINT CHK_Empleado_CUIL
 
 	ALTER TABLE infraestructura.empleado ALTER COLUMN DNI nvarchar(256)
@@ -39,7 +38,6 @@ BEGIN
 	ALTER TABLE infraestructura.empleado ADD Encriptado bit default 0 NOT NULL
 
 	ALTER TABLE infraestructura.empleado ADD CONSTRAINT UQ_Empleado_DNI UNIQUE (DNI);
-	ALTER TABLE infraestructura.empleado ADD CONSTRAINT UQ_Empleado_CUIL UNIQUE (CUIL);
 
 	CREATE NONCLUSTERED INDEX idx_empleado_dni
     ON infraestructura.empleado (DNI);
