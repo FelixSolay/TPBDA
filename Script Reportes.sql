@@ -285,7 +285,7 @@ CREATE OR ALTER PROCEDURE reportes.VentasFechaSucursal
 AS
 BEGIN
 	WITH Datos AS(
-	SELECT b.*
+	SELECT SUM(c.MontoBruto) AS AcFacturacion, COUNT(a.ID) AS CantVent, '???' AS Y_Ahora?
 		FROM facturacion.Venta				AS a
 		INNER JOIN facturacion.lineaVenta	AS b ON b.ID		 = a.ID
 		INNER JOIN facturacion.factura		AS c ON c.ID		 = a.IDFactura
@@ -331,7 +331,10 @@ GO
 EXEC reportes.LowProductos
 GO
 */
-EXEC reportes.VentasFechaSucursal @Fecha = @Sucursal =
+DECLARE @tmp DATETIME
+SET @tmp = GETDATE()
+
+EXEC reportes.VentasFechaSucursal @Fecha = @tmp, @Sucursal = 'Ramos Mejia'
 GO
 
 USE master
