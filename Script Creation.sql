@@ -46,20 +46,8 @@ RECONFIGURE
 GO
 EXEC sp_MSSet_oledb_prop N'Microsoft.ACE.OLEDB.16.0', N'AllowInProcess', 1
 GO
---EXEC sp_MSSet_oledb_prop N'Microsoft.ACE.OLEDB.12.0', N'DynamicParameters', 0
---GO
 SET DATEFORMAT mdy
 GO
-
--- hay que agregar esto
-/*
-CONTAINMENT = NONE
-ON PRIMARY(
-	NAME = N'AuroraVentas', FILENAME = N'D:\DataTP\AuroraVentas'),
-FILEGROUP [Memoria] CONTAINS MEMORY_OPTIMIZED_DATA DEFAULT(
-	NAME = N'MemoryDB', FILENAME = N'D:\DataTP\AuroraVentasMem')
-GO
-*/
 
 --Para trabajar sobre la base de datos creada
 USE COM2900G09

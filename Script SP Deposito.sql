@@ -197,3 +197,6 @@ BEGIN
     END CATCH
 END
 GO
+
+use master
+go

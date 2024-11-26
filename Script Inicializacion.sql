@@ -22,3 +22,6 @@ DECLARE @FechaActual DATETIME;
 SET @FechaActual = GETDATE();
 EXEC facturacion.ConfigurarDatosFacturacion @CUIT='30646228685', @FechaInicio=@FechaActual, @RazonSocial='Aurora S.A.'
 GO
+
+use master
+go

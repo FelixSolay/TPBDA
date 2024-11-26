@@ -19,15 +19,24 @@ CREATE OR ALTER PROCEDURE reportes.Mensual
 AS
 BEGIN
 	WITH FacMes AS(
-	SELECT DATEPART(WEEKDAY, fecha) AS DiaSemana, MontoBruto
+	SELECT DATEPART(WEEKDAY, fecha) AS DiaNum, MontoBruto
 		FROM facturacion.factura
-			WHERE Fecha <= DATEFROMPARTS(@Año, @Mes, 1) -- Fecha inicio
-			  AND Fecha >= DATEADD(DAY, 30, DATEFROMPARTS(@Año, @Mes, 1)) -- Fecha fin
+			WHERE Fecha >= DATEFROMPARTS(@Año, @Mes, 1) -- Fecha inicio
+			  AND Fecha <= DATEADD(MONTH, 1, DATEFROMPARTS(@Año, @Mes, 1)) -- Fecha fin
     )
 
-	SELECT DiaSemana, SUM(MontoBruto) AS TotalFacturado
+	SELECT CASE DiaNum 
+			WHEN 1 THEN 'Domingo'
+			WHEN 2 THEN 'Lunes'
+			WHEN 3 THEN 'Martes'
+			WHEN 4 THEN 'Miercoles'
+			WHEN 5 THEN 'Jueves'
+			WHEN 6 THEN 'Viernes'
+			WHEN 7 THEN 'Sabado'
+			END DiaSemana,
+			SUM(MontoBruto) AS TotalFacturado
 		FROM FacMes
-			GROUP BY DiaSemana
+			GROUP BY DiaNum
     
     -- Generar .XML
 END
@@ -272,13 +281,13 @@ BEGIN
 END
 GO
 
---EXEC reportes.Mensual @Mes = 1, @Año = 2024
+--EXEC reportes.Mensual @Mes = 1, @Año = 2019
 --EXEC reportes.Trimestral
---EXEC reportes.ProductosFecha
---EXEC reportes.ProductosSucursalFecha
+--EXEC reportes.ProductosFecha @inicio =
+--EXEC reportes.ProductosSucursalFecha @inicio =
 --EXEC reportes.TopProductosXSemana
 --EXEC reportes.LowProductos
---EXEC reportes.VentasFechaSucursal
+--EXEC reportes.VentasFechaSucursal @Fecha = @Sucursal =
 
 USE master
 GO
