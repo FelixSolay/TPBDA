@@ -56,6 +56,7 @@ GO
 
 -------------------- TIPO DE CLIENTE --------------------
 
+
 CREATE OR ALTER PROCEDURE facturacion.InsertarTipoCliente
     @Nombre VARCHAR(20)
 AS
@@ -142,20 +143,21 @@ GO
 
 CREATE OR ALTER PROCEDURE facturacion.InsertarCliente
     @DNI           INT,
+	@CUIL          CHAR(11) = NULL,
     @Nombre        VARCHAR(25),
     @Apellido      VARCHAR(25),
     @Genero        CHAR(1),
     @IDTipoCliente INT
 AS
 BEGIN
-    DECLARE @CUIL_G INT;
-    DECLARE @CUIL_N INT;
-    DECLARE @CUIL   BIGINT;
-    DECLARE @CUIL_FINAL CHAR(11);
+    --DECLARE @CUIL_G INT;
+    --DECLARE @CUIL_N INT;
+    --DECLARE @CUIL   BIGINT;
+    --DECLARE @CUIL_FINAL CHAR(11);
 	DECLARE @error VARCHAR(MAX) = 'Error al intentar Insertar el cliente: '
     BEGIN TRANSACTION;
     BEGIN TRY
-        -- Número por género
+        /*-- Número por género
         SET @CUIL_G = CASE 
                         WHEN @Genero = 'M' THEN 20 
                         ELSE 27 
@@ -181,10 +183,10 @@ BEGIN
         -- Armado de CUIL
         SET @CUIL = (@CUIL_G * 1000000000) + (@DNI * 10) + @CUIL_N;
         SET @CUIL_FINAL = CAST(@CUIL AS CHAR(11));
-
+		*/
         -- Insertar cliente
         INSERT INTO facturacion.Cliente (DNI, CUIL, Nombre, Apellido, Genero, IDTipoCliente)
-        VALUES (@DNI, @CUIL_FINAL, @Nombre, @Apellido, @Genero, @IDTipoCliente);
+        VALUES (@DNI, @CUIL, @Nombre, @Apellido, @Genero, @IDTipoCliente);
 
         COMMIT TRANSACTION;
         PRINT 'Cliente insertado correctamente.';
@@ -762,3 +764,5 @@ BEGIN
 END
 GO
 */
+
+

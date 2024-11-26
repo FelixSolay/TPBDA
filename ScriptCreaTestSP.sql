@@ -23,9 +23,6 @@ BEGIN
 	EXEC infraestructura.InsertarCargo @descripcion='Cajero'				--1
 	EXEC infraestructura.InsertarCargo @descripcion='Supervisor'			--2
 	EXEC infraestructura.InsertarCargo @descripcion='Gerente de Sucursal'	--3
-	--Cliente: Tipo
-	EXEC facturacion.InsertarTipoCliente @nombre='Member'--1
-	EXEC facturacion.InsertarTipoCliente @nombre='Normal'--2
 	--Medios de pago
 	EXEC facturacion.insertarMedioDePago @nombre='Credit card',@descripcion='Tarjeta de credito'	--1
 	EXEC facturacion.insertarMedioDePago @nombre='Cash',@descripcion='Efectivo'						--2
@@ -107,3 +104,57 @@ BEGIN
 		@Cargo = 2,
 		@Sucursal = 2
 END
+GO
+
+CREATE OR ALTER PROCEDURE test.CrearClientes
+AS
+BEGIN
+	--Cliente: Tipo
+	EXEC facturacion.InsertarTipoCliente @nombre='Member'--1
+	EXEC facturacion.InsertarTipoCliente @nombre='Normal'--2
+	--Clientes: Femenino member (con CUIL)
+	EXEC facturacion.InsertarCliente 
+		@DNI = 11111111,
+		@CUIL = '00111111110',
+		@Nombre = 'Marta',
+		@Apellido = 'Lopez',
+		@Genero = 'F',
+		@idtipoCliente = 1
+	--Clientes: Femenino normal (sin CUIL)
+	EXEC facturacion.InsertarCliente 
+		@DNI = 22222222,
+		@Nombre = 'Juana',
+		@Apellido = 'Gonzalez',
+		@Genero = 'F',
+		@idtipoCliente = 2
+	--Clientes: Masculino member (con CUIL)
+	EXEC facturacion.InsertarCliente 
+		@DNI = 11111112,
+		@CUIL = '00111111120',
+		@Nombre = 'Franco',
+		@Apellido = 'Locatimpo',
+		@Genero = 'M',
+		@idtipoCliente = 1
+	--Clientes: Masculino normal (sin CUIL)
+	EXEC facturacion.InsertarCliente 
+		@DNI = 22222221,
+		@Nombre = 'Mauro',
+		@Apellido = 'Vigliano',
+		@Genero = 'M',
+		@idtipoCliente = 2
+END
+GO
+
+CREATE OR ALTER PROCEDURE test.CrearVentas
+AS
+BEGIN
+	print 'Proximamente...'
+	--iniciar venta
+	--agregar lineas de venta
+	--cerrar venta
+
+END
+GO
+
+EXEC test.CrearClientes
+select * from facturacion.cliente

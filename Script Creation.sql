@@ -125,8 +125,7 @@ create table infraestructura.empleado(
 	Direccion varchar(100),
 	EmailPersonal varchar(100),
 	EmailEmpresa varchar(100),
-	CUIL CHAR(11) CONSTRAINT UQ_Empleado_CUIL UNIQUE
-        CONSTRAINT CHK_Empleado_CUIL CHECK (CUIL LIKE '[0-9]%'),
+	CUIL CHAR(11) CONSTRAINT CHK_Empleado_CUIL CHECK (CUIL LIKE '[0-9]%'),
 	Turno char(16) check (Turno='TN' or Turno='TM' or turno= 'TT' or Turno='Jornada Completa'),
 	Cargo int,
 	Sucursal int,
@@ -144,7 +143,7 @@ GO
 create table facturacion.cliente(
 	IDCliente int Identity(1,1) primary key,
 	DNI int Unique,
-	CUIL char(11) UNIQUE CHECK (CUIL LIKE '[0-9]%'), -- calculable
+	CUIL char(11), --UNIQUE CHECK (CUIL LIKE '[0-9]%'), -- calculable
 	Nombre varchar(25),
 	Apellido varchar(25),
 	Genero char(1) check (Genero='M' or Genero='F'),
